@@ -226,6 +226,28 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (std::make_unique<API> (pid (P::pb_range), "Pitch Bend Range", 0, 24, 2, semis));
     layout.add (toggle (P::vintage_cv, "Vintage 7-bit Knobs", false));
 
+    // Effects (expansion)
+    layout.add (toggle (P::fuzz_on, "Fuzz On", false));
+    layout.add (percent (P::fuzz_sustain, "Fuzz Sustain", 0.6f));
+    layout.add (percent (P::fuzz_tone, "Fuzz Tone", 0.5f));
+    layout.add (percent (P::fuzz_volume, "Fuzz Volume", 0.5f));
+    layout.add (percent (P::fuzz_mix, "Fuzz Mix", 1.0f));
+    layout.add (toggle (P::phaser_on, "Phaser On", false));
+    layout.add (hertz (P::phaser_rate, "Phaser Rate", 0.02f, 10.0f, 0.3f));
+    layout.add (percent (P::phaser_depth, "Phaser Depth", 0.7f));
+    layout.add (percent (P::phaser_fb, "Phaser Feedback", 0.4f));
+    layout.add (percent (P::phaser_mix, "Phaser Mix", 0.5f));
+    layout.add (std::make_unique<APC> (pid (P::chorus_mode), "Chorus Mode", juce::StringArray { "FREE", "I", "II", "I+II" }, 0));
+    layout.add (toggle (P::delay_sync, "Delay Sync", false));
+    {
+        juce::StringArray divs;
+        for (auto* n : augur::delaySyncNames)
+            divs.add (n);
+        layout.add (std::make_unique<APC> (pid (P::delay_div), "Delay Division", divs, 6));
+    }
+    layout.add (toggle (P::delay_pingpong, "Delay Ping-Pong", false));
+    layout.add (std::make_unique<APC> (pid (P::reverb_type), "Reverb Type", juce::StringArray { "HALL", "PLATE" }, 0));
+
     // Arpeggiator
     layout.add (toggle (P::arp_on, "Arp On", false));
     layout.add (std::make_unique<APC> (pid (P::arp_mode), "Arp Mode", juce::StringArray { "UP", "DOWN", "UP-DOWN", "RANDOM", "ORDER" }, 0));
@@ -265,6 +287,7 @@ struct ParameterBinding::Raw
     A tune, glide, unison, legato, pbRange, vintage;
     A arpOn, arpMode, arpOct, arpRate, arpGate, arpSwing, arpLatch;
     A fltSlope, fltMode, hpf;
+    A fzOn, fzSus, fzTone, fzVol, fzMix, phOn, phRate, phDepth, phFb, phMix, chMode, dlSync, dlDiv, dlPing, rvType;
 
     // Rev 3 knob digitiser: 7 bits, two-step software hysteresis (service manual 2-12).
     struct Knob7
@@ -331,6 +354,10 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     r.mixRing = get (P::mix_ring); r.mixSub = get (P::mix_sub); r.subOct = get (P::sub_oct); r.xmod = get (P::osc_xmod);
     r.lfo2Rate = get (P::lfo2_rate); r.lfo2Wave = get (P::lfo2_wave); r.lfo2Sync = get (P::lfo2_sync); r.lfo2Retrig = get (P::lfo2_retrig);
     r.mA = get (P::menv_a); r.mD = get (P::menv_d); r.mS = get (P::menv_s); r.mR = get (P::menv_r);
+    r.fzOn = get (P::fuzz_on); r.fzSus = get (P::fuzz_sustain); r.fzTone = get (P::fuzz_tone); r.fzVol = get (P::fuzz_volume);
+    r.fzMix = get (P::fuzz_mix); r.phOn = get (P::phaser_on); r.phRate = get (P::phaser_rate); r.phDepth = get (P::phaser_depth);
+    r.phFb = get (P::phaser_fb); r.phMix = get (P::phaser_mix); r.chMode = get (P::chorus_mode); r.dlSync = get (P::delay_sync);
+    r.dlDiv = get (P::delay_div); r.dlPing = get (P::delay_pingpong); r.rvType = get (P::reverb_type);
     r.fltSlope = get (P::flt_slope); r.fltMode = get (P::flt_mode); r.hpf = get (P::hpf_cutoff);
     r.arpOn = get (P::arp_on); r.arpMode = get (P::arp_mode); r.arpOct = get (P::arp_oct); r.arpRate = get (P::arp_rate);
     r.arpGate = get (P::arp_gate); r.arpSwing = get (P::arp_swing); r.arpLatch = get (P::arp_latch);
@@ -382,6 +409,10 @@ void ParameterBinding::fill (augur::SynthParams& p) noexcept
     p.mixRing = f (r.mixRing); p.mixSub = f (r.mixSub); p.subOctave = i (r.subOct); p.crossMod = f (r.xmod);
     p.lfo2Rate = f (r.lfo2Rate); p.lfo2Wave = i (r.lfo2Wave); p.lfo2Sync = b (r.lfo2Sync); p.lfo2Retrig = b (r.lfo2Retrig);
     p.menvA = f (r.mA); p.menvD = f (r.mD); p.menvS = f (r.mS); p.menvR = f (r.mR);
+    p.fuzzOn = b (r.fzOn); p.fuzzSustain = f (r.fzSus); p.fuzzTone = f (r.fzTone); p.fuzzVolume = f (r.fzVol); p.fuzzMix = f (r.fzMix);
+    p.phaserOn = b (r.phOn); p.phaserRate = f (r.phRate); p.phaserDepth = f (r.phDepth); p.phaserFeedback = f (r.phFb); p.phaserMix = f (r.phMix);
+    p.chorusMode = i (r.chMode); p.delaySync = b (r.dlSync); p.delayDivision = i (r.dlDiv); p.delayPingPong = b (r.dlPing);
+    p.reverbType = i (r.rvType);
     p.filterSlope = i (r.fltSlope); p.filterMode = i (r.fltMode); p.hpfHz = f (r.hpf);
     p.arpOn = b (r.arpOn); p.arpMode = i (r.arpMode); p.arpOctaves = i (r.arpOct); p.arpRate = i (r.arpRate);
     p.arpGate = f (r.arpGate); p.arpSwing = f (r.arpSwing); p.arpLatch = b (r.arpLatch);

@@ -254,8 +254,8 @@ simd::F4 LadderFilter::bite4 (Lanes& l, simd::F4 x, simd::F4 g, simd::F4 r) cons
         l.s[0] = lp1 + v1;
         const F4 y1 = x - lp1;
         const F4 s35 = (splat (0.0f) - G * invOnePlusG) * l.s[1] + invOnePlusG * l.s[2];
-        const F4 u = simd::tanh (alpha0 * (y1 + s35) * sat) * invSat;
-        const F4 y = K * u;
+        const F4 sum = simd::tanh (alpha0 * (y1 + s35) * sat) * invSat;
+        const F4 y = K * sum;
         const F4 v2 = (y - l.s[1]) * G;
         const F4 lp2 = v2 + l.s[1];
         l.s[1] = lp2 + v2;
@@ -265,18 +265,18 @@ simd::F4 LadderFilter::bite4 (Lanes& l, simd::F4 x, simd::F4 g, simd::F4 r) cons
         l.s[2] = lp3 + v3;
         // The loop's second high-pass pole only acts through the feedback: one more at the output
         // makes it 12 dB/oct at any resonance.
-        const F4 v4 = (u - l.s[3]) * G;
+        const F4 v4 = (sum - l.s[3]) * G;
         const F4 lp4 = v4 + l.s[3];
         l.s[3] = lp4 + v4;
-        return u - lp4;
+        return sum - lp4;
     }
 
     const F4 v1 = (x - l.s[0]) * G;
     const F4 y1 = v1 + l.s[0];
     l.s[0] = y1 + v1;
     const F4 s35 = (K - K * G) * invOnePlusG * l.s[1] - invOnePlusG * l.s[2];
-    const F4 u = simd::tanh (alpha0 * (y1 + s35) * sat) * invSat;
-    const F4 v2 = (u - l.s[1]) * G;
+    const F4 sum = simd::tanh (alpha0 * (y1 + s35) * sat) * invSat;
+    const F4 v2 = (sum - l.s[1]) * G;
     const F4 y2 = v2 + l.s[1];
     l.s[1] = y2 + v2;
     const F4 y = K * y2;

@@ -116,6 +116,17 @@ namespace augur5::params
     inline constexpr auto lfo2_retrig = "lfo2_retrig"; // bool: restart on every note (poly) / free
     inline constexpr auto menv_a = "menv_a", menv_d = "menv_d", menv_s = "menv_s", menv_r = "menv_r";
 
+    // ---------- EFFECTS (expansion) ----------
+    inline constexpr auto fuzz_on = "fuzz_on", fuzz_sustain = "fuzz_sustain", fuzz_tone = "fuzz_tone",
+                          fuzz_volume = "fuzz_volume", fuzz_mix = "fuzz_mix";
+    inline constexpr auto phaser_on = "phaser_on", phaser_rate = "phaser_rate", phaser_depth = "phaser_depth",
+                          phaser_fb = "phaser_fb", phaser_mix = "phaser_mix";
+    inline constexpr auto chorus_mode    = "chorus_mode";    // choice: FREE, I, II, I+II
+    inline constexpr auto delay_sync     = "delay_sync";     // bool
+    inline constexpr auto delay_div      = "delay_div";      // choice: 1/32 .. 1 BAR (when synced)
+    inline constexpr auto delay_pingpong = "delay_pingpong"; // bool
+    inline constexpr auto reverb_type    = "reverb_type";    // choice: HALL, PLATE
+
     // ---------- ARPEGGIATOR ----------
     inline constexpr auto arp_on    = "arp_on";    // bool
     inline constexpr auto arp_mode  = "arp_mode";  // choice: UP, DOWN, UP-DOWN, RANDOM, ORDER

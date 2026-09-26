@@ -123,6 +123,14 @@ struct SynthParams
     float delayTime = 0.375f, delayFeedback = 0.35f, delayMix = 0.3f;
     bool reverbOn = false;
     float reverbSize = 0.5f, reverbDecay = 2.5f, reverbMix = 0.25f;
+    int reverbType = 0;       // 0 = hall (FDN), 1 = plate
+    int chorusMode = 0;       // 0 = free, 1 = I, 2 = II, 3 = I+II
+    bool delaySync = false, delayPingPong = false;
+    int delayDivision = 6;    // index into delaySyncBeats (1/8 dotted)
+    bool fuzzOn = false;
+    float fuzzSustain = 0.6f, fuzzTone = 0.5f, fuzzVolume = 0.5f, fuzzMix = 1.0f;
+    bool phaserOn = false;
+    float phaserRate = 0.3f, phaserDepth = 0.7f, phaserFeedback = 0.4f, phaserMix = 0.5f;
 
     // Global
     float masterTuneCents = 0.0f, glide = 0.0f;
@@ -137,6 +145,9 @@ struct SynthParams
     float arpGate = 0.5f, arpSwing = 0.0f;
     bool arpLatch = false;
 };
+
+inline constexpr std::array<double, 12> delaySyncBeats { 0.125, 1.0 / 6.0, 0.25, 0.375, 1.0 / 3.0, 0.5, 0.75, 2.0 / 3.0, 1.0, 1.5, 2.0, 4.0 };
+inline constexpr std::array<const char*, 12> delaySyncNames { "1/32", "1/16T", "1/16", "1/16D", "1/8T", "1/8", "1/8D", "1/4T", "1/4", "1/4D", "1/2", "1 BAR" };
 
 inline constexpr std::array<double, 8> arpRateBeats { 1.0, 0.75, 0.5, 1.0 / 3.0, 0.375, 0.25, 1.0 / 6.0, 0.125 };
 inline constexpr std::array<const char*, 8> arpRateNames { "1/4", "1/8D", "1/8", "1/8T", "1/16D", "1/16", "1/16T", "1/32" };

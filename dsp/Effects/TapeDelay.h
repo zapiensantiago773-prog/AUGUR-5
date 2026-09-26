@@ -15,8 +15,10 @@ public:
     void prepare (double sampleRate);
     void reset() noexcept;
 
-    // Send-style: output = dry + wet * mix.
-    void process (float* left, float* right, int numSamples, float timeSeconds, float feedback, float mix) noexcept;
+    // Send-style: output = dry + wet * mix. Ping-pong: the input enters the left line only and each
+    // repeat crosses to the other side.
+    void process (float* left, float* right, int numSamples, float timeSeconds, float feedback, float mix,
+                  bool pingPong = false) noexcept;
 
 private:
     float read (const std::vector<float>& buf, float delaySamples) const noexcept;

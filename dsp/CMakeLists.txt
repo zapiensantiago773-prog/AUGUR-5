@@ -4,6 +4,7 @@ add_library(augur_dsp STATIC
     Util/FastMath.h
     Util/Denormals.h
     Util/Halfband.h
+    Util/HalfbandFir.h
     Util/Simd4.h
     Analog/Drift.h
     Analog/Fingerprint.h
@@ -23,6 +24,12 @@ add_library(augur_dsp STATIC
     Modulation/Arpeggiator.h
     Modulation/Arpeggiator.cpp
     Modulation/Lfo.h
+    Effects/Fuzz.h
+    Effects/Fuzz.cpp
+    Effects/Phaser.h
+    Effects/Phaser.cpp
+    Effects/PlateReverb.h
+    Effects/PlateReverb.cpp
     Effects/Chorus.h
     Effects/Chorus.cpp
     Effects/TapeDelay.h

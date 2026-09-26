@@ -11,6 +11,7 @@
  #define AUGUR_SIMD_NEON 1
 #endif
 
+#include <cmath>
 #include <cstring>
 
 namespace augur::simd
@@ -37,6 +38,7 @@ inline F4 selectGreater (F4 x, F4 limit, F4 a, F4 b) noexcept
     return { _mm_or_ps (_mm_and_ps (m, a.v), _mm_andnot_ps (m, b.v)) };
 }
 inline F4 min (F4 a, F4 b) noexcept { return { _mm_min_ps (a.v, b.v) }; }
+inline F4 sqrt (F4 a) noexcept { return { _mm_sqrt_ps (a.v) }; }
 inline F4 max (F4 a, F4 b) noexcept { return { _mm_max_ps (a.v, b.v) }; }
 inline F4 set (float a, float b, float c, float d) noexcept { return { _mm_setr_ps (a, b, c, d) }; }
 inline float get (F4 a, int lane) noexcept
@@ -73,6 +75,7 @@ inline F4 operator/ (F4 a, F4 b) noexcept { return { vdivq_f32 (a.v, b.v) }; }
 inline F4 abs (F4 a) noexcept { return { vabsq_f32 (a.v) }; }
 inline F4 selectGreater (F4 x, F4 limit, F4 a, F4 b) noexcept { return { vbslq_f32 (vcgtq_f32 (x.v, limit.v), a.v, b.v) }; }
 inline F4 min (F4 a, F4 b) noexcept { return { vminq_f32 (a.v, b.v) }; }
+inline F4 sqrt (F4 a) noexcept { return { vsqrtq_f32 (a.v) }; }
 inline F4 max (F4 a, F4 b) noexcept { return { vmaxq_f32 (a.v, b.v) }; }
 inline F4 set (float a, float b, float c, float d) noexcept
 {
@@ -109,6 +112,13 @@ AUGUR_F4_OP (-)
 AUGUR_F4_OP (*)
 AUGUR_F4_OP (/)
 #undef AUGUR_F4_OP
+inline F4 sqrt (F4 a) noexcept
+{
+    F4 r;
+    for (int i = 0; i < 4; ++i)
+        r.v[i] = std::sqrt (a.v[i]);
+    return r;
+}
 inline F4 abs (F4 a) noexcept
 {
     F4 r;

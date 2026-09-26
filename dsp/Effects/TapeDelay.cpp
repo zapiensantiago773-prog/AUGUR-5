@@ -44,18 +44,19 @@ float TapeDelay::read (const std::vector<float>& buf, float delaySamples) const 
     return a + t * (b - a);
 }
 
-void TapeDelay::process (float* left, float* right, int numSamples, float timeSeconds, float feedback, float mix) noexcept
+void TapeDelay::process (float* left, float* right, int numSamples, float timeSeconds, float feedback, float mix, bool pingPong) noexcept
 {
     const float target = std::clamp (timeSeconds, 0.005f, static_cast<float> (maxSeconds) - 0.01f) * static_cast<float> (sampleRate);
     const float fb = std::clamp (feedback, 0.0f, 1.0f) * 1.05f; // can run slightly hot; saturation keeps it bounded
-    constexpr float cross = 0.25f;
+    const float cross = pingPong ? 1.0f : 0.25f;
+    const float spread = pingPong ? 1.0f : 1.0125f; // ping-pong keeps both sides on the beat
 
     for (int n = 0; n < numSamples; ++n)
     {
         smoothedDelay += (target - smoothedDelay) * delayCoeff;
 
         const float wetL = read (bufL, smoothedDelay);
-        const float wetR = read (bufR, smoothedDelay * 1.0125f);
+        const float wetR = read (bufR, smoothedDelay * spread);
 
         // Feedback path: band-limit + saturate.
         float fL = (1.0f - cross) * wetL + cross * wetR;
@@ -68,8 +69,16 @@ void TapeDelay::process (float* left, float* right, int numSamples, float timeSe
         fR = fastmath::tanh ((lpR - hpR) * fb);
 
         const size_t w = static_cast<size_t> (writePos & mask);
-        bufL[w] = left[n] + fL;
-        bufR[w] = right[n] + fR;
+        if (pingPong)
+        {
+            bufL[w] = 0.5f * (left[n] + right[n]) + fL;
+            bufR[w] = fR;
+        }
+        else
+        {
+            bufL[w] = left[n] + fL;
+            bufR[w] = right[n] + fR;
+        }
 
         left[n] += wetL * mix;
         right[n] += wetR * mix;

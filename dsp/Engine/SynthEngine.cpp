@@ -37,6 +37,9 @@ void SynthEngine::prepare (double hostSampleRate, std::uint64_t unitSeed)
     lfo.prepare (internalRate, deriveSeed (unitSeed, 7));
     floorNoise.setSeed (deriveSeed (unitSeed, 8));
     chorus.prepare (hostSampleRate);
+    fuzz.prepare (internalRate);
+    phaser.prepare (hostSampleRate);
+    plate.prepare (hostSampleRate);
     delay.prepare (hostSampleRate);
     reverb.prepare (hostSampleRate);
 
@@ -68,8 +71,13 @@ void SynthEngine::reset() noexcept
     chorus.reset();
     delay.reset();
     reverb.reset();
+    fuzz.reset();
+    phaser.reset();
+    plate.reset();
     chorusMix = delayMix = reverbMix = 0.0f;
+    fuzzMix = phaserMix = hallMix = plateMix = 0.0f;
     chorusActive = delayActive = reverbActive = false;
+    fuzzActive = phaserActive = plateActive = false;
 
     sampleCounter = 0;
     chunkPos = 0;
@@ -610,6 +618,10 @@ void SynthEngine::controlUpdate() noexcept
     chorusMix += ((params.chorusOn ? params.chorusMix : 0.0f) - chorusMix) * fxCoeff;
     delayMix += ((params.delayOn ? params.delayMix : 0.0f) - delayMix) * fxCoeff;
     reverbMix += ((params.reverbOn ? params.reverbMix : 0.0f) - reverbMix) * fxCoeff;
+    hallMix += ((params.reverbOn && params.reverbType == 0 ? params.reverbMix : 0.0f) - hallMix) * fxCoeff;
+    plateMix += ((params.reverbOn && params.reverbType == 1 ? params.reverbMix : 0.0f) - plateMix) * fxCoeff;
+    fuzzMix += ((params.fuzzOn ? params.fuzzMix : 0.0f) - fuzzMix) * fxCoeff;
+    phaserMix += ((params.phaserOn ? params.phaserMix : 0.0f) - phaserMix) * fxCoeff;
 }
 
 void SynthEngine::renderSegment (float* left, float* right, int offset, int numSamples) noexcept
@@ -694,6 +706,18 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
     for (size_t v = 0; v < voices.size(); ++v)
         voiceLevels[v].store (voices[v].isActive() ? voices[v].getLevel() : 0.0f, std::memory_order_relaxed);
 
+    // FUZZ pedal on the oversampled bus, before the decimator (it oversamples further inside).
+    if (params.fuzzOn || fuzzMix > 1.0e-4f)
+    {
+        fuzzActive = true;
+        fuzz.process (busL.data(), busR.data(), iCount, params.fuzzSustain, params.fuzzTone, params.fuzzVolume, fuzzMix);
+    }
+    else if (fuzzActive)
+    {
+        fuzzActive = false;
+        fuzz.reset();
+    }
+
     const float floorAmp = 1.6e-5f * params.analogAge;
     for (int k = 0; k < numSamples; ++k)
     {
@@ -730,15 +754,24 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
         }
     };
 
+    runFx (params.phaserOn, phaserMix, phaserActive,
+           [&] { phaser.process (left, right, numSamples, params.phaserRate, params.phaserDepth, params.phaserFeedback, phaserMix); },
+           [&] { phaser.reset(); });
     runFx (params.chorusOn, chorusMix, chorusActive,
-           [&] { chorus.process (left, right, numSamples, params.chorusRate, params.chorusDepth, chorusMix); },
+           [&] { chorus.process (left, right, numSamples, params.chorusRate, params.chorusDepth, chorusMix, params.chorusMode); },
            [&] { chorus.reset(); });
+    const float delaySeconds = params.delaySync
+                                   ? static_cast<float> (delaySyncBeats[static_cast<size_t> (std::clamp (params.delayDivision, 0, 11))] * 60.0 / bpm)
+                                   : params.delayTime;
     runFx (params.delayOn, delayMix, delayActive,
-           [&] { delay.process (left, right, numSamples, params.delayTime, params.delayFeedback, delayMix); },
+           [&] { delay.process (left, right, numSamples, delaySeconds, params.delayFeedback, delayMix, params.delayPingPong); },
            [&] { delay.reset(); });
-    runFx (params.reverbOn, reverbMix, reverbActive,
-           [&] { reverb.process (left, right, numSamples, params.reverbSize, params.reverbDecay, reverbMix); },
+    runFx (params.reverbOn && params.reverbType == 0, hallMix, reverbActive,
+           [&] { reverb.process (left, right, numSamples, params.reverbSize, params.reverbDecay, hallMix); },
            [&] { reverb.reset(); });
+    runFx (params.reverbOn && params.reverbType == 1, plateMix, plateActive,
+           [&] { plate.process (left, right, numSamples, params.reverbSize, params.reverbDecay, plateMix); },
+           [&] { plate.reset(); });
 
     for (int k = 0; k < numSamples; ++k)
     {

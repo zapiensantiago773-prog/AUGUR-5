@@ -193,3 +193,21 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
   - mod env → pitch y LFO 2 → nivel;
   - **bit-idéntico con todo activado y bloques aleatorios**.
 - CPU: 5 voces 8.6 % → **9.3 %**.
+
+## D-023 · Efectos: FUZZ, phaser, modos de chorus, delay sync/ping-pong, plate (2026-09-26)
+- **Orden de la cadena**: FUZZ (sobre el bus sobremuestreado, antes del decimador) → decimador → PHASER → CHORUS → DELAY → REVERB (HALL o PLATE). Cada efecto entra y sale con fundido y solo cuesta CPU mientras suena.
+- **FUZZ**: topología clásica del pedal "sustainer" de 4 transistores:
+  - dos etapas de recorte con diodos en la realimentación, cada una con HP de acople y LP del condensador de realimentación;
+  - tone stack pasivo con mezcla LP 410 Hz / HP 1850 Hz, que da el hueco de medios del sonido "melancólico";
+  - etapa de recuperación.
+  - Recortador algebraico x/√(1+x²), con curva de diodo y ADAA de primer orden: la antiderivada es √(1+x²), así que no necesita exp ni log.
+  - **8x de sobremuestreo interno** (768 kHz a 48 kHz), con half-bands de 27/19/19 taps dimensionados por etapa (`Util/HalfbandFir.h`, plantilla float/SIMD).
+  - **Aliasing medido a sustain máximo: −120 a −123 dB**. Con 2x y tanh+ADAA daba −45 a −65 dB, y con 4x −72 a −86 dB.
+  - L/R en un solo registro SIMD. CPU con el fuzz activo: +3.5 % (antes de optimizar, +6.4 %).
+- **PHASER**: 6 all-pass de primer orden barridos exponencialmente (hasta 120 Hz–4 kHz), con realimentación saturada y el canal R desfasado 90° en el LFO.
+- **CHORUS**: modos FREE (perillas), I (0.513 Hz), II (0.863 Hz) e I+II (9.75 Hz, 3.3–3.7 ms). Son los valores del ensemble BBD clásico de dos botones: 1.66–5.35 ms en los modos I y II.
+- **DELAY**:
+  - sync a tempo con 12 divisiones, de 1/32 a 1 compás, con puntillos y tresillos (1/8D por defecto);
+  - ping-pong: la entrada va a L y cada repetición cruza de lado (test).
+- **PLATE**: tanque de figura 8 de Dattorro (JAES 1997) escalado a cualquier frecuencia de muestreo y por SIZE. El decay se aplica dos veces por mitad del tanque y la ganancia sale del RT60 pedido: **RT60 medido con integración de Schroeder dentro de ±30 %** (test a 1 y 3 s).
+- Test de determinismo con todos los efectos activos y bloques aleatorios: bit-idéntico.

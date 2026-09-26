@@ -43,11 +43,19 @@ float Chorus::read (float delaySamples) const noexcept
     return ((c3 * t + c2) * t + c1) * t + x0;
 }
 
-void Chorus::process (float* left, float* right, int numSamples, float rateHz, float depth, float mix) noexcept
+void Chorus::process (float* left, float* right, int numSamples, float rateHz, float depth, float mix, int mode) noexcept
 {
-    const double inc = rateHz / sampleRate;
-    const float baseDelay = static_cast<float> (0.0065 * sampleRate);
-    const float modDepth = static_cast<float> ((0.0005 + 0.0045 * depth) * sampleRate);
+    double rate = rateHz, centre = 0.0065, swing = 0.0005 + 0.0045 * depth; // seconds
+    switch (mode)
+    {
+        case 1: rate = 0.513; centre = 0.003505; swing = 0.001845; break;
+        case 2: rate = 0.863; centre = 0.003505; swing = 0.001845; break;
+        case 3: rate = 9.75;  centre = 0.0035;   swing = 0.0002;   break;
+        default: break;
+    }
+    const double inc = rate / sampleRate;
+    const float baseDelay = static_cast<float> (centre * sampleRate);
+    const float modDepth = static_cast<float> (swing * sampleRate);
 
     for (int n = 0; n < numSamples; ++n)
     {
