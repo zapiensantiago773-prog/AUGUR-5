@@ -294,3 +294,12 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
 - Nivelación: `level_presets.py` recorre los dos archivos. Tres pasadas dejan todo en su objetivo, salvo dos sonidos percusivos que quedan 2–3 dB por debajo porque los limita el techo de pico.
 - Soak de 30 s en los Signature: sin acumulación.
 - CPU con 12 voces y todos los efectos: 24 % de un núcleo en promedio.
+
+## D-029 · Panel en formato ancho (2026-09-26)
+- A pedido del usuario (el panel de 1536×1400 no cabía en su pantalla), el lienzo pasa a **2608×1024**, en formato ancho para pantallas 16:9.
+  - Las tres filas del diseño original quedan intactas a la izquierda.
+  - Los módulos nuevos van en un bloque a la derecha, alineados con esas tres filas: ARP / LFO 2 / HPF-VOICE, luego MOD ENV / FX OPTIONS / VOICE TRIMS, luego FUZZ / PHASER / OSC +.
+  - Cada panel conserva su distribución interna, centrada en su nuevo tamaño (tabla `expansionPanels`); controles y rótulos se mueven juntos.
+- Escala por defecto 65 %: 1695×666 px, que cabe en 1920×1080 con la ventana del DAW.
+- Al abrir, la ventana se limita al área útil de la pantalla, por si una sesión se guardó en un monitor más grande.
+- Tamaños de 45 % a 100 %; mínimo 40 % (1043 px), para portátiles de 1366 px.
