@@ -94,4 +94,8 @@ namespace augur5::params
     inline constexpr auto glide       = "glide";       // s 0..5
     inline constexpr auto unison      = "unison";      // bool
     inline constexpr auto legato      = "legato";      // bool
+
+    // ---------- ADDITIONAL (not on the panel; reachable from SETTINGS) ----------
+    inline constexpr auto osc_model = "osc_model"; // choice: 0 = REV3 (CEM3340), 1 = REV1 (SSM2030)
+    inline constexpr auto pb_range  = "pb_range";  // semitones 0..24, default 2
 }

@@ -2,8 +2,9 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-#include "Util/Smoother.h"
-#include "Voice/MonoTestVoice.h"
+#include "Engine/SynthEngine.h"
+#include "ParameterLayout.h"
+#include "Presets.h"
 
 class Augur5Processor final : public juce::AudioProcessor
 {
@@ -12,6 +13,7 @@ public:
     static constexpr int stateVersion = 1;
 
     Augur5Processor();
+    ~Augur5Processor() override;
 
     void prepareToPlay (double sampleRate, int maximumExpectedSamplesPerBlock) override;
     void releaseResources() override {}
@@ -39,18 +41,25 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     juce::AudioProcessorValueTreeState& getParameters() noexcept { return parameters; }
+    juce::UndoManager& getUndoManager() noexcept { return undoManager; }
+    augur5::PresetManager& getPresets() noexcept { return presets; }
+    float getVoiceLevel (int v) const noexcept { return engine->getVoiceLevel (v); }
+
+    // Editor size, persisted with the session.
+    float getUiScale() const noexcept { return uiScale; }
+    void setUiScale (float s) noexcept { uiScale = s; }
 
 private:
-    static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     void handleMidi (const juce::uint8* data, int numBytes) noexcept;
-    void renderRange (juce::AudioBuffer<float>&, int start, int numSamples) noexcept;
-    float currentGainTarget() const noexcept;
 
+    juce::UndoManager undoManager;
     juce::AudioProcessorValueTreeState parameters;
-    std::atomic<float>* gainDb = nullptr;
+    augur5::ParameterBinding binding;
+    augur5::PresetManager presets;
 
-    augur::LinearSmoother gainSmoother;
-    augur::MonoTestVoice voice;
+    std::unique_ptr<augur::SynthEngine> engine;
+    augur::SynthParams snapshot;
+    float uiScale = 0.75f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Augur5Processor)
 };

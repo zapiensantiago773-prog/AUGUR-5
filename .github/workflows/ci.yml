@@ -46,17 +46,13 @@ jobs:
         shell: pwsh
         run: ./tools/pluginval.ps1 -Preset ${{ matrix.preset }} -SkipGui
 
-      - name: pluginval (macOS, VST3 + AU)
+      - name: pluginval (macOS, VST3 + AU, installs the AU)
         if: runner.os == 'macOS'
         run: bash tools/pluginval.sh ${{ matrix.preset }} 10 --skip-gui
 
       - name: auval (Logic compatibility)
         if: runner.os == 'macOS'
-        run: |
-          mkdir -p ~/Library/Audio/Plug-Ins/Components
-          cp -R "build/${{ matrix.preset }}/plugin/Augur5_artefacts/Release/AU/AUGUR-5.component" ~/Library/Audio/Plug-Ins/Components/
-          killall -9 AudioComponentRegistrar || true
-          auval -v aumu Au53 Augr
+        run: auval -v aumu Au53 Augr
 
       - name: Upload plugin binaries
         uses: actions/upload-artifact@v4

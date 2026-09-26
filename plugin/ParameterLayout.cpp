@@ -1,0 +1,306 @@
+#include "ParameterLayout.h"
+#include "Parameters.h"
+
+namespace augur5
+{
+
+namespace
+{
+using APF = juce::AudioParameterFloat;
+using APB = juce::AudioParameterBool;
+using APC = juce::AudioParameterChoice;
+using API = juce::AudioParameterInt;
+using Range = juce::NormalisableRange<float>;
+
+constexpr int version = 1; // ParameterID version hint for AU/VST3 hosts; bump only for new parameters
+
+juce::ParameterID pid (const juce::String& id) { return { id, version }; }
+
+// Logarithmic range: equal knob travel per octave / decade (cutoff, times, rates).
+Range logRange (float lo, float hi)
+{
+    const float ratio = std::log (hi / lo);
+    return Range (lo, hi,
+                  [lo, ratio] (float, float, float v) { return lo * std::exp (v * ratio); },
+                  [lo, ratio] (float, float, float x) { return std::log (juce::jmax (x, lo) / lo) / ratio; });
+}
+
+juce::String formatHz (float v, int)
+{
+    return v >= 1000.0f ? juce::String (v / 1000.0f, 2) + " kHz" : juce::String (v, v < 10.0f ? 2 : 1) + " Hz";
+}
+
+juce::String formatSeconds (float v, int)
+{
+    return v < 1.0f ? juce::String (v * 1000.0f, v < 0.01f ? 1 : 0) + " ms" : juce::String (v, 2) + " s";
+}
+
+juce::String formatPercent (float v, int) { return juce::String (juce::roundToInt (v * 100.0f)) + " %"; }
+juce::String formatBipolar (float v, int) { return (v > 0.0f ? "+" : "") + juce::String (juce::roundToInt (v * 100.0f)) + " %"; }
+
+std::unique_ptr<APF> percent (const juce::String& id, const juce::String& name, float def)
+{
+    return std::make_unique<APF> (pid (id), name, Range (0.0f, 1.0f), def,
+                                  juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatPercent));
+}
+
+std::unique_ptr<APF> bipolar (const juce::String& id, const juce::String& name, float def)
+{
+    return std::make_unique<APF> (pid (id), name, Range (-1.0f, 1.0f), def,
+                                  juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatBipolar));
+}
+
+std::unique_ptr<APF> seconds (const juce::String& id, const juce::String& name, float lo, float hi, float def)
+{
+    return std::make_unique<APF> (pid (id), name, logRange (lo, hi), def,
+                                  juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatSeconds));
+}
+
+std::unique_ptr<APF> hertz (const juce::String& id, const juce::String& name, float lo, float hi, float def)
+{
+    return std::make_unique<APF> (pid (id), name, logRange (lo, hi), def,
+                                  juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatHz));
+}
+
+std::unique_ptr<APB> toggle (const juce::String& id, const juce::String& name, bool def)
+{
+    return std::make_unique<APB> (pid (id), name, def);
+}
+} // namespace
+
+const juce::StringArray& matrixSourceNames()
+{
+    static const juce::StringArray names { "FILTER ENV", "AMP ENV", "OSC 2", "LFO", "MOD WHEEL", "VELOCITY", "AFTERTOUCH", "NOISE" };
+    return names;
+}
+
+const juce::StringArray& matrixDestNames()
+{
+    static const juce::StringArray names { "OSC 1 FREQ", "OSC 2 FREQ", "OSC 1 PW", "OSC 2 PW", "FILTER CUTOFF", "RESONANCE", "AMP LEVEL", "LFO RATE" };
+    return names;
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
+{
+    namespace P = params;
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
+    const auto semis = juce::AudioParameterIntAttributes().withStringFromValueFunction ([] (int v, int) {
+        return (v > 0 ? "+" : "") + juce::String (v) + " st";
+    });
+    const auto cents = juce::AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) {
+        return (v > 0.0f ? "+" : "") + juce::String (v, 1) + " ct";
+    });
+    const auto pwText = juce::AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) {
+        return juce::String (juce::roundToInt (v)) + " %";
+    });
+
+    // Oscillators
+    layout.add (std::make_unique<API> (pid (P::osc1_freq), "Osc 1 Frequency", -24, 24, 0, semis));
+    layout.add (std::make_unique<APF> (pid (P::osc1_fine), "Osc 1 Fine", Range (-50.0f, 50.0f), 0.0f, cents));
+    layout.add (std::make_unique<APF> (pid (P::osc1_pw), "Osc 1 Width", Range (5.0f, 95.0f), 50.0f, pwText));
+    layout.add (toggle (P::osc1_saw, "Osc 1 Saw", true));
+    layout.add (toggle (P::osc1_pulse, "Osc 1 Pulse", false));
+    layout.add (toggle (P::osc1_sync, "Osc 1 Sync", false));
+
+    layout.add (std::make_unique<API> (pid (P::osc2_freq), "Osc 2 Frequency", -24, 24, 0, semis));
+    layout.add (std::make_unique<APF> (pid (P::osc2_fine), "Osc 2 Fine", Range (-50.0f, 50.0f), 0.0f, cents));
+    layout.add (std::make_unique<APF> (pid (P::osc2_pw), "Osc 2 Width", Range (5.0f, 95.0f), 50.0f, pwText));
+    layout.add (toggle (P::osc2_saw, "Osc 2 Saw", true));
+    layout.add (toggle (P::osc2_tri, "Osc 2 Triangle", false));
+    layout.add (toggle (P::osc2_pulse, "Osc 2 Pulse", false));
+    layout.add (toggle (P::osc2_lofreq, "Osc 2 Lo Freq", false));
+    layout.add (toggle (P::osc2_kbd, "Osc 2 Keyboard", true));
+
+    // Mixer
+    layout.add (percent (P::mix_osc1, "Mixer Osc 1", 0.8f));
+    layout.add (percent (P::mix_osc2, "Mixer Osc 2", 0.6f));
+    layout.add (percent (P::mix_noise, "Mixer Noise", 0.0f));
+    layout.add (percent (P::mix_drive, "Mixer Drive", 0.2f));
+
+    // Filter
+    layout.add (hertz (P::flt_cutoff, "Filter Cutoff", 20.0f, 20000.0f, 2500.0f));
+    layout.add (percent (P::flt_reso, "Filter Resonance", 0.15f));
+    layout.add (bipolar (P::flt_env_amt, "Filter Env Amount", 0.35f));
+    layout.add (std::make_unique<APC> (pid (P::flt_model), "Filter Model", juce::StringArray { "REV 3 (CEM3320)", "REV 1 (SSM2040)" }, 0));
+    layout.add (std::make_unique<APC> (pid (P::flt_keytrack), "Filter Key Track", juce::StringArray { "OFF", "HALF", "FULL" }, 2));
+    layout.add (percent (P::flt_velocity, "Velocity to Filter", 0.0f));
+
+    // Amplifier
+    layout.add (std::make_unique<APF> (pid (P::amp_level), "Level", Range (-60.0f, 6.0f, 0.1f), -6.0f,
+                                       juce::AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) {
+                                           return v <= -59.9f ? juce::String ("-inf dB") : juce::String (v, 1) + " dB";
+                                       })));
+    layout.add (percent (P::amp_velocity, "Velocity to Amp", 0.5f));
+    layout.add (percent (P::at_amount, "Aftertouch", 0.0f));
+
+    // Envelopes
+    layout.add (seconds (P::fenv_a, "Filter Env Attack", 0.001f, 10.0f, 0.005f));
+    layout.add (seconds (P::fenv_d, "Filter Env Decay", 0.001f, 10.0f, 0.6f));
+    layout.add (percent (P::fenv_s, "Filter Env Sustain", 0.3f));
+    layout.add (seconds (P::fenv_r, "Filter Env Release", 0.001f, 10.0f, 0.5f));
+    layout.add (seconds (P::aenv_a, "Amp Env Attack", 0.001f, 10.0f, 0.003f));
+    layout.add (seconds (P::aenv_d, "Amp Env Decay", 0.001f, 10.0f, 0.8f));
+    layout.add (percent (P::aenv_s, "Amp Env Sustain", 0.8f));
+    layout.add (seconds (P::aenv_r, "Amp Env Release", 0.001f, 10.0f, 0.4f));
+
+    // LFO
+    layout.add (hertz (P::lfo_rate, "LFO Rate", 0.05f, 30.0f, 4.0f));
+    layout.add (percent (P::lfo_amount, "LFO Amount", 0.5f));
+    layout.add (std::make_unique<APF> (pid (P::lfo_delay), "LFO Delay", Range (0.0f, 5.0f, 0.0f, 0.4f), 0.0f,
+                                       juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatSeconds)));
+    layout.add (std::make_unique<APC> (pid (P::lfo_wave), "LFO Wave", juce::StringArray { "TRI", "SAW", "SQR", "S&H" }, 0));
+    layout.add (toggle (P::lfo_sync, "LFO Sync", false));
+
+    // Poly Mod
+    layout.add (toggle (P::pm_on, "Poly Mod On", false));
+    layout.add (percent (P::pm_fenv_amt, "Poly Mod Filter Env", 0.0f));
+    layout.add (percent (P::pm_osc2_amt, "Poly Mod Osc 2", 0.0f));
+    layout.add (toggle (P::pm_dst_freqa, "Poly Mod to Freq A", true));
+    layout.add (toggle (P::pm_dst_pwa, "Poly Mod to PW A", false));
+    layout.add (toggle (P::pm_dst_filter, "Poly Mod to Filter", false));
+
+    // Mod matrix (defaults mirror the panel design, with zero amount)
+    const int defaultSrc[] = { 0, 2, 3, 4 };
+    const int defaultDst[] = { 0, 2, 4, 6 };
+    for (int slot = 1; slot <= P::kNumMatrixSlots; ++slot)
+    {
+        const auto n = juce::String (slot);
+        layout.add (std::make_unique<APC> (pid (P::mmSrc (slot)), "Matrix " + n + " Source", matrixSourceNames(), defaultSrc[slot - 1]));
+        layout.add (std::make_unique<APC> (pid (P::mmDst (slot)), "Matrix " + n + " Destination", matrixDestNames(), defaultDst[slot - 1]));
+        layout.add (bipolar (P::mmAmt (slot), "Matrix " + n + " Amount", 0.0f));
+    }
+
+    // Per voice / vintage
+    layout.add (percent (P::voice_detune, "Voice Detune", 0.3f));
+    layout.add (percent (P::voice_spread, "Voice Spread", 0.3f));
+    layout.add (bipolar (P::voice_pan, "Pan", 0.0f));
+    layout.add (std::make_unique<API> (pid (P::voice_count), "Voices", 1, 16, 5));
+    layout.add (percent (P::analog_age, "Analog Age", 0.35f));
+
+    // Effects
+    layout.add (toggle (P::chorus_on, "Chorus On", false));
+    layout.add (hertz (P::chorus_rate, "Chorus Rate", 0.05f, 5.0f, 0.6f));
+    layout.add (percent (P::chorus_depth, "Chorus Depth", 0.5f));
+    layout.add (percent (P::chorus_mix, "Chorus Mix", 0.5f));
+    layout.add (toggle (P::delay_on, "Delay On", false));
+    layout.add (seconds (P::delay_time, "Delay Time", 0.01f, 2.0f, 0.375f));
+    layout.add (percent (P::delay_fb, "Delay Feedback", 0.35f));
+    layout.add (percent (P::delay_mix, "Delay Mix", 0.3f));
+    layout.add (toggle (P::reverb_on, "Reverb On", false));
+    layout.add (percent (P::reverb_size, "Reverb Size", 0.5f));
+    layout.add (seconds (P::reverb_decay, "Reverb Decay", 0.2f, 20.0f, 2.5f));
+    layout.add (percent (P::reverb_mix, "Reverb Mix", 0.25f));
+
+    // Global
+    layout.add (std::make_unique<APF> (pid (P::master_tune), "Master Tune", Range (-100.0f, 100.0f), 0.0f, cents));
+    layout.add (std::make_unique<APF> (pid (P::glide), "Glide", Range (0.0f, 5.0f, 0.0f, 0.35f), 0.0f,
+                                       juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatSeconds)));
+    layout.add (toggle (P::unison, "Unison", false));
+    layout.add (toggle (P::legato, "Legato", false));
+
+    // Additional
+    layout.add (std::make_unique<APC> (pid (P::osc_model), "VCO Model", juce::StringArray { "REV 3 (CEM3340)", "REV 1 (SSM2030)" }, 0));
+    layout.add (std::make_unique<API> (pid (P::pb_range), "Pitch Bend Range", 0, 24, 2, semis));
+
+    return layout;
+}
+
+//==============================================================================
+
+struct ParameterBinding::Raw
+{
+    using A = std::atomic<float>*;
+    A osc1Freq, osc1Fine, osc1Pw, osc1Saw, osc1Pulse, osc1Sync;
+    A osc2Freq, osc2Fine, osc2Pw, osc2Saw, osc2Tri, osc2Pulse, osc2LoFreq, osc2Kbd, oscModel;
+    A mix1, mix2, mixNoise, mixDrive;
+    A cutoff, reso, envAmt, fltModel, keytrack, fltVel;
+    A level, ampVel, atAmount;
+    A fA, fD, fS, fR, aA, aD, aS, aR;
+    A lfoRate, lfoAmount, lfoDelay, lfoWave, lfoSync;
+    A pmOn, pmFenv, pmOsc2, pmFreqA, pmPwA, pmFilter;
+    std::array<A, 4> mmSrc, mmDst, mmAmt;
+    A detune, spread, pan, voices, age;
+    A chOn, chRate, chDepth, chMix, dlOn, dlTime, dlFb, dlMix, rvOn, rvSize, rvDecay, rvMix;
+    A tune, glide, unison, legato, pbRange;
+};
+
+ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw (std::make_unique<Raw>())
+{
+    namespace P = params;
+    const auto get = [&s] (const juce::String& id) {
+        auto* p = s.getRawParameterValue (id);
+        jassert (p != nullptr);
+        return p;
+    };
+    auto& r = *raw;
+    r.osc1Freq = get (P::osc1_freq); r.osc1Fine = get (P::osc1_fine); r.osc1Pw = get (P::osc1_pw);
+    r.osc1Saw = get (P::osc1_saw); r.osc1Pulse = get (P::osc1_pulse); r.osc1Sync = get (P::osc1_sync);
+    r.osc2Freq = get (P::osc2_freq); r.osc2Fine = get (P::osc2_fine); r.osc2Pw = get (P::osc2_pw);
+    r.osc2Saw = get (P::osc2_saw); r.osc2Tri = get (P::osc2_tri); r.osc2Pulse = get (P::osc2_pulse);
+    r.osc2LoFreq = get (P::osc2_lofreq); r.osc2Kbd = get (P::osc2_kbd); r.oscModel = get (P::osc_model);
+    r.mix1 = get (P::mix_osc1); r.mix2 = get (P::mix_osc2); r.mixNoise = get (P::mix_noise); r.mixDrive = get (P::mix_drive);
+    r.cutoff = get (P::flt_cutoff); r.reso = get (P::flt_reso); r.envAmt = get (P::flt_env_amt);
+    r.fltModel = get (P::flt_model); r.keytrack = get (P::flt_keytrack); r.fltVel = get (P::flt_velocity);
+    r.level = get (P::amp_level); r.ampVel = get (P::amp_velocity); r.atAmount = get (P::at_amount);
+    r.fA = get (P::fenv_a); r.fD = get (P::fenv_d); r.fS = get (P::fenv_s); r.fR = get (P::fenv_r);
+    r.aA = get (P::aenv_a); r.aD = get (P::aenv_d); r.aS = get (P::aenv_s); r.aR = get (P::aenv_r);
+    r.lfoRate = get (P::lfo_rate); r.lfoAmount = get (P::lfo_amount); r.lfoDelay = get (P::lfo_delay);
+    r.lfoWave = get (P::lfo_wave); r.lfoSync = get (P::lfo_sync);
+    r.pmOn = get (P::pm_on); r.pmFenv = get (P::pm_fenv_amt); r.pmOsc2 = get (P::pm_osc2_amt);
+    r.pmFreqA = get (P::pm_dst_freqa); r.pmPwA = get (P::pm_dst_pwa); r.pmFilter = get (P::pm_dst_filter);
+    for (int i = 0; i < 4; ++i)
+    {
+        r.mmSrc[static_cast<size_t> (i)] = get (P::mmSrc (i + 1));
+        r.mmDst[static_cast<size_t> (i)] = get (P::mmDst (i + 1));
+        r.mmAmt[static_cast<size_t> (i)] = get (P::mmAmt (i + 1));
+    }
+    r.detune = get (P::voice_detune); r.spread = get (P::voice_spread); r.pan = get (P::voice_pan);
+    r.voices = get (P::voice_count); r.age = get (P::analog_age);
+    r.chOn = get (P::chorus_on); r.chRate = get (P::chorus_rate); r.chDepth = get (P::chorus_depth); r.chMix = get (P::chorus_mix);
+    r.dlOn = get (P::delay_on); r.dlTime = get (P::delay_time); r.dlFb = get (P::delay_fb); r.dlMix = get (P::delay_mix);
+    r.rvOn = get (P::reverb_on); r.rvSize = get (P::reverb_size); r.rvDecay = get (P::reverb_decay); r.rvMix = get (P::reverb_mix);
+    r.tune = get (P::master_tune); r.glide = get (P::glide); r.unison = get (P::unison); r.legato = get (P::legato);
+    r.pbRange = get (P::pb_range);
+}
+
+ParameterBinding::~ParameterBinding() = default;
+
+void ParameterBinding::fill (augur::SynthParams& p) const noexcept
+{
+    const auto& r = *raw;
+    const auto f = [] (std::atomic<float>* a) { return a->load (std::memory_order_relaxed); };
+    const auto b = [&f] (std::atomic<float>* a) { return f (a) > 0.5f; };
+    const auto i = [&f] (std::atomic<float>* a) { return juce::roundToInt (f (a)); };
+
+    p.osc1Semi = i (r.osc1Freq); p.osc1Fine = f (r.osc1Fine); p.osc1Pw = f (r.osc1Pw) * 0.01f;
+    p.osc1Saw = b (r.osc1Saw); p.osc1Pulse = b (r.osc1Pulse); p.osc1Sync = b (r.osc1Sync);
+    p.osc2Semi = i (r.osc2Freq); p.osc2Fine = f (r.osc2Fine); p.osc2Pw = f (r.osc2Pw) * 0.01f;
+    p.osc2Saw = b (r.osc2Saw); p.osc2Tri = b (r.osc2Tri); p.osc2Pulse = b (r.osc2Pulse);
+    p.osc2LoFreq = b (r.osc2LoFreq); p.osc2Kbd = b (r.osc2Kbd); p.oscModel = i (r.oscModel);
+    p.mixOsc1 = f (r.mix1); p.mixOsc2 = f (r.mix2); p.mixNoise = f (r.mixNoise); p.mixDrive = f (r.mixDrive);
+    p.cutoffHz = f (r.cutoff); p.resonance = f (r.reso); p.envAmount = f (r.envAmt);
+    p.filterModel = i (r.fltModel); p.keytrack = i (r.keytrack); p.filterVelocity = f (r.fltVel);
+    p.levelDb = f (r.level); p.ampVelocity = f (r.ampVel); p.aftertouchAmount = f (r.atAmount);
+    p.fenvA = f (r.fA); p.fenvD = f (r.fD); p.fenvS = f (r.fS); p.fenvR = f (r.fR);
+    p.aenvA = f (r.aA); p.aenvD = f (r.aD); p.aenvS = f (r.aS); p.aenvR = f (r.aR);
+    p.lfoRate = f (r.lfoRate); p.lfoAmount = f (r.lfoAmount); p.lfoDelay = f (r.lfoDelay);
+    p.lfoWave = i (r.lfoWave); p.lfoSync = b (r.lfoSync);
+    p.pmOn = b (r.pmOn); p.pmFilterEnv = f (r.pmFenv); p.pmOsc2 = f (r.pmOsc2);
+    p.pmFreqA = b (r.pmFreqA); p.pmPwA = b (r.pmPwA); p.pmFilter = b (r.pmFilter);
+    for (size_t k = 0; k < 4; ++k)
+    {
+        p.matrix[k].source = static_cast<augur::ModSource> (juce::jlimit (0, 7, i (r.mmSrc[k])));
+        p.matrix[k].dest = static_cast<augur::ModDest> (juce::jlimit (0, 7, i (r.mmDst[k])));
+        p.matrix[k].amount = f (r.mmAmt[k]);
+    }
+    p.voiceDetune = f (r.detune); p.voiceSpread = f (r.spread); p.voicePan = f (r.pan);
+    p.voiceCount = i (r.voices); p.analogAge = f (r.age);
+    p.chorusOn = b (r.chOn); p.chorusRate = f (r.chRate); p.chorusDepth = f (r.chDepth); p.chorusMix = f (r.chMix);
+    p.delayOn = b (r.dlOn); p.delayTime = f (r.dlTime); p.delayFeedback = f (r.dlFb); p.delayMix = f (r.dlMix);
+    p.reverbOn = b (r.rvOn); p.reverbSize = f (r.rvSize); p.reverbDecay = f (r.rvDecay); p.reverbMix = f (r.rvMix);
+    p.masterTuneCents = f (r.tune); p.glide = f (r.glide); p.unison = b (r.unison); p.legato = b (r.legato);
+    p.pitchBendRange = i (r.pbRange);
+}
+
+} // namespace augur5

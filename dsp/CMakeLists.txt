@@ -1,8 +1,32 @@
 add_library(augur_dsp STATIC
     Util/Smoother.h
-    Oscillator/TestSine.h
-    Voice/MonoTestVoice.h
-    Voice/MonoTestVoice.cpp
+    Util/Random.h
+    Util/FastMath.h
+    Util/Denormals.h
+    Util/Halfband.h
+    Analog/Drift.h
+    Analog/Fingerprint.h
+    Oscillator/BlepTable.h
+    Oscillator/BlepTable.cpp
+    Oscillator/Vco.h
+    Oscillator/Vco.cpp
+    Oscillator/Noise.h
+    Filter/LadderFilter.h
+    Filter/LadderFilter.cpp
+    Envelope/RcAdsr.h
+    Modulation/Lfo.h
+    Effects/Chorus.h
+    Effects/Chorus.cpp
+    Effects/TapeDelay.h
+    Effects/TapeDelay.cpp
+    Effects/Reverb.h
+    Effects/Reverb.cpp
+    Voice/SynthVoice.h
+    Voice/SynthVoice.cpp
+    Engine/SynthParams.h
+    Engine/ChunkSignals.h
+    Engine/SynthEngine.h
+    Engine/SynthEngine.cpp
 )
 
 target_include_directories(augur_dsp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

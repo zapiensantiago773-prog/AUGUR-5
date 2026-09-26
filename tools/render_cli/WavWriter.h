@@ -8,9 +8,9 @@
 namespace augur::tools
 {
 
-// Writes mono 32-bit float WAV (WAVE_FORMAT_IEEE_FLOAT). Offline use only.
+// Writes interleaved 32-bit float WAV (WAVE_FORMAT_IEEE_FLOAT). Offline use only.
 // Assumes a little-endian host (x86-64 and arm64 both are).
-inline bool writeWavFloatMono (const std::string& path, const std::vector<float>& samples, std::uint32_t sampleRate)
+inline bool writeWavFloat (const std::string& path, const std::vector<float>& interleaved, std::uint16_t channels, std::uint32_t sampleRate)
 {
     std::ofstream file (path, std::ios::binary);
     if (! file)
@@ -19,8 +19,8 @@ inline bool writeWavFloatMono (const std::string& path, const std::vector<float>
     const auto put32 = [&] (std::uint32_t v) { file.write (reinterpret_cast<const char*> (&v), 4); };
     const auto put16 = [&] (std::uint16_t v) { file.write (reinterpret_cast<const char*> (&v), 2); };
 
-    const std::uint16_t channels = 1, bitsPerSample = 32, formatFloat = 3;
-    const std::uint32_t dataBytes = static_cast<std::uint32_t> (samples.size() * sizeof (float));
+    const std::uint16_t bitsPerSample = 32, formatFloat = 3;
+    const std::uint32_t dataBytes = static_cast<std::uint32_t> (interleaved.size() * sizeof (float));
     const std::uint32_t blockAlign = channels * bitsPerSample / 8u;
 
     file.write ("RIFF", 4);
@@ -36,7 +36,7 @@ inline bool writeWavFloatMono (const std::string& path, const std::vector<float>
     put16 (bitsPerSample);
     file.write ("data", 4);
     put32 (dataBytes);
-    file.write (reinterpret_cast<const char*> (samples.data()), static_cast<std::streamsize> (dataBytes));
+    file.write (reinterpret_cast<const char*> (interleaved.data()), static_cast<std::streamsize> (dataBytes));
 
     return static_cast<bool> (file);
 }

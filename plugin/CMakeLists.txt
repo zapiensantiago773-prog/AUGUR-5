@@ -23,12 +23,33 @@ juce_add_plugin(Augur5
     COPY_PLUGIN_AFTER_BUILD FALSE
 )
 
+# Embedded OFL fonts (licenses next to the files).
+juce_add_binary_data(AugurBinary
+    HEADER_NAME AugurBinary.h
+    NAMESPACE AugurBinary
+    SOURCES
+        resources/fonts/Jost-Regular.ttf
+        resources/fonts/Jost-Medium.ttf
+        resources/fonts/Michroma-Regular.ttf
+        resources/fonts/JetBrainsMono-Medium.ttf
+)
+
 target_sources(Augur5 PRIVATE
     Parameters.h
+    ParameterLayout.h
+    ParameterLayout.cpp
+    Presets.h
+    Presets.cpp
     PluginProcessor.h
     PluginProcessor.cpp
     PluginEditor.h
     PluginEditor.cpp
+    gui/Theme.h
+    gui/Theme.cpp
+    gui/AugurLookAndFeel.h
+    gui/AugurLookAndFeel.cpp
+    gui/Widgets.h
+    gui/Widgets.cpp
 )
 
 target_compile_definitions(Augur5 PUBLIC
@@ -40,6 +61,7 @@ target_compile_definitions(Augur5 PUBLIC
 target_link_libraries(Augur5
     PRIVATE
         augur_dsp
+        AugurBinary
         juce::juce_audio_utils
     PUBLIC
         juce::juce_recommended_config_flags
