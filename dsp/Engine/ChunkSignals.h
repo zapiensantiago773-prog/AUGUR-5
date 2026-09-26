@@ -25,6 +25,10 @@ struct ChunkSignals
     Buffer mix1 {}, mix2 {}, mixNoise {}, drive {};
     Buffer cutoffOct {}, resonance {}, envAmount {};
     Buffer pmFilterEnv {}, pmOsc2 {};
+    Buffer mixRing {}, mixSub {}, crossMod {};
+
+    double lfo2Inc = 0.0;        // LFO 2 cycles per internal sample
+    double lfo2PhaseStart = 0.0; // free-running LFO 2 phase at the start of the chunk
 
     float modWheel = 0.0f;
     float channelPressure = 0.0f;

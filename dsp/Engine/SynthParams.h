@@ -15,6 +15,10 @@ enum class ModSource
     Velocity,
     Aftertouch,
     Noise,
+    ModEnv,
+    Lfo2,
+    Keytrack,   // note position, -1..1 over C-1..C9 around middle C
+    NoteRandom, // one random value per note, -1..1
     count
 };
 
@@ -28,6 +32,14 @@ enum class ModDest
     Resonance,
     AmpLevel,
     LfoRate,
+    CrossMod,
+    RingLevel,
+    SubLevel,
+    Drive,
+    Osc1Level,
+    Osc2Level,
+    NoiseLevel,
+    Lfo2Rate,
     count
 };
 
@@ -57,6 +69,9 @@ struct SynthParams
 
     // Mixer
     float mixOsc1 = 0.8f, mixOsc2 = 0.6f, mixNoise = 0.0f, mixDrive = 0.2f;
+    float mixRing = 0.0f, mixSub = 0.0f;
+    int subOctave = 0;    // 0 = one octave below OSC A, 1 = two octaves
+    float crossMod = 0.0f; // linear FM OSC B -> OSC A, 0..1
 
     // Filter
     float cutoffHz = 2500.0f, resonance = 0.2f, envAmount = 0.3f;
@@ -82,13 +97,19 @@ struct SynthParams
     int lfoWave = 0;
     bool lfoSync = false;
 
+    // LFO 2 (per voice) and modulation envelope
+    float lfo2Rate = 2.0f; // Hz (position as for LFO 1 when synced)
+    int lfo2Wave = 0;      // sine, tri, saw up, saw down, square, S&H, smooth random
+    bool lfo2Sync = false, lfo2Retrig = true;
+    float menvA = 0.01f, menvD = 0.5f, menvS = 0.0f, menvR = 0.5f;
+
     // Poly Mod
     bool pmOn = false;
     float pmFilterEnv = 0.0f, pmOsc2 = 0.0f;
     bool pmFreqA = true, pmPwA = false, pmFilter = false;
 
     // Mod matrix
-    std::array<ModSlot, 4> matrix {};
+    std::array<ModSlot, 8> matrix {};
 
     // Voices / vintage
     float voiceDetune = 0.3f, voiceSpread = 0.3f, voicePan = 0.0f;

@@ -262,6 +262,7 @@ void SynthEngine::triggerNote (int note, float velocity) noexcept
     on.glide = pending.glide > 0.0005f;
     on.panPosition = panPositionFor (chosen, count);
     on.order = ++noteCounter;
+    on.lfo2Phase = lfo2PhaseNow();
     startVoice (voices[static_cast<size_t> (chosen)], on);
     nextVoice = (chosen + 1) % count;
 }
@@ -276,6 +277,12 @@ void SynthEngine::startVoice (SynthVoice& voice, const SynthVoice::NoteOn& on) n
                 break;
             }
     voice.noteOn (on);
+}
+
+double SynthEngine::lfo2PhaseNow() const noexcept
+{
+    // Position inside the current control chunk: identical however the host splits its blocks.
+    return sig.lfo2PhaseStart + static_cast<double> (chunkPos * oversampling) * sig.lfo2Inc;
 }
 
 void SynthEngine::warmUp() noexcept
@@ -303,6 +310,7 @@ void SynthEngine::monoTrigger (int note, float velocity, bool retrigger) noexcep
         on.unisonOffset = count > 1 ? panPositionFor (i, count) * pending.voiceDetune * 0.25f : 0.0f;
         on.panPosition = panPositionFor (i, count);
         on.order = ++noteCounter;
+        on.lfo2Phase = lfo2PhaseNow();
         startVoice (voices[static_cast<size_t> (i)], on);
     }
 }
@@ -504,6 +512,9 @@ void SynthEngine::controlUpdate() noexcept
         initSmoother (smPmOsc2, 0.02, params.pmOsc2, internalRate);
         initSmoother (smLfoAmount, 0.02, params.lfoAmount, internalRate);
         initSmoother (smLevel, 0.02, level, hostRate);
+        initSmoother (smMixRing, 0.02, params.mixRing, internalRate);
+        initSmoother (smMixSub, 0.02, params.mixSub, internalRate);
+        initSmoother (smCrossMod, 0.02, params.crossMod, internalRate);
         lastMonoMode = isMonoMode();
         lastVoiceCount = activeVoiceCount();
         paramsInitialised = true;
@@ -533,6 +544,29 @@ void SynthEngine::controlUpdate() noexcept
     fill (smEnvAmt, params.envAmount, sig.envAmount);
     fill (smPmFenv, params.pmFilterEnv, sig.pmFilterEnv);
     fill (smPmOsc2, params.pmOsc2, sig.pmOsc2);
+    fill (smMixRing, params.mixRing, sig.mixRing);
+    fill (smMixSub, params.mixSub, sig.mixSub);
+    fill (smCrossMod, params.crossMod, sig.crossMod);
+
+    // LFO 2 clock: free-running phase shared by all voices (Hz, or locked to the song when synced).
+    {
+        double rate2 = std::clamp (static_cast<double> (params.lfo2Rate), 0.01, 50.0);
+        if (params.lfo2Sync)
+        {
+            const double pos = std::log (std::max (rate2, 0.05) / 0.05) / std::log (600.0);
+            const double beats = lfoSyncBeats[static_cast<size_t> (std::clamp (std::lround (pos * 15.0), 0L, 15L))];
+            rate2 = bpm / 60.0 / beats;
+            if (playing)
+            {
+                const double ppqNow = ppqBlockStart + static_cast<double> (samplesSinceBlockStart) * bpm / (60.0 * hostRate);
+                lfo2Phase = ppqNow / beats;
+            }
+        }
+        lfo2Phase -= std::floor (lfo2Phase);
+        sig.lfo2Inc = rate2 / internalRate;
+        sig.lfo2PhaseStart = lfo2Phase;
+        lfo2Phase += sig.lfo2Inc * n;
+    }
     smLevel.setTarget (level);
 
     sig.modWheel = modWheel;

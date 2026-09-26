@@ -171,3 +171,25 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
   - el bloque más lento.
 - Con 69 presets × 60 s y "Warm Horizon" × 180 s no hay nada que se acumule con el uso: los silencios y el brillo quedan iguales del inicio al final.
 - Los picos de tiempo por bloque son aleatorios entre corridas (planificador del SO), no del motor.
+
+## D-022 · Modulación y osciladores extra (2026-09-26)
+- **MOD ENV**: tercera envolvente RC por voz (ADSR), fuente de la matriz.
+- **LFO 2 por voz**: seno, triángulo, sierra ↑, sierra ↓, cuadrada, S&H y aleatorio suave.
+  - Con RETRIG, cada nota arranca en fase 0 (poly). Sin él, la voz arranca en la fase del reloj libre del motor, calculada en la posición exacta dentro del chunk, así que es independiente del corte de bloques.
+  - Sync a tempo con las divisiones del LFO 1.
+  - Su velocidad es destino de la matriz, por voz.
+- **Matriz de 8 slots** (mm5–mm8 nuevos). A las listas solo se les añaden entradas al final, para que los presets guardados sigan valiendo.
+  - Fuentes nuevas: MOD ENV, LFO 2, KEYTRACK, NOTE RANDOM.
+  - Destinos nuevos: FM AMOUNT, RING, SUB, DRIVE, OSC 1/2 LEVEL, NOISE LEVEL, LFO 2 RATE.
+- **FM lineal (cross-mod) OSC B → OSC A**: la frecuencia se mueve alrededor de la portadora, hasta ±3× a fondo, así que la afinación se mantiene mientras crecen las bandas laterales.
+  - Pasa por el pitch del VCO muestra a muestra, con el mismo solver de eventos: tasa lineal dentro de la muestra, D-012.
+  - `fastmath::log2` nuevo, con error < 2e-6.
+- **Ring mod**: OSC A × OSC B, las dos señales AC del mezclador.
+  - Sin banda limitada propia: el producto de dos señales limitadas a Nyquist puede plegar sumas por encima. Con 2x de sobremuestreo y armónicos en 1/n queda bajo, pero no se garantiza −100 dB. Es un compromiso aceptado, igual que en el hardware digital de referencia.
+- **Sub oscilador**: flip-flop disparado por los resets de OSC A (−1 o −2 octavas). Los escalones van con BLEP en la misma línea de tiempo y latencia que las salidas del VCO: sin aliasing de la cuadrada y alineado en fase con la sierra.
+- Tests:
+  - frecuencia del sub (−1/−2 oct, ±0.3 %);
+  - FM y ring finitos y audibles;
+  - mod env → pitch y LFO 2 → nivel;
+  - **bit-idéntico con todo activado y bloques aleatorios**.
+- CPU: 5 voces 8.6 % → **9.3 %**.

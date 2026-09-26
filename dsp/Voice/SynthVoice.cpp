@@ -32,6 +32,14 @@ float mapMatrixAmount (ModDest d, float a) noexcept
         case ModDest::FilterCutoff: return a * 6.0f;
         case ModDest::Resonance:
         case ModDest::AmpLevel:     return a;
+        case ModDest::CrossMod:
+        case ModDest::RingLevel:
+        case ModDest::SubLevel:
+        case ModDest::Drive:
+        case ModDest::Osc1Level:
+        case ModDest::Osc2Level:
+        case ModDest::NoiseLevel:   return a;
+        case ModDest::Lfo2Rate:     return a * 4.0f; // octaves
         case ModDest::LfoRate:
         case ModDest::count:        break;
     }
@@ -61,6 +69,9 @@ void SynthVoice::prepare (double internalRate, double controlRate, std::uint64_t
     driftF.prepare (controlRate, deriveSeed (seed, 7));
     filterEnv.prepare (internalRate);
     ampEnv.prepare (internalRate);
+    modEnv.prepare (internalRate);
+    lfo2.prepare (internalRate, deriveSeed (seed, 30));
+    noteRng.setSeed (deriveSeed (seed, 31));
     filter.prepare (internalRate);
 
     droopInc = 1.0 / (shRefreshSeconds * internalRate);
@@ -78,7 +89,11 @@ void SynthVoice::reset() noexcept
 {
     filterEnv.reset();
     ampEnv.reset();
+    modEnv.reset();
     filter.reset();
+    subRing.reset();
+    subState = 1.0f;
+    subCount = 0;
     note = -1;
     held = false;
     hasPitch = false;
@@ -180,11 +195,15 @@ void SynthVoice::noteOn (const NoteOn& n) noexcept
     else if (model >= 0)
         updateCvOffsets(); // the computer writes the new note's CV (with its own bias) immediately
 
+    noteRandom = noteRng.nextBipolar();
     if (n.retrigger || ! ampEnv.isActive())
     {
         filterEnv.noteOn();
         ampEnv.noteOn();
+        modEnv.noteOn();
         lfoDelayGain = lfoDelayInc >= 1.0f ? 1.0f : 0.0f;
+        const bool retrig = lastSig == nullptr || lastSig->params == nullptr || lastSig->params->lfo2Retrig;
+        lfo2.restart (retrig ? 0.0 : n.lfo2Phase);
     }
 }
 
@@ -232,6 +251,7 @@ void SynthVoice::warmUp (const ChunkSignals& sig, int chunks) noexcept
     // exactly as in the instrument, where the voice circuitry never stops.
     filterEnv.reset();
     ampEnv.reset();
+    modEnv.reset();
     note = -1;
     held = false;
     hasPitch = false;
@@ -243,6 +263,7 @@ void SynthVoice::noteOff() noexcept
     held = false;
     filterEnv.noteOff();
     ampEnv.noteOff();
+    modEnv.noteOff();
 }
 
 void SynthVoice::updateControl (const ChunkSignals& sig) noexcept
@@ -321,8 +342,12 @@ void SynthVoice::computeConstants (const ChunkSignals& sig) noexcept
     // OSC B only has to run when it can be heard or when something depends on it.
     bool matrixUsesB = false;
     for (const auto& s : p.matrix)
-        matrixUsesB = matrixUsesB || (s.amount != 0.0f && s.source == ModSource::Osc2);
+        matrixUsesB = matrixUsesB
+                      || (s.amount != 0.0f
+                          && (s.source == ModSource::Osc2 || s.dest == ModDest::Osc2Level || s.dest == ModDest::CrossMod
+                              || s.dest == ModDest::RingLevel));
     needOscB = sig.mix2[0] > 0.0f || sig.mix2[last] > 0.0f || p.osc1Sync || matrixUsesB
+               || sig.crossMod[0] > 0.0f || sig.crossMod[last] > 0.0f || sig.mixRing[0] > 0.0f || sig.mixRing[last] > 0.0f
                || (p.pmOn && (sig.pmOsc2[0] > 0.0f || sig.pmOsc2[last] > 0.0f));
 
     cutoffOffset = fp.cutoff * 0.04f * spread + dF;
@@ -334,10 +359,13 @@ void SynthVoice::computeConstants (const ChunkSignals& sig) noexcept
     filter.setShape (p.filterSlope == 1, static_cast<LadderFilter::Mode> (std::clamp (p.filterMode, 0, 2)));
     filter.setHighpass (p.hpfHz);
 
-    const std::array<float, 9> envKey { p.fenvA, p.fenvD, p.fenvS, p.fenvR, p.aenvA, p.aenvD, p.aenvS, p.aenvR, age };
-    if (envKey != envCache)
+    const std::array<float, 13> envKey { p.fenvA, p.fenvD, p.fenvS, p.fenvR, p.aenvA, p.aenvD, p.aenvS, p.aenvR, age,
+                                         p.menvA, p.menvD, p.menvS, p.menvR };
+    if (! envCacheValid || envKey != envCache)
     {
         envCache = envKey;
+        envCacheValid = true;
+        modEnv.setParameters (p.menvA, p.menvD, p.menvS, p.menvR);
         const float envSpread = 0.05f * spread;
         filterEnv.setParameters (p.fenvA * (1.0f + envSpread * fp.envTime[0]), p.fenvD * (1.0f + envSpread * fp.envTime[0]),
                                  p.fenvS, p.fenvR * (1.0f + envSpread * fp.envTime[0]));
@@ -431,6 +459,9 @@ void SynthVoice::tickFront (const ChunkSignals& sig, size_t i, Front& front) noe
         pitch += (pitchTarget - pitch) * glideCoeff;
         const float fenv = filterEnv.next();
         const float aenv = ampEnv.next();
+        const float menv = modEnv.next();
+        const double lfo2Inc = lfo2RateMod == 0.0f ? sig.lfo2Inc : sig.lfo2Inc * static_cast<double> (fastmath::exp2 (lfo2RateMod));
+        const float lfo2Value = lfo2.next (lfo2Inc, static_cast<PolyLfo::Wave> (std::clamp (p.lfo2Wave, 0, 6)));
         lfoDelayGain = std::min (1.0f, lfoDelayGain + lfoDelayInc);
         const float lfo = sig.lfo[i] * lfoDelayGain;
         float white, cvWhite[2];
@@ -460,10 +491,13 @@ void SynthVoice::tickFront (const ChunkSignals& sig, size_t i, Front& front) noe
         {
             for (auto& d : dst)
                 d = 0.0f;
-            const float src[static_cast<size_t> (ModSource::count)] { fenv, aenv, lastOscB, lfo, sig.modWheel, velocity, pressure, pink };
+            const float keySrc = (pitch - 60.0f) * (1.0f / 60.0f);
+            const float src[static_cast<size_t> (ModSource::count)] { fenv, aenv, lastOscB, lfo, sig.modWheel, velocity, pressure, pink,
+                                                                      menv, lfo2Value, keySrc, noteRandom };
             for (int s = 0; s < numSlots; ++s)
                 dst[slots[static_cast<size_t> (s)].dest] += src[slots[static_cast<size_t> (s)].source] * slots[static_cast<size_t> (s)].amount;
         }
+        lfo2RateMod = dst[static_cast<size_t> (ModDest::Lfo2Rate)];
 
         const float notePitch = pitch + unisonOffset;
 
@@ -490,7 +524,17 @@ void SynthVoice::tickFront (const ChunkSignals& sig, size_t i, Front& front) noe
         // Poly-Mod: filter envelope and OSC B (with its DC, as on the hardware) -> FREQ A / PW A / filter.
         const float pm = pmOn ? fenv * sig.pmFilterEnv[i] + mB * sig.pmOsc2[i] : 0.0f;
 
-        const float pitchA = notePitch + cvOffset[0] + analogTune[0] + common + cvExtra[0]
+        // Linear FM (cross-mod): OSC B moves OSC A's frequency around its centre, so the pitch holds while
+        // sidebands grow (bells, metallic plucks). Up to +-3x the carrier frequency at full depth.
+        float fmSemis = 0.0f;
+        const float fmDepth = sig.crossMod[i] + dst[static_cast<size_t> (ModDest::CrossMod)];
+        if (fmDepth > 0.0f)
+        {
+            const float factor = 1.0f + std::min (fmDepth, 1.0f) * std::min (fmDepth, 1.0f) * 6.0f * lastOscB;
+            fmSemis = 12.0f * fastmath::log2 (std::max (factor, 0.02f));
+        }
+
+        const float pitchA = notePitch + cvOffset[0] + analogTune[0] + common + cvExtra[0] + fmSemis
                              + dst[static_cast<size_t> (ModDest::Osc1Freq)] + (p.pmFreqA ? pm * polyModPitchRange : 0.0f);
         const float pwA = std::clamp (sig.osc1Pw[i] + dst[static_cast<size_t> (ModDest::Osc1Pw)] + (p.pmPwA ? pm * pwModRange : 0.0f), 0.0f, 1.0f);
         const float syncD = sync ? resetB : -1.0f;
@@ -505,8 +549,27 @@ void SynthVoice::tickFront (const ChunkSignals& sig, size_t i, Front& front) noe
             warmPos += warmInc;
         }
 
+        // Sub oscillator: a flip-flop clocked by OSC A's resets (one or two octaves down), square wave with
+        // band-limited steps on the same timeline and latency as the VCO outputs.
+        const float resetA = rev3 ? cem[0].lastResetD() : ssm[0].lastResetD();
+        if (resetA >= 0.0f && (p.subOctave == 0 || (++subCount & 1) == 0))
+        {
+            subRing.add (BlepTable::get(), resetA, -subState, 0.0f);
+            subState = -subState;
+        }
+        const float sub = subRing.push (subState * 0.5f);
+
+        // Ring modulator: OSC A x OSC B (both AC-coupled mixer signals).
+        const float ring = 2.0f * mA * lastOscB;
+
         // Mixer bus (AC-coupled) + noise + OTA feed-through, then the DRIVE stage into the filter.
-        const float bus = mA * sig.mix1[i] + lastOscB * sig.mix2[i] + white * sig.mixNoise[i] * 0.8f + (mA + lastOscB) * bleed;
+        const auto lvl = [&dst] (float base, ModDest d) { return std::max (0.0f, base + dst[static_cast<size_t> (d)]); };
+        float bus = mA * lvl (sig.mix1[i], ModDest::Osc1Level) + lastOscB * lvl (sig.mix2[i], ModDest::Osc2Level)
+                    + white * lvl (sig.mixNoise[i], ModDest::NoiseLevel) * 0.8f + ring * lvl (sig.mixRing[i], ModDest::RingLevel)
+                    + sub * lvl (sig.mixSub[i], ModDest::SubLevel) + (mA + lastOscB) * bleed;
+        const float driveMod = dst[static_cast<size_t> (ModDest::Drive)];
+        if (driveMod != 0.0f) // the engine applies (0.9 + 3 * DRIVE); rescale for this voice's modulated drive
+            bus *= (0.9f + 3.0f * std::max (0.0f, sig.drive[i] + driveMod)) / (0.9f + 3.0f * sig.drive[i]);
         front.bus = bus;
         front.cutoffOct = sig.cutoffOct[i] + cutoffOffset + sig.envAmount[i] * fenv * envCutoffRange
                                 + keytrack * (notePitch - 60.0f) * (1.0f / 12.0f) + filterVelOct + atOct

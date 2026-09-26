@@ -70,6 +70,7 @@ private:
     void monoTrigger (int note, float velocity, bool retrigger) noexcept;
     void releaseNote (int note) noexcept;
     void startVoice (SynthVoice& voice, const SynthVoice::NoteOn& on) noexcept;
+    double lfo2PhaseNow() const noexcept;
     void triggerNote (int note, float velocity) noexcept; // voice assignment (keyboard or arpeggiator)
     void keyReleased (int note) noexcept;                 // a key (or the sustain pedal) let go
 
@@ -129,7 +130,8 @@ private:
     Lfo lfo;
     LinearSmoother smOsc1Pw, smOsc2Pw, smSaw1, smPulse1, smSaw2, smTri2, smPulse2;
     LinearSmoother smMix1, smMix2, smMixNoise, smDrive, smCutoff, smReso, smEnvAmt, smPmFenv, smPmOsc2, smLfoAmount;
-    LinearSmoother smLevel;
+    LinearSmoother smLevel, smMixRing, smMixSub, smCrossMod;
+    double lfo2Phase = 0.0; // free-running LFO 2 (voices start from it when not retriggered)
     float chorusMix = 0.0f, delayMix = 0.0f, reverbMix = 0.0f, fxCoeff = 0.1f;
     bool chorusActive = false, delayActive = false, reverbActive = false;
 

@@ -6,6 +6,8 @@
 #include "Engine/ChunkSignals.h"
 #include "Envelope/RcAdsr.h"
 #include "Filter/LadderFilter.h"
+#include "Modulation/PolyLfo.h"
+#include "Oscillator/BlepRing.h"
 #include "Oscillator/Cem3340.h"
 #include "Oscillator/Noise.h"
 #include "Oscillator/Ssm2030.h"
@@ -35,6 +37,7 @@ public:
         float unisonOffset = 0.0f;   // semitones
         float panPosition = 0.0f;    // -1..1 before VOICE SPREAD
         std::uint64_t order = 0;     // allocation timestamp
+        double lfo2Phase = 0.0;      // engine's free-running LFO 2 phase (used when not retriggered)
     };
 
     void prepare (double internalRate, double controlRate, std::uint64_t seed) noexcept;
@@ -117,7 +120,14 @@ private:
     std::array<Cem3340Vco, 2> cem;
     std::array<Ssm2030Vco, 2> ssm;
     std::array<AutotuneTable, 2> tuning;
-    RcAdsr filterEnv, ampEnv;
+    RcAdsr filterEnv, ampEnv, modEnv;
+    PolyLfo lfo2;
+    Random noteRng;
+    float noteRandom = 0.0f;      // NOTE RANDOM matrix source
+    float lfo2RateMod = 0.0f;     // previous sample's LFO 2 RATE modulation (octaves)
+    BlepRing subRing;             // sub oscillator: flip-flop on OSC A's resets, band-limited steps
+    float subState = 1.0f;
+    int subCount = 0;
     LadderFilter filter;
     NoiseSource noise;
     Drift driftA, driftB, driftF;
@@ -160,7 +170,8 @@ private:
     bool constantsDirty = true;
     std::array<float, 3> driftNow {};
     bool needOscB = true;
-    std::array<float, 9> envCache { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f };
+    std::array<float, 13> envCache {};
+    bool envCacheValid = false;
     std::array<float, 8> dcCache { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f };
 
     // Mixer DC (AC coupling): analytic mean per chunk + a slowly learned residual that persists across
@@ -180,7 +191,7 @@ private:
     float glideCoeff = 1.0f;
     float keytrack = 1.0f;
     float panL = 0.7071f, panR = 0.7071f, panLTarget = 0.7071f, panRTarget = 0.7071f; // chunk start / end
-    std::array<ActiveSlot, 4> slots {};
+    std::array<ActiveSlot, 8> slots {};
     int numSlots = 0;
 };
 
