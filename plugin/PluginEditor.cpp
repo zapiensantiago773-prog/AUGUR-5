@@ -258,7 +258,7 @@ public:
         moveExpansion = false;
 
         // ---- Row 4: tape echo (full width, like a rack unit) ----
-        add (std::make_unique<FxLed> (state, P::echo_on), { width - 52 - 44, 936, 22, 14 });
+        add (std::make_unique<ParamToggle> (state, P::echo_on, "ON"), { 200, 930, 70, 28 });
         dropdown (P::echo_mode, 72, 978, 176);
         {
             const char* ids[8] = { P::echo_rate, P::echo_intensity, P::echo_bass, P::echo_treble,
@@ -271,7 +271,7 @@ public:
         for (const auto& [id, panel] : { std::pair { P::fuzz_on, 6 }, std::pair { P::phaser_on, 7 } })
         {
             const auto to = expansionPanels()[static_cast<size_t> (panel)].to;
-            add (std::make_unique<FxLed> (state, id), { to.getRight() - 44, to.getY() + 14, 22, 14 });
+            add (std::make_unique<ParamToggle> (state, id, "ON"), { to.getX() + 130, to.getY() + 10, 70, 28 });
         }
 
         // Master volume: instrument output, independent of the presets (their LEVEL matches their loudness).
