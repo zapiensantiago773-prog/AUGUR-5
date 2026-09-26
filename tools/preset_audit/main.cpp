@@ -4,8 +4,10 @@
 
 #include "PluginProcessor.h"
 
+#include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <memory>
 
 namespace
@@ -28,9 +30,81 @@ std::vector<int> notesFor (const juce::String& category)
 }
 } // namespace
 
-int main()
+namespace
+{
+// --soak "<preset>" <seconds>: plays a repeating chord pattern (1 s on, 1 s off) through the real
+// processor for a long time and reports, every 10 s, what is left in the gaps (noise, hiss, whine),
+// how bright the held notes are, and the slowest block. Finds problems that only appear after use.
+int soak (const juce::String& presetName, double seconds)
+{
+    constexpr double sr = 48000.0;
+    constexpr int block = 256;
+    std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+    auto* proc = dynamic_cast<Augur5Processor*> (base.get());
+    proc->setPlayConfigDetails (0, 2, sr, block);
+    proc->prepareToPlay (sr, block);
+    auto& presets = proc->getPresets();
+    const int index = presets.findFactory (presetName);
+    if (index < 0)
+    {
+        std::printf ("preset not found\n");
+        return 2;
+    }
+    presets.loadFactory (index);
+
+    juce::AudioBuffer<float> buffer (2, block);
+    const int blocksPerSecond = static_cast<int> (sr / block);
+    const int total = static_cast<int> (seconds * blocksPerSecond);
+    const int chords[4][3] = { { 57, 60, 64 }, { 53, 57, 60 }, { 60, 64, 67 }, { 55, 59, 62 } };
+    double gapSum = 0.0, gapHf = 0.0, noteSum = 0.0, noteHf = 0.0, worstMs = 0.0;
+    long gapN = 0, noteN = 0;
+    float prevL = 0.0f;
+    std::printf ("%6s %10s %10s %10s %10s %9s\n", "t (s)", "gap dB", "gap HF dB", "note dB", "note HF dB", "worst ms");
+    for (int b = 0; b < total; ++b)
+    {
+        juce::MidiBuffer midi;
+        const int second = b / blocksPerSecond, inSecond = b % blocksPerSecond;
+        const auto& chord = chords[(second / 2) % 4];
+        if (inSecond == 0 && second % 2 == 0)
+            for (int n : chord)
+                midi.addEvent (juce::MidiMessage::noteOn (1, n, static_cast<juce::uint8> (100)), 0);
+        if (inSecond == 0 && second % 2 == 1)
+            for (int n : chords[((second - 1) / 2) % 4])
+                midi.addEvent (juce::MidiMessage::noteOff (1, n), 0);
+        buffer.clear();
+        const auto t0 = std::chrono::steady_clock::now();
+        proc->processBlock (buffer, midi);
+        worstMs = std::max (worstMs, std::chrono::duration<double, std::milli> (std::chrono::steady_clock::now() - t0).count());
+
+        // Gap = the last 0.4 s of each silent second (after release tails); note = the middle of the held second.
+        const bool gap = second % 2 == 1 && inSecond > blocksPerSecond * 6 / 10;
+        const bool note = second % 2 == 0 && inSecond > blocksPerSecond / 4 && inSecond < blocksPerSecond * 3 / 4;
+        for (int i = 0; i < block; ++i)
+        {
+            const float l = buffer.getSample (0, i);
+            const float d = l - prevL; // first difference: a crude high-frequency weighting (+6 dB/oct)
+            prevL = l;
+            if (gap) { gapSum += l * l; gapHf += d * d; ++gapN; }
+            if (note) { noteSum += l * l; noteHf += d * d; ++noteN; }
+        }
+        if ((b + 1) % (10 * blocksPerSecond) == 0)
+        {
+            const auto db = [] (double s, long n) { return 10.0 * std::log10 (s / std::max (1L, n) + 1e-20); };
+            std::printf ("%6d %10.1f %10.1f %10.1f %10.1f %9.3f\n", (b + 1) / blocksPerSecond, db (gapSum, gapN), db (gapHf, gapN),
+                         db (noteSum, noteN), db (noteHf, noteN), worstMs);
+            gapSum = gapHf = noteSum = noteHf = worstMs = 0.0;
+            gapN = noteN = 0;
+        }
+    }
+    return 0;
+}
+} // namespace
+
+int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI juceInit;
+    if (argc >= 4 && std::strcmp (argv[1], "--soak") == 0)
+        return soak (juce::String::fromUTF8 (argv[2]), std::atof (argv[3]));
     constexpr double sr = 48000.0;
     constexpr int block = 256;
     constexpr int window = 2400; // 50 ms short-term loudness window

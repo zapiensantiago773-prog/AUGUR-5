@@ -73,14 +73,107 @@ void SynthEngine::reset() noexcept
 
     sampleCounter = 0;
     chunkPos = 0;
+
+    arp.reset();
+    freeOriginSample = 0;
+    freeOriginBeat = 0.0;
+    freeBpm = bpm;
 }
 
 void SynthEngine::setTransport (double newBpm, bool isPlaying, double ppqAtBlockStart) noexcept
 {
     bpm = newBpm > 1.0 ? newBpm : 120.0;
+    if (bpm != freeBpm)
+        rebaseFreeClock();
     playing = isPlaying;
     ppqBlockStart = ppqAtBlockStart;
     samplesSinceBlockStart = 0;
+
+    if (! arp.isRunning())
+    {
+        lastPlaying = playing;
+        return;
+    }
+    // Transport started/stopped, looped or located: pick the arpeggio up on the new grid.
+    const auto st = arpSettings();
+    const double b = beatNow(), next = arp.nextStepBeat();
+    const bool jumped = playing && (next < b - 0.5 * st.stepBeats || next > b + 2.5 * st.stepBeats);
+    if (playing != lastPlaying || jumped)
+    {
+        if (arp.soundingNote() >= 0)
+            releaseNote (arp.soundingNote());
+        arp.start (b, playing, st);
+    }
+    lastPlaying = playing;
+}
+
+//==============================================================================
+// Arpeggiator
+
+Arpeggiator::Settings SynthEngine::arpSettings() const noexcept
+{
+    Arpeggiator::Settings st;
+    st.mode = static_cast<Arpeggiator::Mode> (std::clamp (pending.arpMode, 0, 4));
+    st.octaves = std::clamp (pending.arpOctaves, 1, 4);
+    st.stepBeats = arpRateBeats[static_cast<size_t> (std::clamp (pending.arpRate, 0, 7))];
+    st.gate = std::clamp (pending.arpGate, 0.02f, 1.0f);
+    st.swing = std::clamp (pending.arpSwing, 0.0f, 0.5f);
+    st.latch = pending.arpLatch;
+    return st;
+}
+
+double SynthEngine::beatNow() const noexcept
+{
+    if (playing)
+        return ppqBlockStart + static_cast<double> (samplesSinceBlockStart) * bpm / (60.0 * hostRate);
+    return freeOriginBeat + static_cast<double> (sampleCounter - freeOriginSample) * freeBpm / (60.0 * hostRate);
+}
+
+void SynthEngine::rebaseFreeClock() noexcept
+{
+    freeOriginBeat += static_cast<double> (sampleCounter - freeOriginSample) * freeBpm / (60.0 * hostRate);
+    freeOriginSample = sampleCounter;
+    freeBpm = bpm;
+}
+
+void SynthEngine::stopArp() noexcept
+{
+    if (arp.soundingNote() >= 0)
+        releaseNote (arp.soundingNote());
+    arp.stop();
+}
+
+void SynthEngine::runArp() noexcept
+{
+    if (! arp.isRunning())
+        return;
+    const auto st = arpSettings();
+    const double b = beatNow() + 1.0e-9;
+    Arpeggiator::Event events[3];
+    for (int guard = 0; guard < 4; ++guard)
+    {
+        const int n = arp.fire (b, st, events);
+        if (n == 0)
+            break;
+        for (int e = 0; e < n; ++e)
+        {
+            if (events[e].on)
+                triggerNote (events[e].note, events[e].velocity);
+            else
+                releaseNote (events[e].note);
+        }
+    }
+}
+
+int SynthEngine::samplesToArpEvent() const noexcept
+{
+    if (! arp.isRunning())
+        return 1 << 30;
+    const double tempo = playing ? bpm : freeBpm;
+    const double samples = (arp.nextEventBeat() - beatNow()) * 60.0 * hostRate / tempo;
+    if (samples > 1.0e9)
+        return 1 << 30;
+    return std::max (1, static_cast<int> (std::ceil (samples - 1.0e-6)));
 }
 
 //==============================================================================
@@ -98,7 +191,24 @@ void SynthEngine::noteOn (int note, float velocity) noexcept
     const auto n = static_cast<size_t> (note);
     keyDown[n] = true;
     sustained[n] = false;
-    keyVelocity[n] = velocity;
+
+    if (pending.arpOn)
+    {
+        const auto st = arpSettings();
+        if (arp.keyDown (note, velocity, st))
+        {
+            arp.start (beatNow(), playing, st);
+            lastPlaying = playing;
+            runArp(); // a free-running arpeggio starts on this very sample
+        }
+        return;
+    }
+    triggerNote (note, velocity);
+}
+
+void SynthEngine::triggerNote (int note, float velocity) noexcept
+{
+    keyVelocity[static_cast<size_t> (note)] = velocity;
 
     if (isMonoMode())
     {
@@ -240,7 +350,18 @@ void SynthEngine::noteOff (int note) noexcept
         sustained[static_cast<size_t> (note)] = true;
         return;
     }
-    releaseNote (note);
+    keyReleased (note);
+}
+
+void SynthEngine::keyReleased (int note) noexcept
+{
+    if (! pending.arpOn)
+    {
+        releaseNote (note);
+        return;
+    }
+    if (arp.keyUp (note, arpSettings()))
+        stopArp();
 }
 
 void SynthEngine::setSustain (bool down) noexcept
@@ -254,7 +375,7 @@ void SynthEngine::setSustain (bool down) noexcept
         {
             sustained[static_cast<size_t> (n)] = false;
             if (! keyDown[static_cast<size_t> (n)])
-                releaseNote (n);
+                keyReleased (n);
         }
     }
 }
@@ -274,6 +395,7 @@ void SynthEngine::allNotesOff() noexcept
     keyDown.fill (false);
     sustained.fill (false);
     monoStackSize = 0;
+    arp.reset();
 }
 
 void SynthEngine::allSoundOff() noexcept
@@ -305,6 +427,22 @@ void SynthEngine::syncMode() noexcept
     }
     lastMonoMode = mono;
     lastVoiceCount = count;
+
+    if (pending.arpOn != lastArpOn)
+    {
+        // Arpeggiator switched: held notes belong to the other mode, start clean.
+        for (auto& v : voices)
+            if (v.isActive())
+                v.noteOff();
+        arp.reset();
+        monoStackSize = 0;
+        keyDown.fill (false);
+        sustained.fill (false);
+    }
+    else if (pending.arpOn && lastArpLatch && ! pending.arpLatch && arp.unlatch())
+        stopArp();
+    lastArpOn = pending.arpOn;
+    lastArpLatch = pending.arpLatch;
 }
 
 //==============================================================================
@@ -317,8 +455,9 @@ void SynthEngine::process (float* left, float* right, int numSamples) noexcept
     {
         if (chunkPos == 0)
             controlUpdate();
+        runArp();
 
-        const int len = std::min (numSamples - done, controlInterval - chunkPos);
+        const int len = std::min ({ numSamples - done, controlInterval - chunkPos, samplesToArpEvent() });
         renderSegment (left + done, right + done, chunkPos, len);
 
         chunkPos += len;

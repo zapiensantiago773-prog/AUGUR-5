@@ -147,3 +147,124 @@ TEST_CASE ("SIMD 4-lane filter matches the scalar filter", "[filter][simd]")
     INFO ("max difference " << worst);
     CHECK (worst < 1.0e-4f);
 }
+
+namespace
+{
+// Steady-state gain of a small sine through the filter (linear region).
+double sineGain (LadderFilter& f, double sr, double hz, float cutoff, float reso)
+{
+    f.reset();
+    const int n = static_cast<int> (sr * 0.25);
+    double in2 = 0.0, out2 = 0.0;
+    for (int i = 0; i < n; ++i)
+    {
+        const float x = 0.05f * static_cast<float> (std::sin (2.0 * 3.14159265358979 * hz * i / sr));
+        const float y = f.process (x, cutoff, reso);
+        if (i > n / 2)
+        {
+            in2 += static_cast<double> (x) * x;
+            out2 += static_cast<double> (y) * y;
+        }
+    }
+    return std::sqrt (out2 / in2);
+}
+} // namespace
+
+TEST_CASE ("Every filter model and shape stays stable at extreme settings", "[filter]")
+{
+    const auto model = GENERATE (LadderFilter::Model::Cem3320, LadderFilter::Model::Ssm2040, LadderFilter::Model::Cascade,
+                                 LadderFilter::Model::Multimode, LadderFilter::Model::Bite);
+    const auto mode = GENERATE (LadderFilter::Mode::LowPass, LadderFilter::Mode::BandPass, LadderFilter::Mode::HighPass);
+    const bool twelve = GENERATE (false, true);
+    LadderFilter f;
+    f.prepare (96000.0);
+    f.setModel (model);
+    f.setShape (twelve, mode);
+    f.setHighpass (200.0f);
+    augur::Random r (7);
+
+    float peak = 0.0f;
+    for (int i = 0; i < 48000; ++i)
+    {
+        const float cutoff = 10.0f * std::pow (4000.0f, r.nextFloat());
+        const float y = f.process (r.nextBipolar() * 3.0f, cutoff, 1.1f);
+        REQUIRE (std::isfinite (y));
+        peak = std::max (peak, std::abs (y));
+    }
+    INFO ("model " << static_cast<int> (model) << " mode " << static_cast<int> (mode) << " 12dB " << twelve);
+    CHECK (peak < 30.0f);
+}
+
+TEST_CASE ("Filter modes have the right frequency response", "[filter]")
+{
+    constexpr double sr = 96000.0;
+    constexpr float fc = 1000.0f;
+    const auto model = GENERATE (LadderFilter::Model::Cem3320, LadderFilter::Model::Ssm2040, LadderFilter::Model::Cascade,
+                                 LadderFilter::Model::Multimode, LadderFilter::Model::Bite);
+    const bool twelve = GENERATE (false, true);
+    LadderFilter f;
+    f.prepare (sr);
+    f.setModel (model);
+    INFO ("model " << static_cast<int> (model) << " 12dB " << twelve);
+
+    f.setShape (twelve, LadderFilter::Mode::LowPass);
+    const double lpLow = sineGain (f, sr, fc / 8.0, fc, 0.0f), lpHigh = sineGain (f, sr, fc * 8.0, fc, 0.0f);
+    CHECK (lpLow > 0.7);
+    CHECK (lpHigh < 0.05);
+
+    f.setShape (twelve, LadderFilter::Mode::HighPass);
+    const double hpLow = sineGain (f, sr, fc / 8.0, fc, 0.0f), hpHigh = sineGain (f, sr, fc * 8.0, fc, 0.0f);
+    CHECK (hpHigh > 0.7);
+    CHECK (hpLow < 0.05);
+
+    if (model != LadderFilter::Model::Bite) // Bite has no band-pass (it uses LP)
+    {
+        f.setShape (twelve, LadderFilter::Mode::BandPass);
+        const double bpMid = sineGain (f, sr, fc, fc, 0.0f);
+        CHECK (bpMid > 0.3);
+        CHECK (bpMid > 4.0 * sineGain (f, sr, fc / 16.0, fc, 0.0f));
+        CHECK (bpMid > 4.0 * sineGain (f, sr, fc * 16.0, fc, 0.0f));
+    }
+
+    // 24 dB rolls off faster than 12 dB (two octaves above the corner).
+    if (model != LadderFilter::Model::Bite)
+    {
+        f.setShape (twelve, LadderFilter::Mode::LowPass);
+        const double g4 = sineGain (f, sr, fc * 4.0, fc, 0.0f), g8 = sineGain (f, sr, fc * 8.0, fc, 0.0f);
+        const double slopeDb = 20.0 * std::log10 (g4 / g8);
+        CHECK (slopeDb > (twelve ? 9.0 : 19.0));
+        CHECK (slopeDb < (twelve ? 14.0 : 27.0));
+    }
+}
+
+TEST_CASE ("Bite self-oscillates and screams at high resonance", "[filter]")
+{
+    constexpr double sr = 96000.0;
+    LadderFilter f;
+    f.prepare (sr);
+    f.setModel (LadderFilter::Model::Bite);
+    std::vector<float> out (static_cast<size_t> (sr));
+    for (size_t i = 0; i < out.size(); ++i)
+        out[i] = f.process (i == 0 ? 0.1f : 0.0f, 1000.0f, 1.05f);
+    INFO ("rms " << augur::test::rms (out, out.size() / 2));
+    CHECK (augur::test::rms (out, out.size() / 2) > 0.1);
+    const double freq = augur::test::measureFrequency (out, sr, out.size() / 2);
+    CHECK (freq > 700.0);
+    CHECK (freq < 1300.0);
+}
+
+TEST_CASE ("Post-filter high-pass removes the lows and leaves the rest", "[filter]")
+{
+    constexpr double sr = 96000.0;
+    LadderFilter f;
+    f.prepare (sr);
+    // Relative to the main filter alone (wide open, it still rolls off a little at 4 kHz).
+    const double ref50 = sineGain (f, sr, 50.0, 20000.0f, 0.0f), ref400 = sineGain (f, sr, 400.0, 20000.0f, 0.0f),
+                 ref4k = sineGain (f, sr, 4000.0, 20000.0f, 0.0f);
+    f.setHighpass (400.0f);
+    CHECK (sineGain (f, sr, 50.0, 20000.0f, 0.0f) / ref50 < 0.03); // 3 octaves below: -36 dB (12 dB/oct)
+    CHECK_THAT (sineGain (f, sr, 400.0, 20000.0f, 0.0f) / ref400, Catch::Matchers::WithinRel (0.707, 0.08));
+    CHECK_THAT (sineGain (f, sr, 4000.0, 20000.0f, 0.0f) / ref4k, Catch::Matchers::WithinRel (1.0, 0.05));
+    f.setHighpass (10.0f); // off
+    CHECK_THAT (sineGain (f, sr, 50.0, 20000.0f, 0.0f) / ref50, Catch::Matchers::WithinRel (1.0, 0.01));
+}

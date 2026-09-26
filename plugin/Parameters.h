@@ -34,7 +34,10 @@ namespace augur5::params
     inline constexpr auto flt_cutoff   = "flt_cutoff";   // Hz 20..20000 (skewed)
     inline constexpr auto flt_reso     = "flt_reso";     // 0..1 (self-osc near 1)
     inline constexpr auto flt_env_amt  = "flt_env_amt";  // -1..+1
-    inline constexpr auto flt_model    = "flt_model";    // choice: 0 = REV3 (CEM3320), 1 = REV1 (SSM2040)
+    inline constexpr auto flt_model    = "flt_model";    // choice: 0 = REV3 (CEM3320), 1 = REV1 (SSM2040), 2 = CASCADE, 3 = MULTIMODE, 4 = BITE
+    inline constexpr auto flt_slope    = "flt_slope";    // choice: 0 = 24 dB, 1 = 12 dB
+    inline constexpr auto flt_mode     = "flt_mode";     // choice: 0 = LP, 1 = BP, 2 = HP
+    inline constexpr auto hpf_cutoff   = "hpf_cutoff";   // Hz 10..2000 (10 = off)
     inline constexpr auto flt_keytrack = "flt_keytrack"; // choice: 0 off, 1 half, 2 full
     inline constexpr auto flt_velocity = "flt_velocity"; // 0..1
 
@@ -99,4 +102,13 @@ namespace augur5::params
     inline constexpr auto osc_model = "osc_model"; // choice: 0 = REV3 (CEM3340), 1 = REV1 (SSM2030)
     inline constexpr auto pb_range  = "pb_range";  // semitones 0..24, default 2
     inline constexpr auto vintage_cv = "vintage_cv"; // bool: Rev 3 7-bit knob digitising (128 steps + hysteresis)
+
+    // ---------- ARPEGGIATOR ----------
+    inline constexpr auto arp_on    = "arp_on";    // bool
+    inline constexpr auto arp_mode  = "arp_mode";  // choice: UP, DOWN, UP-DOWN, RANDOM, ORDER
+    inline constexpr auto arp_oct   = "arp_oct";   // int 1..4
+    inline constexpr auto arp_rate  = "arp_rate";  // choice: 1/4 .. 1/32 (host tempo)
+    inline constexpr auto arp_gate  = "arp_gate";  // 0.02..1 of a step
+    inline constexpr auto arp_swing = "arp_swing"; // 0..0.5 of a step
+    inline constexpr auto arp_latch = "arp_latch"; // bool
 }

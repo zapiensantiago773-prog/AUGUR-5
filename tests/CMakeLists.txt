@@ -4,6 +4,7 @@ add_executable(augur_tests
     test_vco.cpp
     test_filter_env.cpp
     test_engine.cpp
+    test_arp.cpp
 )
 target_link_libraries(augur_tests PRIVATE augur_dsp augur_warnings Catch2::Catch2WithMain)
 

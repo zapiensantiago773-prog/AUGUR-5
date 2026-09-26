@@ -133,3 +133,41 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
 - **Drums** sintetizados con el propio motor: barrido de pitch vía matriz (FILTER ENV → OSC FREQ), ruido y dos pulsos inarmónicos.
 - **Auditoría** (`augur_preset_audit`, también en la CI): cada preset pasa por el procesador real con notas de su categoría, con un procesador nuevo por preset para que sea determinista. Falla si hay silencio, valores no finitos o saturación.
 - **Nivelación** (`tools/level_presets.py`): volumen de corto plazo (RMS máximo en 50 ms) a −18 dB para lo melódico; drums −16 (bombo/tom), −20 (snare) y −25 (clap, rim, hats, cowbell); pico ≤ −3 dBFS.
+
+## D-019 · Arpegiador (2026-09-26)
+- Modos UP, DOWN, UP-DOWN (sin repetir las notas de giro), RANDOM y ORDER (orden tocado); 1–4 octavas.
+- Rate 1/4 … 1/32 con puntillos y tresillos; gate de 2–100 % del paso; swing de 0–50 % en los pasos impares; latch (un acorde nuevo reemplaza al retenido).
+- **Reloj en beats derivado del contador absoluto de muestras.** Cada evento cae en una muestra exacta y el resultado es bit-idéntico sin importar cómo el host corte los bloques (test).
+  - Con transporte en marcha sigue la rejilla de la canción: espera la siguiente línea y se recoloca en loops o saltos.
+  - Parado, arranca en la primera tecla con el BPM del host.
+- Las notas del arpegio entran por la misma asignación de voces que el teclado (poly, mono, unison y legato siguen valiendo).
+
+## D-020 · Modelos de filtro, pendiente/modo y HPF (2026-09-26)
+- El filtro de voz ofrece cinco modelos, todos ZDF semi-implícitos y en SIMD de 4 voces:
+
+| Modelo | Topología | Carácter |
+|---|---|---|
+| REV 3 (CEM3320) | Escalera | Original |
+| REV 1 (SSM2040) | Escalera | Original |
+| CASCADE | Escalera OTA 4 polos | Etapas más limpias, entrada más saturada, resonancia suave |
+| MULTIMODE | SVF con integradores saturables | 12 dB, o 24 dB con dos secciones Butterworth, resonancia en la segunda |
+| BITE | Sallen-Key 2 polos, saturador dentro del lazo de realimentación positiva | Estilo Korg35: agresivo y chillón |
+
+  - BITE solo tiene LP/HP; el HP lleva un polo extra a la salida para mantener 12 dB/oct.
+- **Pendiente 24/12 dB y modo LP/BP/HP** en la escalera, mezclando la entrada y las cuatro salidas de etapa (enfoque Xpander). El BP está normalizado a ganancia 1 en el corte.
+- **HPF post-filtro** de 2 polos (Q 0.707) de 10 a 2000 Hz, apagado a 10 Hz.
+- Tests:
+  - estabilidad con cutoff aleatorio a resonancia 1.1 en los 5 × 3 × 2 casos;
+  - respuesta LP/HP/BP y pendiente medida (12 dB ≈ 12, 24 dB ≈ 24);
+  - auto-oscilación de BITE;
+  - HPF.
+- CPU (5 voces, 48 kHz): **8.3–9.0 %** en todos los modelos, sin cambio respecto a D-017.
+- Constantes provisionales, a calibrar con grabaciones.
+
+## D-021 · Prueba de uso prolongado (2026-09-26)
+- `augur_preset_audit --soak "<preset>" <segundos>` toca acordes (1 s sí, 1 s no) con el procesador real y reporta cada 10 s:
+  - nivel y agudos (primera diferencia) en los silencios;
+  - nivel y brillo de las notas;
+  - el bloque más lento.
+- Con 69 presets × 60 s y "Warm Horizon" × 180 s no hay nada que se acumule con el uso: los silencios y el brillo quedan iguales del inicio al final.
+- Los picos de tiempo por bloque son aleatorios entre corridas (planificador del SO), no del motor.

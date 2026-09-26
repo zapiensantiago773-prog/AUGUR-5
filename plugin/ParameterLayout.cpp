@@ -122,7 +122,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (hertz (P::flt_cutoff, "Filter Cutoff", 20.0f, 20000.0f, 2500.0f));
     layout.add (percent (P::flt_reso, "Filter Resonance", 0.15f));
     layout.add (bipolar (P::flt_env_amt, "Filter Env Amount", 0.35f));
-    layout.add (std::make_unique<APC> (pid (P::flt_model), "Filter Model", juce::StringArray { "REV 3 (CEM3320)", "REV 1 (SSM2040)" }, 0));
+    layout.add (std::make_unique<APC> (pid (P::flt_model), "Filter Model", juce::StringArray { "REV 3 (CEM3320)", "REV 1 (SSM2040)", "CASCADE", "MULTIMODE", "BITE" }, 0));
+    layout.add (std::make_unique<APC> (pid (P::flt_slope), "Filter Slope", juce::StringArray { "24 dB", "12 dB" }, 0));
+    layout.add (std::make_unique<APC> (pid (P::flt_mode), "Filter Mode", juce::StringArray { "LP", "BP", "HP" }, 0));
+    layout.add (std::make_unique<APF> (pid (P::hpf_cutoff), "HPF Cutoff", logRange (10.0f, 2000.0f), 10.0f,
+                                       juce::AudioParameterFloatAttributes().withStringFromValueFunction (
+                                           [] (float v, int n) { return v <= 10.5f ? juce::String ("OFF") : formatHz (v, n); })));
     layout.add (std::make_unique<APC> (pid (P::flt_keytrack), "Filter Key Track", juce::StringArray { "OFF", "HALF", "FULL" }, 2));
     layout.add (percent (P::flt_velocity, "Velocity to Filter", 0.0f));
 
@@ -204,6 +209,22 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (std::make_unique<API> (pid (P::pb_range), "Pitch Bend Range", 0, 24, 2, semis));
     layout.add (toggle (P::vintage_cv, "Vintage 7-bit Knobs", false));
 
+    // Arpeggiator
+    layout.add (toggle (P::arp_on, "Arp On", false));
+    layout.add (std::make_unique<APC> (pid (P::arp_mode), "Arp Mode", juce::StringArray { "UP", "DOWN", "UP-DOWN", "RANDOM", "ORDER" }, 0));
+    layout.add (std::make_unique<API> (pid (P::arp_oct), "Arp Octaves", 1, 4, 1));
+    {
+        juce::StringArray rates;
+        for (auto* n : augur::arpRateNames)
+            rates.add (n);
+        layout.add (std::make_unique<APC> (pid (P::arp_rate), "Arp Rate", rates, 5));
+    }
+    layout.add (std::make_unique<APF> (pid (P::arp_gate), "Arp Gate", Range (0.02f, 1.0f), 0.5f,
+                                       juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatPercent)));
+    layout.add (std::make_unique<APF> (pid (P::arp_swing), "Arp Swing", Range (0.0f, 0.5f), 0.0f,
+                                       juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatPercent)));
+    layout.add (toggle (P::arp_latch, "Arp Latch", false));
+
     return layout;
 }
 
@@ -224,6 +245,8 @@ struct ParameterBinding::Raw
     A detune, spread, pan, voices, age;
     A chOn, chRate, chDepth, chMix, dlOn, dlTime, dlFb, dlMix, rvOn, rvSize, rvDecay, rvMix;
     A tune, glide, unison, legato, pbRange, vintage;
+    A arpOn, arpMode, arpOct, arpRate, arpGate, arpSwing, arpLatch;
+    A fltSlope, fltMode, hpf;
 
     // Rev 3 knob digitiser: 7 bits, two-step software hysteresis (service manual 2-12).
     struct Knob7
@@ -287,6 +310,9 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     r.tune = get (P::master_tune); r.glide = get (P::glide); r.unison = get (P::unison); r.legato = get (P::legato);
     r.pbRange = get (P::pb_range);
     r.vintage = get (P::vintage_cv);
+    r.fltSlope = get (P::flt_slope); r.fltMode = get (P::flt_mode); r.hpf = get (P::hpf_cutoff);
+    r.arpOn = get (P::arp_on); r.arpMode = get (P::arp_mode); r.arpOct = get (P::arp_oct); r.arpRate = get (P::arp_rate);
+    r.arpGate = get (P::arp_gate); r.arpSwing = get (P::arp_swing); r.arpLatch = get (P::arp_latch);
 
     // The Prophet's own panel knobs (the pots listed in the service manual's program format).
     for (const char* id : { P::flt_cutoff, P::flt_reso, P::flt_env_amt, P::mix_osc1, P::mix_osc2, P::mix_noise,
@@ -332,6 +358,9 @@ void ParameterBinding::fill (augur::SynthParams& p) noexcept
     p.reverbOn = b (r.rvOn); p.reverbSize = f (r.rvSize); p.reverbDecay = f (r.rvDecay); p.reverbMix = f (r.rvMix);
     p.masterTuneCents = f (r.tune); p.glide = f (r.glide); p.unison = b (r.unison); p.legato = b (r.legato);
     p.pitchBendRange = i (r.pbRange);
+    p.filterSlope = i (r.fltSlope); p.filterMode = i (r.fltMode); p.hpfHz = f (r.hpf);
+    p.arpOn = b (r.arpOn); p.arpMode = i (r.arpMode); p.arpOctaves = i (r.arpOct); p.arpRate = i (r.arpRate);
+    p.arpGate = f (r.arpGate); p.arpSwing = f (r.arpSwing); p.arpLatch = b (r.arpLatch);
 
     // Panel knobs, optionally through the 7-bit digitiser (order matches the constructor list).
     const bool vintage = b (r.vintage);

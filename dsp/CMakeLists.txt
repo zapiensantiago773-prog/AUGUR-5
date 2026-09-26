@@ -20,6 +20,8 @@ add_library(augur_dsp STATIC
     Filter/LadderFilter.h
     Filter/LadderFilter.cpp
     Envelope/RcAdsr.h
+    Modulation/Arpeggiator.h
+    Modulation/Arpeggiator.cpp
     Modulation/Lfo.h
     Effects/Chorus.h
     Effects/Chorus.cpp

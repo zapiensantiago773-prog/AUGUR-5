@@ -330,7 +330,9 @@ void SynthVoice::computeConstants (const ChunkSignals& sig) noexcept
     vcaTrim = 1.0f + fp.vcaGain * 0.03f * spread;
     bleed = 0.0005f + 0.004f * age;
 
-    filter.setModel (p.filterModel == 0 ? LadderFilter::Model::Cem3320 : LadderFilter::Model::Ssm2040);
+    filter.setModel (static_cast<LadderFilter::Model> (std::clamp (p.filterModel, 0, 4)));
+    filter.setShape (p.filterSlope == 1, static_cast<LadderFilter::Mode> (std::clamp (p.filterMode, 0, 2)));
+    filter.setHighpass (p.hpfHz);
 
     const std::array<float, 9> envKey { p.fenvA, p.fenvD, p.fenvS, p.fenvR, p.aenvA, p.aenvD, p.aenvS, p.aenvR, age };
     if (envKey != envCache)

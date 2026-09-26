@@ -60,7 +60,10 @@ struct SynthParams
 
     // Filter
     float cutoffHz = 2500.0f, resonance = 0.2f, envAmount = 0.3f;
-    int filterModel = 0; // 0 = CEM3320 (Rev 3), 1 = SSM2040 (Rev 1/2)
+    int filterModel = 0; // 0 = CEM3320 (Rev 3), 1 = SSM2040 (Rev 1/2), 2 = Cascade, 3 = Multimode, 4 = Bite
+    int filterSlope = 0; // 0 = 24 dB/oct, 1 = 12 dB/oct
+    int filterMode = 0;  // 0 = low-pass, 1 = band-pass, 2 = high-pass
+    float hpfHz = 10.0f; // post-filter high-pass; <= 10 Hz = off
     int keytrack = 2;    // 0 off, 1 half, 2 full
     float filterVelocity = 0.0f;
 
@@ -104,7 +107,18 @@ struct SynthParams
     float masterTuneCents = 0.0f, glide = 0.0f;
     bool unison = false, legato = false;
     int pitchBendRange = 2;
+
+    // Arpeggiator
+    bool arpOn = false;
+    int arpMode = 0;   // Up, Down, Up-Down, Random, As played
+    int arpOctaves = 1;
+    int arpRate = 5;   // index into arpRateBeats (1/16)
+    float arpGate = 0.5f, arpSwing = 0.0f;
+    bool arpLatch = false;
 };
+
+inline constexpr std::array<double, 8> arpRateBeats { 1.0, 0.75, 0.5, 1.0 / 3.0, 0.375, 0.25, 1.0 / 6.0, 0.125 };
+inline constexpr std::array<const char*, 8> arpRateNames { "1/4", "1/8D", "1/8", "1/8T", "1/16D", "1/16", "1/16T", "1/32" };
 
 // Tempo-synced LFO divisions, in beats (quarter notes) per cycle, slowest first.
 inline constexpr std::array<float, 16> lfoSyncBeats { 32.0f, 16.0f, 8.0f, 6.0f, 4.0f, 3.0f, 2.0f, 1.5f,

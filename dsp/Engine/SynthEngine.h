@@ -5,6 +5,7 @@
 #include "Effects/TapeDelay.h"
 #include "Engine/ChunkSignals.h"
 #include "Engine/SynthParams.h"
+#include "Modulation/Arpeggiator.h"
 #include "Modulation/Lfo.h"
 #include "Util/Halfband.h"
 #include "Util/Random.h"
@@ -69,6 +70,17 @@ private:
     void monoTrigger (int note, float velocity, bool retrigger) noexcept;
     void releaseNote (int note) noexcept;
     void startVoice (SynthVoice& voice, const SynthVoice::NoteOn& on) noexcept;
+    void triggerNote (int note, float velocity) noexcept; // voice assignment (keyboard or arpeggiator)
+    void keyReleased (int note) noexcept;                 // a key (or the sustain pedal) let go
+
+    // Arpeggiator. Its clock is derived from the absolute sample counter, so steps land on the same
+    // samples however the host splits its blocks.
+    Arpeggiator::Settings arpSettings() const noexcept;
+    double beatNow() const noexcept;
+    void rebaseFreeClock() noexcept;
+    void stopArp() noexcept;
+    void runArp() noexcept;                      // fires every arp event due now
+    int samplesToArpEvent() const noexcept;      // host samples until the next one (>= 1)
 
     // Parameters
     SynthParams pending, params;
@@ -94,6 +106,12 @@ private:
     bool sustainDown = false;
     bool lastMonoMode = false;
     int lastVoiceCount = 5;
+    bool lastArpOn = false, lastArpLatch = false;
+
+    Arpeggiator arp;
+    std::int64_t freeOriginSample = 0; // free-running arp clock (transport stopped)
+    double freeOriginBeat = 0.0, freeBpm = 120.0;
+    bool lastPlaying = false;
 
     // Performance controls
     float bend = 0.0f, modWheel = 0.0f, channelPressure = 0.0f;
