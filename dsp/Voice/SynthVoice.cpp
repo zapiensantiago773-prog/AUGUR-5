@@ -24,7 +24,7 @@ struct VcoModelConstants
 constexpr VcoModelConstants cem3340 { 0.035f, 1.6e-6f, 0.5f, 1.0f, 0.98f, 0.92f, 1.5e-5f };
 constexpr VcoModelConstants ssm2030 { 0.11f, 3.0e-6f, 0.47f, 1.0f, 0.93f, 0.95f, 4.0e-5f };
 
-constexpr float voiceOutputScale = 0.32f;
+constexpr float voiceOutputScale = 1.0f; // ~-12 dBFS per note at LEVEL -6 dB
 constexpr float lowFreqDivider = 1.0f / 128.0f; // OSC 2 LO FREQ: seven octaves down
 constexpr float envCutoffRange = 7.0f;          // octaves at ENV AMT = 1
 constexpr float polyModPitchRange = 48.0f;      // semitones at full poly-mod
