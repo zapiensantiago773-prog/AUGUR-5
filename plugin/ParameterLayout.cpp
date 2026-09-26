@@ -202,6 +202,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     // Additional
     layout.add (std::make_unique<APC> (pid (P::osc_model), "VCO Model", juce::StringArray { "REV 3 (CEM3340)", "REV 1 (SSM2030)" }, 0));
     layout.add (std::make_unique<API> (pid (P::pb_range), "Pitch Bend Range", 0, 24, 2, semis));
+    layout.add (toggle (P::vintage_cv, "Vintage 7-bit Knobs", false));
 
     return layout;
 }
@@ -222,7 +223,30 @@ struct ParameterBinding::Raw
     std::array<A, 4> mmSrc, mmDst, mmAmt;
     A detune, spread, pan, voices, age;
     A chOn, chRate, chDepth, chMix, dlOn, dlTime, dlFb, dlMix, rvOn, rvSize, rvDecay, rvMix;
-    A tune, glide, unison, legato, pbRange;
+    A tune, glide, unison, legato, pbRange, vintage;
+
+    // Rev 3 knob digitiser: 7 bits, two-step software hysteresis (service manual 2-12).
+    struct Knob7
+    {
+        juce::RangedAudioParameter* param = nullptr;
+        A raw = nullptr;
+        int step = -1;
+
+        float read (bool vintage) noexcept
+        {
+            const float value = raw->load (std::memory_order_relaxed);
+            if (! vintage)
+            {
+                step = -1;
+                return value;
+            }
+            const int now = juce::roundToInt (param->convertTo0to1 (value) * 127.0f);
+            if (step < 0 || std::abs (now - step) >= 2)
+                step = now;
+            return param->convertFrom0to1 (static_cast<float> (step) / 127.0f);
+        }
+    };
+    std::vector<Knob7> knobs; // allocated once in the constructor
 };
 
 ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw (std::make_unique<Raw>())
@@ -262,13 +286,20 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     r.rvOn = get (P::reverb_on); r.rvSize = get (P::reverb_size); r.rvDecay = get (P::reverb_decay); r.rvMix = get (P::reverb_mix);
     r.tune = get (P::master_tune); r.glide = get (P::glide); r.unison = get (P::unison); r.legato = get (P::legato);
     r.pbRange = get (P::pb_range);
+    r.vintage = get (P::vintage_cv);
+
+    // The Prophet's own panel knobs (the pots listed in the service manual's program format).
+    for (const char* id : { P::flt_cutoff, P::flt_reso, P::flt_env_amt, P::mix_osc1, P::mix_osc2, P::mix_noise,
+                            P::osc1_pw, P::osc2_pw, P::osc2_fine, P::fenv_a, P::fenv_d, P::fenv_s, P::fenv_r,
+                            P::aenv_a, P::aenv_d, P::aenv_s, P::aenv_r, P::lfo_rate, P::glide, P::pm_fenv_amt, P::pm_osc2_amt })
+        r.knobs.push_back ({ s.getParameter (id), get (id), -1 });
 }
 
 ParameterBinding::~ParameterBinding() = default;
 
-void ParameterBinding::fill (augur::SynthParams& p) const noexcept
+void ParameterBinding::fill (augur::SynthParams& p) noexcept
 {
-    const auto& r = *raw;
+    auto& r = *raw;
     const auto f = [] (std::atomic<float>* a) { return a->load (std::memory_order_relaxed); };
     const auto b = [&f] (std::atomic<float>* a) { return f (a) > 0.5f; };
     const auto i = [&f] (std::atomic<float>* a) { return juce::roundToInt (f (a)); };
@@ -301,6 +332,18 @@ void ParameterBinding::fill (augur::SynthParams& p) const noexcept
     p.reverbOn = b (r.rvOn); p.reverbSize = f (r.rvSize); p.reverbDecay = f (r.rvDecay); p.reverbMix = f (r.rvMix);
     p.masterTuneCents = f (r.tune); p.glide = f (r.glide); p.unison = b (r.unison); p.legato = b (r.legato);
     p.pitchBendRange = i (r.pbRange);
+
+    // Panel knobs, optionally through the 7-bit digitiser (order matches the constructor list).
+    const bool vintage = b (r.vintage);
+    float k[21];
+    for (size_t n = 0; n < r.knobs.size() && n < 21; ++n)
+        k[n] = r.knobs[n].read (vintage);
+    p.cutoffHz = k[0]; p.resonance = k[1]; p.envAmount = k[2];
+    p.mixOsc1 = k[3]; p.mixOsc2 = k[4]; p.mixNoise = k[5];
+    p.osc1Pw = k[6] * 0.01f; p.osc2Pw = k[7] * 0.01f; p.osc2Fine = k[8];
+    p.fenvA = k[9]; p.fenvD = k[10]; p.fenvS = k[11]; p.fenvR = k[12];
+    p.aenvA = k[13]; p.aenvD = k[14]; p.aenvS = k[15]; p.aenvR = k[16];
+    p.lfoRate = k[17]; p.glide = k[18]; p.pmFilterEnv = k[19]; p.pmOsc2 = k[20];
 }
 
 } // namespace augur5

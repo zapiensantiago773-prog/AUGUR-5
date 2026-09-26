@@ -63,3 +63,37 @@ El paquete de diseño se declara "reference mockup". Replicamos sus valores (col
 
 ## D-015 · CPU — pendiente (medido, fuera de objetivo)
 `augur_render --bench`: 5 voces a 48 kHz = **24.9%** de un núcleo (objetivo < 5%). Costo por muestra interna: VCO ≈ 56–68 ns, filtro ≈ 115 ns. Plan: procesar 4 voces por instrucción SIMD (SSE/NEON) en VCO, filtro y envolventes; calcular el pitch por chunk cuando no hay modulación a audio rate; y medir otra vez.
+
+## D-016 · VCO reconstruido a partir del hardware (2026-09-25)
+Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servicio Rev 3 + datasheet CEM3340).
+- **CEM3340 = núcleo triangular** (`Cem3340Vco`): capacitor entre 0 y Vcc/3 con carga y descarga asimétricas (tolerancia de simetría de la unidad), retardo del comparador (el triángulo sobrepasa sus umbrales, así que los agudos se desafinan hacia abajo y hay escalón a mitad de la sierra), conversor tri→saw con errores de ganancia y offset, pulso por comparador con flanco de bajada más lento, y sync del Prophet por descarga del capacitor (PNP, retención de ~4.4 µs).
+- **SSM2030 = núcleo de rampa** (`Ssm2030Vco`): el modelo anterior, ahora con la misma interfaz.
+- **Ley exponencial por unidad** (`ExpoConverter`): error de afinación, error de escala y caída por resistencia de emisor.
+- **Capa digital del Prophet:**
+  - autotune simulado (conteo de periodo a 2.5 MHz, SAR sobre el DAC de 14 bits, medición en C3–C9 y extrapolación a C0–C2, interpolación por nota);
+  - CV cuantizada a 1/128 de semitono;
+  - droop del S/H (0.5 mV cada 6 ms);
+  - ruido de CV en la base del convertidor exponencial.
+- **Mixer CA3280 diferencial** (`ota::mix`): saw en (+), pulso en (−), triángulo level-shifted ±5 V, con los valores de resistencia del esquema. Acople AC con su DC exacto más un residuo aprendido.
+- **Poly-mod OSC B** a través de su propio par diferencial, conservando su DC como en el hardware.
+- **Acople AC entre VCF y VCA** (C4165), con carga que persiste entre notas: notas repetidas sin golpe de DC (< −60 dBFS).
+- **OSC B LO FREQ corregido a −7.5 octavas**, con el rango de INIT FREQ duplicado.
+- **Opción "Vintage 7-bit knobs"** (SETTINGS): digitalización de las perillas de panel a 128 pasos con la histéresis de dos pasos del software Rev 3.
+- **PWM a audio rate limitado en banda:** umbral de PW interpolado con Catmull-Rom (un sample tarde) y cruces resueltos con Newton protegido.
+
+**Mediciones** (tests `[aliasing]`, peor componente no armónica en 20 Hz–20 kHz, a la tasa interna):
+
+| Caso | Resultado |
+|---|---|
+| CEM3340 saw / tri / pulso, 1–7 kHz, 88.2 y 96 kHz | −138 a −164 dB |
+| PWM a audio rate (±35 % a 377 Hz) | −134.9 dB |
+| Sync del Prophet | −142.5 dB |
+| FM exponencial a audio rate (±3 semitonos a 377 Hz) | −102.3 dB (margen chico; el siguiente paso es interpolar el pitch dentro del sample) |
+| SSM2030 | −100.8 a −152 dB |
+
+- **Afinación tocada** (motor completo, edad 0): dentro de ±2 cents en C2, C4 y C6 con ambos modelos.
+- **Sin autotune:** la unidad típica cae −2.2 cents en C7 y −8.5 en C9, emergente del comparador y la resistencia de emisor.
+
+**CPU:** 5 voces a 48 kHz = **11.7–12.2 %** de un núcleo (antes 25 %). Objetivo < 5 %: sigue pendiente el SIMD.
+
+**Pendiente conocido:** la primera nota después de cargar el plugin puede llevar un escalón de DC de hasta −45 dBFS por debajo de 25 Hz. Se debe a la saturación del filtro con la carga del C4165 aún no establecida. Desaparece desde la segunda nota.

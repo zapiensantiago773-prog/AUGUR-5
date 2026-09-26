@@ -98,4 +98,5 @@ namespace augur5::params
     // ---------- ADDITIONAL (not on the panel; reachable from SETTINGS) ----------
     inline constexpr auto osc_model = "osc_model"; // choice: 0 = REV3 (CEM3340), 1 = REV1 (SSM2030)
     inline constexpr auto pb_range  = "pb_range";  // semitones 0..24, default 2
+    inline constexpr auto vintage_cv = "vintage_cv"; // bool: Rev 3 7-bit knob digitising (128 steps + hysteresis)
 }

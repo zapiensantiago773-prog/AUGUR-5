@@ -5,6 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_range.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include <memory>
 
@@ -167,4 +168,113 @@ TEST_CASE ("Sustain pedal holds released notes until it is lifted", "[engine][mi
     for (int i = 0; i < 5; ++i)
         e->process (l.data(), r.data(), 4800);
     CHECK (augur::test::rms (l) < 1e-4);
+}
+
+namespace
+{
+SynthParams bareOscillator()
+{
+    SynthParams p;
+    p.mixOsc1 = 1.0f;
+    p.mixOsc2 = 0.0f;
+    p.mixDrive = 0.0f;
+    p.cutoffHz = 20000.0f;
+    p.resonance = 0.0f;
+    p.envAmount = 0.0f;
+    p.keytrack = 0;
+    p.aenvA = 0.001f;
+    p.aenvS = 1.0f;
+    p.analogAge = 0.0f;
+    p.voiceDetune = 0.0f;
+    p.lfoAmount = 0.0f;
+    return p;
+}
+
+double playAndMeasure (SynthEngine& e, int note, double seconds, double sr)
+{
+    e.noteOn (note, 1.0f);
+    std::vector<float> l (static_cast<size_t> (seconds * sr)), r (l.size());
+    e.process (l.data(), r.data(), static_cast<int> (l.size()));
+    e.noteOff (note);
+    return augur::test::measureFrequency (l, sr, static_cast<size_t> (0.1 * sr));
+}
+} // namespace
+
+TEST_CASE ("Played pitch after autotune is within the Prophet's tuning resolution", "[engine][autotune]")
+{
+    const int model = GENERATE (0, 1);
+    constexpr double sr = 48000.0;
+    auto e = std::make_unique<SynthEngine>();
+    e->prepare (sr);
+    auto p = bareOscillator();
+    p.oscModel = model;
+    e->setParams (p);
+
+    for (const int note : { 36, 60, 84 })
+    {
+        const double f = playAndMeasure (*e, note, 1.0, sr);
+        const double cents = 1200.0 * std::log2 (f / (440.0 * std::exp2 ((note - 69) / 12.0)));
+        INFO ("model " << model << " note " << note << ": " << cents << " cents");
+        CHECK (std::abs (cents) < 2.0);
+    }
+}
+
+TEST_CASE ("OSC B LO FREQ drops 7.5 octaves (service manual 2-4)", "[engine]")
+{
+    constexpr double sr = 48000.0;
+    auto e = std::make_unique<SynthEngine>();
+    e->prepare (sr);
+    auto p = bareOscillator();
+    p.mixOsc1 = 0.0f;
+    p.mixOsc2 = 1.0f;
+    p.osc2LoFreq = true;
+    p.osc2Kbd = false;
+    e->setParams (p);
+
+    // At 1.4 Hz the output DC blocker reshapes the ramp, so time the saw's reset edges instead.
+    e->noteOn (60, 1.0f);
+    std::vector<float> l (static_cast<size_t> (8.0 * sr)), r (l.size());
+    e->process (l.data(), r.data(), static_cast<int> (l.size()));
+    std::vector<size_t> resets;
+    for (size_t n = 1; n < l.size(); ++n)
+        if (l[n] - l[n - 1] < -0.05f && (resets.empty() || n - resets.back() > 1000))
+            resets.push_back (n);
+    REQUIRE (resets.size() >= 4);
+    const double period = static_cast<double> (resets.back() - resets[1]) / static_cast<double> (resets.size() - 2) / sr;
+    CHECK_THAT (1.0 / period, Catch::Matchers::WithinRel (261.6255653 / std::exp2 (7.5), 0.01));
+}
+
+TEST_CASE ("Repeated notes carry no DC thump into the VCA", "[engine][dc]")
+{
+    constexpr double sr = 48000.0;
+    auto e = std::make_unique<SynthEngine>();
+    e->prepare (sr);
+    SynthParams p;
+    p.cutoffHz = 25.0f; // closed: only a DC step could get through
+    p.envAmount = 0.0f;
+    p.resonance = 0.0f;
+    p.mixOsc2 = 0.0f;
+    p.osc1Pulse = true;
+    p.aenvA = 0.001f;
+    p.aenvR = 0.05f;
+    p.levelDb = 0.0f;
+    p.analogAge = 0.0f;
+    p.voiceCount = 1;
+    e->setParams (p);
+
+    std::vector<float> l (static_cast<size_t> (2.0 * sr)), r (l.size());
+    for (int n = 0; n < 4; ++n) // let the coupling capacitor settle, as on a powered-up instrument
+    {
+        e->noteOn (69, 1.0f);
+        e->process (l.data(), r.data(), static_cast<int> (l.size()));
+        e->noteOff (69);
+        e->process (l.data(), r.data(), static_cast<int> (0.5 * sr));
+    }
+    e->noteOn (69, 1.0f);
+    e->process (l.data(), r.data(), static_cast<int> (0.3 * sr));
+    float peak = 0.0f;
+    for (size_t n = 0; n < static_cast<size_t> (0.3 * sr); ++n)
+        peak = std::max (peak, std::abs (l[n]));
+    INFO ("peak " << 20.0 * std::log10 (peak + 1e-12) << " dBFS");
+    CHECK (peak < 0.001f); // < -60 dBFS at full level
 }

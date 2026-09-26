@@ -1,4 +1,4 @@
-#include "Oscillator/Vco.h"
+#include "Oscillator/Ssm2030.h"
 
 #include <algorithm>
 #include <cmath>
@@ -19,38 +19,40 @@ enum class Event
 };
 } // namespace
 
-void Vco::prepare (double newSampleRate, std::uint64_t seed) noexcept
+void Ssm2030Vco::prepare (double newSampleRate, std::uint64_t seed) noexcept
 {
     table = &BlepTable::get();
     sampleRate = newSampleRate;
     invSampleRate = 1.0 / newSampleRate;
     rng.setSeed (seed);
-    ring.fill (0.0f);
-    writeIndex = 0;
-    phase = rng.nextFloat(); // free-running: every voice starts somewhere different
+    sawRing.reset();
+    triRing.reset();
+    pulseRing.reset();
+    phase = rng.nextFloat(); // free-running
     dead = 0.0;
     jitter = 1.0;
     resetD = -1.0f;
 }
 
-void Vco::setPhase (double newPhase) noexcept
+double Ssm2030Vco::phiFromC (double c) const noexcept
 {
-    phase = std::clamp (newPhase, 0.0, 0.999999);
-    dead = 0.0;
-}
-
-double Vco::phiFromC (double c) const noexcept
-{
-    const double k = character.curvature;
+    const double k = unit.curvature;
     if (std::abs (k) < 1.0e-6)
         return c;
     const double b = 1.0 + k;
     return (b - std::sqrt (std::max (0.0, b * b - 4.0 * k * c))) / (2.0 * k);
 }
 
-Vco::WaveState Vco::evaluate (double ph, bool inDead, double inc, float w, float p) const noexcept
+double Ssm2030Vco::staticFrequency (double pitch) const noexcept
 {
-    const double k = character.curvature;
+    const double f = unit.expo.frequency (pitch);
+    return 1.0 / (1.0 / f + static_cast<double> (unit.deadTimeSeconds));
+}
+
+// Bipolar internal shapes (-1..1); converted to the chip's positive-going outputs on the way out.
+Ssm2030Vco::WaveState Ssm2030Vco::evaluate (double ph, bool inDead, double inc, float w, float p) const noexcept
+{
+    const double k = unit.curvature;
     const double c = ph + k * ph * (1.0 - ph);
     const double dc = inDead ? 0.0 : (1.0 + k * (1.0 - 2.0 * ph)) * inc;
 
@@ -71,42 +73,28 @@ Vco::WaveState Vco::evaluate (double ph, bool inDead, double inc, float w, float
     return s;
 }
 
-void Vco::addEvent (float d, float step, float slope) noexcept
+VcoOutputs Ssm2030Vco::process (float pitch, float pw, float syncD) noexcept
 {
-    if (step == 0.0f && slope == 0.0f)
-        return;
-    table->accumulate (ring.data(), ringMask, writeIndex - static_cast<unsigned> (latencySamples), d, step, slope);
-}
+    const double f = std::max (0.0, static_cast<double> (unit.expo.fastFrequency (pitch)));
+    const double inc = std::min (0.45, f * invSampleRate * jitter);
+    const double deadSamples = static_cast<double> (unit.deadTimeSeconds) * sampleRate;
 
-float Vco::process (float freqHz, float pw, float gSaw, float gTri, float gPulse, float syncD) noexcept
-{
-    const float ks = gSaw * character.sawLevel;
-    const float kt = gTri * character.triLevel;
-    const float kp = gPulse * character.pulseLevel;
-
-    const double f = std::max (0.0, static_cast<double> (freqHz));
-    const double deadSeconds = character.deadTimeSeconds;
-    // The ramp must run faster than 1/f by the (trimmed) dead time so the total period stays 1/f.
-    const double denom = std::max (0.25, 1.0 - f * deadSeconds * character.hfTrim);
-    const double inc = std::min (0.45, f * invSampleRate / denom * jitter);
-    const double deadSamples = deadSeconds * sampleRate;
-
-    const float w = std::clamp (pw + character.pwOffset, 0.02f, 0.98f);
-    const float p = std::clamp (character.triPeak, 0.05f, 0.95f);
-    // Thresholds only matter for waveforms that are on (their events are skipped otherwise).
-    const bool usePulse = kp != 0.0f;
-    const bool useTri = kt != 0.0f;
-    const double phiW = usePulse ? phiFromC (w) : 2.0;
-    const double phiP = useTri ? phiFromC (p) : 2.0;
+    const float w = std::clamp (pw + unit.pwOffset, 0.01f, 0.99f);
+    const float p = std::clamp (unit.triPeak, 0.05f, 0.95f);
+    const double phiW = phiFromC (w);
+    const double phiP = phiFromC (p);
+    const double k = unit.curvature;
     const double invInc = inc > 0.0 ? 1.0 / inc : 0.0;
-    const double k = character.curvature;
 
     bool syncPending = syncD >= 0.0f;
     const double syncT = syncPending ? 1.0 - static_cast<double> (syncD) : 2.0;
     resetD = -1.0f;
 
-    const auto value = [&] (const WaveState& s) { return ks * s.saw + kt * s.tri + kp * s.pulse; };
-    const auto slope = [&] (const WaveState& s) { return ks * s.dsaw + kt * s.dtri; };
+    const auto addAll = [&] (float d, const WaveState& before, const WaveState& after) {
+        sawRing.add (*table, d, after.saw - before.saw, after.dsaw - before.dsaw);
+        triRing.add (*table, d, after.tri - before.tri, after.dtri - before.dtri);
+        pulseRing.add (*table, d, after.pulse - before.pulse, 0.0f);
+    };
 
     double t = 0.0;
     for (int guard = 0; guard < 16; ++guard)
@@ -159,16 +147,14 @@ float Vco::process (float freqHz, float pw, float gSaw, float gTri, float gPulse
         {
             case Event::PwEdge:
                 phase = phiW;
-                addEvent (d, -2.0f * kp, 0.0f);
+                pulseRing.add (*table, d, -2.0f, 0.0f);
                 break;
 
             case Event::TriPeak:
             {
                 phase = phiP;
                 const double dc = (1.0 + k * (1.0 - 2.0 * phiP)) * inc;
-                const double before = 2.0 * dc / p;
-                const double after = -2.0 * dc / (1.0 - p);
-                addEvent (d, 0.0f, kt * static_cast<float> (after - before));
+                triRing.add (*table, d, 0.0f, static_cast<float> (-2.0 * dc / (1.0 - p) - 2.0 * dc / p));
                 break;
             }
 
@@ -179,11 +165,10 @@ float Vco::process (float freqHz, float pw, float gSaw, float gTri, float gPulse
                 phase = 0.0;
                 dead = deadSamples;
                 if (ev == Event::Wrap)
-                    jitter = 1.0 + static_cast<double> (character.cycleJitter * rng.nextGaussian());
+                    jitter = 1.0 + static_cast<double> (unit.cycleJitter * rng.nextGaussian());
                 else
                     syncPending = false;
-                const auto after = evaluate (0.0, dead > 0.0, inc, w, p);
-                addEvent (d, value (after) - value (before), slope (after) - slope (before));
+                addAll (d, before, evaluate (0.0, dead > 0.0, inc, w, p));
                 resetD = d;
                 break;
             }
@@ -191,7 +176,9 @@ float Vco::process (float freqHz, float pw, float gSaw, float gTri, float gPulse
             case Event::DeadEnd:
             {
                 dead = 0.0;
-                addEvent (d, 0.0f, slope (evaluate (0.0, false, inc, w, p)));
+                const auto s = evaluate (0.0, false, inc, w, p);
+                sawRing.add (*table, d, 0.0f, s.dsaw);
+                triRing.add (*table, d, 0.0f, s.dtri);
                 break;
             }
 
@@ -201,12 +188,10 @@ float Vco::process (float freqHz, float pw, float gSaw, float gTri, float gPulse
     }
 
     const auto s = evaluate (std::min (phase, 1.0), dead > 0.0, inc, w, p);
-    ring[writeIndex & ringMask] += value (s) + character.dcOffset;
-
-    const unsigned outIndex = (writeIndex - static_cast<unsigned> (latencySamples)) & ringMask;
-    const float out = ring[outIndex];
-    ring[outIndex] = 0.0f;
-    ++writeIndex;
+    VcoOutputs out;
+    out.saw = 0.5f * (sawRing.push (s.saw) + 1.0f) * unit.sawLevel;
+    out.tri = 0.5f * (triRing.push (s.tri) + 1.0f) * unit.triLevel;
+    out.pulse = 0.5f * (pulseRing.push (s.pulse) + 1.0f) * unit.pulseLevel;
     return out;
 }
 

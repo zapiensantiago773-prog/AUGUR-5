@@ -1,5 +1,6 @@
 #include "Voice/SynthVoice.h"
 
+#include "Mixer/OtaMixer.h"
 #include "Util/FastMath.h"
 #include "Util/Random.h"
 
@@ -11,25 +12,14 @@ namespace augur
 
 namespace
 {
-// Nominal chip behaviour before per-unit tolerances. Provisional values, to be fitted to measurements.
-struct VcoModelConstants
-{
-    float curvature;
-    float deadTime;    // seconds
-    float triPeak;
-    float sawLevel, triLevel, pulseLevel;
-    float jitter;
-};
-
-constexpr VcoModelConstants cem3340 { 0.035f, 1.6e-6f, 0.5f, 1.0f, 0.98f, 0.92f, 1.5e-5f };
-constexpr VcoModelConstants ssm2030 { 0.11f, 3.0e-6f, 0.47f, 1.0f, 0.93f, 0.95f, 4.0e-5f };
-
-constexpr float voiceOutputScale = 1.0f; // ~-12 dBFS per note at LEVEL -6 dB
-constexpr float lowFreqDivider = 1.0f / 128.0f; // OSC 2 LO FREQ: seven octaves down
-constexpr float envCutoffRange = 7.0f;          // octaves at ENV AMT = 1
-constexpr float polyModPitchRange = 48.0f;      // semitones at full poly-mod
-constexpr float polyModCutoffRange = 5.0f;      // octaves
+constexpr float voiceOutputScale = 1.0f;       // ~-12 dBFS per note at LEVEL -6 dB
+constexpr float loFreqSemitones = -90.0f;      // OSC B LO FREQ: -7.5 V on the 1 V/oct sum (service manual 2-4)
+constexpr float envCutoffRange = 7.0f;         // octaves at ENV AMT = 1
+constexpr float polyModPitchRange = 48.0f;     // semitones per unit of poly-mod CV
+constexpr float polyModCutoffRange = 5.0f;     // octaves per unit of poly-mod CV
 constexpr float pwModRange = 0.45f;
+constexpr double shRefreshSeconds = 0.006;     // DAC/S&H loop (service manual 2-12)
+constexpr float shDroopSemitones = 0.5e-3f / 0.0833f; // 0.5 mV droop per refresh on 83.3 mV/semitone
 
 float mapMatrixAmount (ModDest d, float a) noexcept
 {
@@ -53,8 +43,13 @@ void SynthVoice::prepare (double internalRate, double controlRate, std::uint64_t
 {
     sampleRate = internalRate;
     fp = VoiceFingerprint::generate (deriveSeed (seed, 1));
-    vcoA.prepare (internalRate, deriveSeed (seed, 2));
-    vcoB.prepare (internalRate, deriveSeed (seed, 3));
+    for (size_t i = 0; i < 2; ++i)
+    {
+        cem[i].prepare (internalRate, deriveSeed (seed, 2 + i));
+        ssm[i].prepare (internalRate, deriveSeed (seed, 12 + i));
+        Random r (deriveSeed (seed, 22 + i));
+        droopPhase[i] = r.nextFloat(); // each S/H is refreshed at its own point of the 6 ms loop
+    }
     noise.seed (deriveSeed (seed, 4));
     driftA.prepare (controlRate, deriveSeed (seed, 5));
     driftB.prepare (controlRate, deriveSeed (seed, 6));
@@ -62,6 +57,15 @@ void SynthVoice::prepare (double internalRate, double controlRate, std::uint64_t
     filterEnv.prepare (internalRate);
     ampEnv.prepare (internalRate);
     filter.prepare (internalRate);
+
+    droopInc = 1.0 / (shRefreshSeconds * internalRate);
+    dcTrimCoeff = static_cast<float> (1.0 - std::exp (-1.0 / (1.0 * internalRate))); // tau = 1 s
+    dcTrimA = dcTrimB = filterDc = 0.0f;
+    // CV noise at the exponential converter's base (the Prophet does not band-limit it; datasheet p.4)
+    cvNoiseCoeff = static_cast<float> (1.0 - std::exp (-2.0 * 3.14159265358979 * 5000.0 / internalRate));
+
+    model = -1;
+    tunedAgeBucket = -1;
     reset();
 }
 
@@ -73,8 +77,83 @@ void SynthVoice::reset() noexcept
     note = -1;
     held = false;
     hasPitch = false;
-    lastB = 0.0f;
+    lastOscB = 0.0f;
     polyPressure = 0.0f;
+    cvNoise.fill (0.0f);
+}
+
+void SynthVoice::configureUnits (int newModel, float age) noexcept
+{
+    const float spread = 0.35f + 0.65f * age; // distance of this unit from nominal
+
+    for (size_t i = 0; i < 2; ++i)
+    {
+        const auto& d = fp.osc[i];
+
+        Cem3340Unit c;
+        c.expo.tuneCents = d[0] * 25.0f;                          // untuned error: removed by autotune
+        c.expo.scaleError = d[1] * 0.0005f * (1.0f + 3.0f * age); // 0.05 % trimmed typical (datasheet)
+        c.expo.bulkCentsAt10k = 3.0f * (1.0f + 0.3f * d[2]);
+        c.asymmetry = d[3] * (0.006f + 0.02f * age);              // datasheet: symmetry 45..55 %
+        c.comparatorDelay = 100e-9f * (1.0f + 0.2f * d[4]);
+        c.converterGain = 1.0f + d[5] * 0.002f * (1.0f + 2.0f * age);
+        c.converterOffset = d[6] * 0.0015f * (1.0f + age);        // +-15 mV on 10 V
+        c.syncHold = 4.4e-6f * (1.0f + 0.15f * d[7]);
+        c.pulseFallDelay = 0.5e-6f * (1.0f + 0.2f * d[8]);
+        c.pwOffset = d[9] * 0.004f * (1.0f + age);
+        c.sawLevel = 1.0f + d[10] * 0.015f;                       // 9.4..10.6 V
+        c.triLevel = 1.0f + d[11] * 0.01f;                        // 4.85..5.15 V
+        c.pulseLevel = 1.0f + d[12] * 0.015f;
+        cem[i].setUnit (c);
+
+        Ssm2030Unit s;
+        s.expo.tuneCents = d[0] * 25.0f;
+        s.expo.scaleError = d[1] * 0.001f * (1.0f + 3.0f * age);
+        s.expo.bulkCentsAt10k = 4.0f * (1.0f + 0.3f * d[2]);
+        s.curvature = 0.08f + d[3] * 0.02f * spread;
+        s.deadTimeSeconds = 3.0e-6f * std::max (0.3f, 1.0f + 0.15f * d[4]);
+        s.triPeak = 0.47f + d[5] * 0.01f * spread;
+        s.pwOffset = d[9] * 0.01f * spread;
+        s.cycleJitter = 4.0e-5f * (0.3f + age);
+        s.sawLevel = 1.0f + d[10] * 0.02f;
+        s.triLevel = 1.0f + d[11] * 0.02f;
+        s.pulseLevel = 1.0f + d[12] * 0.02f;
+        ssm[i].setUnit (s);
+
+        droopDepth[i] = shDroopSemitones * (0.5f + 0.5f * std::abs (d[13])) * (0.6f + 0.8f * age);
+
+        if (newModel == 0)
+            tuning[i].tune (cem[i]);
+        else
+            tuning[i].tune (ssm[i]);
+    }
+
+    // CV noise: ~0.12 cents rms (fresh) .. 0.18 (worn)
+    const float sigma = 0.0012f * (0.5f + age);
+    const float lowpassRms = 0.57735f * std::sqrt (cvNoiseCoeff / (2.0f - cvNoiseCoeff));
+    cvNoiseGain = sigma / lowpassRms;
+
+    model = newModel;
+}
+
+double SynthVoice::staticFrequency (int osc, double p) const noexcept
+{
+    return model == 1 ? ssm[static_cast<size_t> (osc)].staticFrequency (p) : cem[static_cast<size_t> (osc)].staticFrequency (p);
+}
+
+float SynthVoice::dacOffset (int osc, float keyPitch, float knob) const noexcept
+{
+    // OSC S/H CV = KBD + OSC FREQ knob + autotune bias, through the 14-bit DAC.
+    const float command = keyPitch + knob;
+    const float bias = tuning[static_cast<size_t> (osc)].biasFor (command);
+    return quantiseOscCv (command + bias) - keyPitch;
+}
+
+void SynthVoice::updateCvOffsets() noexcept
+{
+    const float keyB = kbdB ? pitchTarget : 60.0f;
+    cvOffset[0] = dacOffset (0, pitchTarget, knobSemis[0]);
+    cvOffset[1] = dacOffset (1, keyB, knobSemis[1]) + loFreqOffset;
 }
 
 void SynthVoice::noteOn (const NoteOn& n) noexcept
@@ -91,6 +170,8 @@ void SynthVoice::noteOn (const NoteOn& n) noexcept
     if (! n.glide || ! hasPitch)
         pitch = pitchTarget;
     hasPitch = true;
+    if (model >= 0)
+        updateCvOffsets(); // the computer writes the new note's CV (with its own bias) immediately
 
     if (n.retrigger || ! ampEnv.isActive())
     {
@@ -111,38 +192,54 @@ void SynthVoice::updateControl (const ChunkSignals& sig) noexcept
 {
     const SynthParams& p = *sig.params;
     const float age = std::clamp (p.analogAge, 0.0f, 1.0f);
-    const float spread = 0.25f + 0.75f * age; // how far this unit is from nominal
+    const float spread = 0.25f + 0.75f * age;
 
-    // Drift always advances, even when silent, so behaviour does not depend on voice usage.
-    const float driftSemis = (0.0015f + 0.035f * age); // ~0.15 .. 3.6 cents std-dev
+    // Units and their autotune are rebuilt only when the model or the age bucket changes.
+    const int newModel = std::clamp (p.oscModel, 0, 1);
+    const int ageBucket = static_cast<int> (std::lround (age * 50.0f));
+    if (newModel != model || ageBucket != tunedAgeBucket)
+    {
+        tunedAgeBucket = ageBucket;
+        configureUnits (newModel, age);
+    }
+
+    // Drift since the last TUNE always advances, even when silent.
+    const float driftSemis = 0.0015f + 0.035f * age; // ~0.15 .. 3.6 cents std-dev
     const float dA = driftA.next() * driftSemis;
     const float dB = driftB.next() * driftSemis;
     const float dF = driftF.next() * (0.004f + 0.03f * age); // octaves
 
-    // VCO characters
-    const auto& m = p.oscModel == 0 ? cem3340 : ssm2030;
-    for (int i = 0; i < 2; ++i)
-    {
-        VcoCharacter c;
-        c.curvature = m.curvature + fp.curvature[i] * 0.012f * spread;
-        c.deadTimeSeconds = m.deadTime * std::max (0.3f, 1.0f + 0.15f * fp.deadTime[i] * spread);
-        c.hfTrim = 1.0f + 0.012f * fp.hfTrim[i] * spread - 0.35f * age * (1.0f + 0.3f * fp.hfTrim[i]);
-        c.triPeak = m.triPeak + fp.triPeak * 0.008f * spread;
-        c.sawLevel = m.sawLevel * (1.0f + 0.02f * fp.waveLevel[0] * spread);
-        c.triLevel = m.triLevel * (1.0f + 0.02f * fp.waveLevel[1] * spread);
-        c.pulseLevel = m.pulseLevel * (1.0f + 0.02f * fp.waveLevel[2] * spread);
-        c.pwOffset = fp.pwOffset[i] * 0.01f * spread;
-        c.dcOffset = fp.dc[i] * 0.008f * spread;
-        c.cycleJitter = m.jitter * (0.3f + age);
-        (i == 0 ? vcoA : vcoB).setCharacter (c);
-    }
+    // Analog (unquantised) pitch terms: drift, deliberate per-voice detune, FINE.
+    const float detune = p.voiceDetune * 0.07f;
+    analogTune[0] = dA + fp.oscDetune[0] * detune + p.osc1Fine * 0.01f;
+    analogTune[1] = dB + fp.oscDetune[1] * detune + p.osc2Fine * 0.01f;
 
-    // Tuning: fingerprint spread follows VOICE DETUNE, drift and scale error follow ANALOG AGE.
-    const float tuneSpread = p.voiceDetune * 0.07f; // semitones std-dev at DETUNE = 1
-    tuneA = static_cast<float> (p.osc1Semi) + p.osc1Fine * 0.01f + fp.oscTune[0] * tuneSpread + dA;
-    tuneB = static_cast<float> (p.osc2Semi) + p.osc2Fine * 0.01f + fp.oscTune[1] * tuneSpread + dB;
-    scaleA = fp.oscScale[0] * 0.0012f * spread;
-    scaleB = fp.oscScale[1] * 0.0012f * spread;
+    // Digital part of the CV: KBD + FREQ knob + autotune bias on the 14-bit grid.
+    knobSemis[0] = static_cast<float> (p.osc1Semi);
+    knobSemis[1] = static_cast<float> (p.osc2Semi) * (p.osc2LoFreq ? 2.0f : 1.0f); // INIT FREQ range doubles
+    loFreqOffset = p.osc2LoFreq ? loFreqSemitones : 0.0f;
+    kbdB = p.osc2Kbd;
+    updateCvOffsets();
+
+    // Mixer AC coupling: exact mean of the differential-pair output for the selected waves, including
+    // this unit's output levels and PW comparator offset.
+    const auto last = static_cast<size_t> (std::max (0, sig.numSamples - 1));
+    const auto unitDc = [&] (size_t o, float gS, float gT, float gP, float w) {
+        float ls = 1.0f, lt = 1.0f, lp = 1.0f, pwo = 0.0f;
+        if (model == 1)
+        {
+            const auto& u = ssm[o].getUnit();
+            ls = u.sawLevel; lt = u.triLevel; lp = u.pulseLevel; pwo = u.pwOffset;
+        }
+        else
+        {
+            const auto& u = cem[o].getUnit();
+            ls = u.sawLevel; lt = u.triLevel; lp = u.pulseLevel; pwo = u.pwOffset;
+        }
+        return ota::dc (gS * ls, gT * lt, gP * lp, w + pwo);
+    };
+    dcA = unitDc (0, sig.saw1[last], 0.0f, sig.pulse1[last], sig.osc1Pw[last]);
+    dcB = unitDc (1, sig.saw2[last], sig.tri2[last], sig.pulse2[last], sig.osc2Pw[last]);
 
     cutoffOffset = fp.cutoff * 0.04f * spread + dF;
     resonanceTrim = 1.0f + fp.resonance * 0.03f * spread;
@@ -190,7 +287,8 @@ void SynthVoice::render (const ChunkSignals& sig, int start, int count, float* l
     const float atOct = p.aftertouchAmount * pressure * 3.0f;
     const bool sync = p.osc1Sync;
     const bool pmOn = p.pmOn;
-    const float kbdPitchB = p.osc2Kbd ? 1.0f : 0.0f;
+    const bool rev3 = model == 0;
+    const float common = sig.bendSemitones + sig.tuneSemitones; // analog: master tune, pitch wheel
     const float invChunk = 1.0f / static_cast<float> (std::max (1, sig.numSamples));
 
     for (int j = 0; j < count; ++j)
@@ -202,52 +300,69 @@ void SynthVoice::render (const ChunkSignals& sig, int start, int count, float* l
         const float aenv = ampEnv.next();
         lfoDelayGain = std::min (1.0f, lfoDelayGain + lfoDelayInc);
         const float lfo = sig.lfo[i] * lfoDelayGain;
-        const float nz = noise.analog();
+        const float white = noise.white();
+        pinkState += (white - pinkState) * 0.05f;
+        const float pink = pinkState * 4.0f;
+
+        // CV path extras: S/H droop (saw-shaped, refreshed every 6 ms) and wide-band CV noise.
+        float cvExtra[2];
+        for (size_t o = 0; o < 2; ++o)
+        {
+            droopPhase[o] += droopInc;
+            if (droopPhase[o] >= 1.0)
+                droopPhase[o] -= 1.0;
+            cvNoise[o] += (noise.white() * cvNoiseGain - cvNoise[o]) * cvNoiseCoeff;
+            cvExtra[o] = cvNoise[o] - droopDepth[o] * static_cast<float> (droopPhase[o]);
+        }
 
         // Mod matrix
         float dst[static_cast<size_t> (ModDest::count)] {};
         if (numSlots > 0)
         {
-            const float src[static_cast<size_t> (ModSource::count)] { fenv, aenv, lastB, lfo, sig.modWheel, velocity, pressure, nz };
+            const float src[static_cast<size_t> (ModSource::count)] { fenv, aenv, lastOscB, lfo, sig.modWheel, velocity, pressure, pink };
             for (int s = 0; s < numSlots; ++s)
                 dst[slots[static_cast<size_t> (s)].dest] += src[slots[static_cast<size_t> (s)].source] * slots[static_cast<size_t> (s)].amount;
         }
 
-        // Poly-Mod: filter envelope and OSC B (audio rate) into OSC A pitch / PW and the filter.
-        const float pm = pmOn ? fenv * sig.pmFilterEnv[i] + lastB * sig.pmOsc2[i] : 0.0f;
-
         const float notePitch = pitch + unisonOffset;
-        const float common = sig.bendSemitones + sig.tuneSemitones;
 
-        const float keyB = kbdPitchB * (notePitch - 60.0f);
-        const float pitchB = 60.0f + keyB * (1.0f + scaleB) + tuneB + common + dst[static_cast<size_t> (ModDest::Osc2Freq)];
-        float freqB = fastmath::semitonesToHz (pitchB);
-        if (p.osc2LoFreq)
-            freqB *= lowFreqDivider;
+        // OSC B first: it is the sync master and the poly-mod source.
+        const float pitchB = (kbdB ? notePitch : 60.0f) + cvOffset[1] + analogTune[1] + common + cvExtra[1]
+                             + dst[static_cast<size_t> (ModDest::Osc2Freq)];
+        const float pwB = std::clamp (sig.osc2Pw[i] + dst[static_cast<size_t> (ModDest::Osc2Pw)], 0.0f, 1.0f);
+        const VcoOutputs b = rev3 ? cem[1].process (pitchB, pwB, -1.0f) : ssm[1].process (pitchB, pwB, -1.0f);
+        const float resetB = rev3 ? cem[1].lastResetD() : ssm[1].lastResetD();
 
-        const float pitchA = 60.0f + (notePitch - 60.0f) * (1.0f + scaleA) + tuneA + common + dst[static_cast<size_t> (ModDest::Osc1Freq)]
-                             + (p.pmFreqA ? pm * polyModPitchRange : 0.0f);
-        const float freqA = fastmath::semitonesToHz (pitchA);
+        // OSC B through the mixer / poly-mod differential pairs (same waveform switches feed both).
+        const float mB = ota::mix (b.saw, b.tri, b.pulse, sig.saw2[i], sig.tri2[i], sig.pulse2[i]);
+        lastOscB = mB - dcB - dcTrimB;
+        dcTrimB += (lastOscB) * dcTrimCoeff;
 
-        const float pwB = std::clamp (sig.osc2Pw[i] + dst[static_cast<size_t> (ModDest::Osc2Pw)], 0.05f, 0.95f);
-        const float pwA = std::clamp (sig.osc1Pw[i] + dst[static_cast<size_t> (ModDest::Osc1Pw)] + (p.pmPwA ? pm * pwModRange : 0.0f), 0.05f, 0.95f);
+        // Poly-Mod: filter envelope and OSC B (with its DC, as on the hardware) -> FREQ A / PW A / filter.
+        const float pm = pmOn ? fenv * sig.pmFilterEnv[i] + mB * sig.pmOsc2[i] : 0.0f;
 
-        const float b = vcoB.process (freqB, pwB, sig.saw2[i], sig.tri2[i], sig.pulse2[i], -1.0f);
-        const float a = vcoA.process (freqA, pwA, sig.saw1[i], 0.0f, sig.pulse1[i], sync ? vcoB.lastResetD() : -1.0f);
-        lastB = b;
+        const float pitchA = notePitch + cvOffset[0] + analogTune[0] + common + cvExtra[0]
+                             + dst[static_cast<size_t> (ModDest::Osc1Freq)] + (p.pmFreqA ? pm * polyModPitchRange : 0.0f);
+        const float pwA = std::clamp (sig.osc1Pw[i] + dst[static_cast<size_t> (ModDest::Osc1Pw)] + (p.pmPwA ? pm * pwModRange : 0.0f), 0.0f, 1.0f);
+        const float syncD = sync ? resetB : -1.0f;
+        const VcoOutputs a = rev3 ? cem[0].process (pitchA, pwA, syncD) : ssm[0].process (pitchA, pwA, syncD);
+        const float mA = ota::mix (a.saw, 0.0f, a.pulse, sig.saw1[i], 0.0f, sig.pulse1[i]) - dcA - dcTrimA;
+        dcTrimA += mA * dcTrimCoeff;
 
-        // Mixer: summing into the filter; DRIVE pushes the input stage like a hot mixer does.
-        const float mix = a * sig.mix1[i] + b * sig.mix2[i] + nz * sig.mixNoise[i] * 1.5f + (a + b) * bleed;
-        const float driveGain = 0.55f + 3.5f * sig.drive[i];
-        const float bias = 0.1f * sig.drive[i]; // slight asymmetry -> even harmonics when driven
-        const float x = (fastmath::tanh (mix * driveGain + bias) - fastmath::tanh (bias)) * (1.0f + sig.drive[i]);
+        // Mixer bus (AC-coupled) + noise + OTA feed-through, then the DRIVE stage into the filter.
+        const float bus = mA * sig.mix1[i] + lastOscB * sig.mix2[i] + white * sig.mixNoise[i] * 0.8f + (mA + lastOscB) * bleed;
+        const float pre = bus * (0.9f + 3.0f * sig.drive[i]);
+        const float x = fastmath::tanh (pre * 0.5f) * 2.0f;
 
         const float cutoffOct = sig.cutoffOct[i] + cutoffOffset + sig.envAmount[i] * fenv * envCutoffRange
                                 + keytrack * (notePitch - 60.0f) * (1.0f / 12.0f) + filterVelOct + atOct
                                 + dst[static_cast<size_t> (ModDest::FilterCutoff)] + (p.pmFilter ? pm * polyModCutoffRange : 0.0f);
         const float fc = fastmath::exp2 (std::min (cutoffOct, 15.0f));
         const float res = (sig.resonance[i] + dst[static_cast<size_t> (ModDest::Resonance)]) * resonanceTrim;
-        const float y = filter.process (x, fc, res);
+        // AC coupling into the VCA (C4165): removes the DC the filter's own saturation produces.
+        const float yRaw = filter.process (x, fc, res);
+        const float y = yRaw - filterDc;
+        filterDc += y * dcTrimCoeff;
 
         // VCA with a little OTA colour.
         const float gain = aenv * velGain * std::max (0.0f, 1.0f + dst[static_cast<size_t> (ModDest::AmpLevel)]) * vcaTrim;

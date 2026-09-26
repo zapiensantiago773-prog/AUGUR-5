@@ -28,8 +28,8 @@ void Augur5Processor::prepareToPlay (double sampleRate, int)
     engine->setParams (snapshot);
 
     // Oversampling decimator + BLEP delay, so hosts can align us with other tracks.
-    const int latency = engine->getOversampling() == 2 ? (augur::HalfbandDecimator::centre + augur::Vco::latencySamples) / 2
-                                                       : augur::Vco::latencySamples;
+    const int latency = engine->getOversampling() == 2 ? (augur::HalfbandDecimator::centre + augur::BlepRing::latency) / 2
+                                                       : augur::BlepRing::latency;
     setLatencySamples (latency);
 }
 

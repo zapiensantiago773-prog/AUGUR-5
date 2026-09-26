@@ -1,6 +1,6 @@
 # Análisis del VCO del Prophet-5 a partir de su construcción
 
-Fecha: 2026-09-25. Fuentes primarias:
+Fecha: 2026-09-25 · **Estado: implementado** (ver D-016 en decisions.md). Fuentes primarias:
 - **Prophet-5 Rev 3 Service Manual** (Sequential Circuits, 1981–83): descripción del circuito (sec. 2-3 a 2-13), esquema de voz SD432 (PCB 4, Voice 2) y apéndice de bits del programa. [PDF](https://seriescircuits.com/wp-content/uploads/2023/12/Sequential-Circuits-Prophet-5-Rev-3-Service-Manual.pdf) · [texto en archive.org](https://archive.org/stream/synthmanual-prophet-5-service-manual/prophet-5servicemanual_djvu.txt)
 - **CEM3340/3345 datasheet** (Curtis Electromusic, 1980), 6 páginas. [PDF](https://www.bustedgear.com/images/datasheets/CEM3340-3345.pdf)
 - SSM2030: no se encontró su hoja de datos. Hay descripciones secundarias en [Mod Wiggler, "What's inside a SSM2030"](https://www.modwiggler.com/forum/viewtopic.php?t=32211).

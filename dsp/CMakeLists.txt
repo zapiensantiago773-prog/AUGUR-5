@@ -6,10 +6,15 @@ add_library(augur_dsp STATIC
     Util/Halfband.h
     Analog/Drift.h
     Analog/Fingerprint.h
+    Analog/Autotune.h
+    Mixer/OtaMixer.h
     Oscillator/BlepTable.h
     Oscillator/BlepTable.cpp
-    Oscillator/Vco.h
-    Oscillator/Vco.cpp
+    Oscillator/BlepRing.h
+    Oscillator/Cem3340.h
+    Oscillator/Cem3340.cpp
+    Oscillator/Ssm2030.h
+    Oscillator/Ssm2030.cpp
     Oscillator/Noise.h
     Filter/LadderFilter.h
     Filter/LadderFilter.cpp

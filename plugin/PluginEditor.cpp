@@ -495,10 +495,14 @@ void Augur5Editor::showSettingsMenu()
     for (const int r : { 1, 2, 3, 5, 7, 12, 24 })
         bend.addItem (juce::String (r) + " st", true, range == r, [setParam, r] { setParam (augur5::params::pb_range, static_cast<float> (r)); });
 
+    const bool vintage = state.getRawParameterValue (augur5::params::vintage_cv)->load() > 0.5f;
+
     juce::PopupMenu menu;
     menu.addSubMenu ("Window size", size);
     menu.addSubMenu ("VCO model", vco);
     menu.addSubMenu ("Pitch bend range", bend);
+    menu.addItem ("Vintage 7-bit knobs (Rev 3)", true, vintage,
+                  [setParam, vintage] { setParam (augur5::params::vintage_cv, vintage ? 0.0f : 1.0f); });
     menu.addSeparator();
     menu.addItem (juce::String ("AUGUR-5 v") + JucePlugin_VersionString, false, false, [] {});
 
