@@ -1,0 +1,10 @@
+build/
+renders/
+tools/bin/
+tools/.venv/
+__pycache__/
+reference/**/*.wav
+reference/**/*.flac
+.vs/
+.DS_Store
+*.user

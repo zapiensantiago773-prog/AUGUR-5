@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "AUGUR: build",
+      "type": "cmake",
+      "command": "build",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$msCompile", "$gcc"]
+    },
+    {
+      "label": "AUGUR: test",
+      "type": "cmake",
+      "command": "test",
+      "dependsOn": "AUGUR: build",
+      "group": { "kind": "test", "isDefault": true }
+    },
+    {
+      "label": "AUGUR: pluginval (strict 10)",
+      "type": "shell",
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File tools/pluginval.ps1 -Preset ${command:cmake.activeConfigurePresetName}" },
+      "osx": { "command": "bash tools/pluginval.sh ${command:cmake.activeConfigurePresetName}" },
+      "dependsOn": "AUGUR: build",
+      "problemMatcher": []
+    },
+    {
+      "label": "AUGUR: render test note",
+      "type": "shell",
+      "windows": { "command": "New-Item -ItemType Directory -Force renders | Out-Null; & \"${command:cmake.buildDirectory}/tools/render_cli/augur_render.exe\" --note 57 --out renders/note.wav" },
+      "osx": { "command": "mkdir -p renders && \"${command:cmake.buildDirectory}/tools/render_cli/augur_render\" --note 57 --out renders/note.wav" },
+      "dependsOn": "AUGUR: build",
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Standalone (Windows, Debug)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/win-debug/plugin/Augur5_artefacts/Debug/Standalone/AUGUR-5.exe",
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "preLaunchTask": "AUGUR: build"
+    },
+    {
+      "name": "DSP tests (Windows, Debug)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/win-debug/tests/augur_tests.exe",
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "preLaunchTask": "AUGUR: build"
+    },
+    {
+      "name": "Standalone (macOS, Debug)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/mac-debug/plugin/Augur5_artefacts/Debug/Standalone/AUGUR-5.app/Contents/MacOS/AUGUR-5",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "AUGUR: build"
+    },
+    {
+      "name": "DSP tests (macOS, Debug)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/mac-debug/tests/augur_tests",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "AUGUR: build"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "cmake.useCMakePresets": "always",
+  "cmake.configureOnOpen": true,
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "files.exclude": { "build/**": true },
+  "search.exclude": { "external/**": true, "build/**": true },
+  "python.defaultInterpreterPath": "${workspaceFolder}/tools/.venv/Scripts/python.exe"
+}
