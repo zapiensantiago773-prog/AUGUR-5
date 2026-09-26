@@ -67,6 +67,24 @@ public:
     void beginRender (const ChunkSignals& sig) noexcept;
     void tick (const ChunkSignals& sig, size_t i, float& left, float& right) noexcept;
 
+    // Front half of a sample: everything up to the filter input (oscillators, CV path, modulation,
+    // mixer). The engine runs the back half (drive, filter, coupling, VCA, pan) for four voices at once.
+    struct Front
+    {
+        float bus = 0.0f;       // mixer bus into the DRIVE stage
+        float cutoffOct = 0.0f; // log2 of the filter cutoff in Hz
+        float resonance = 0.0f;
+        float gain = 0.0f;      // VCA gain
+        float panL = 0.0f, panR = 0.0f;
+    };
+    void tickFront (const ChunkSignals& sig, size_t i, Front& front) noexcept;
+
+    // State the SIMD back half works on (loaded per segment, written back afterwards).
+    LadderFilter& getFilter() noexcept { return filter; }
+    float& couplingCharge() noexcept { return filterDc; }
+    float couplingCoeff() const noexcept { return dcTrimCoeff; }
+    static float outputScale() noexcept;
+
     bool isActive() const noexcept { return ampEnv.isActive(); }
     bool isHeld() const noexcept { return held; }
     bool isReleasing() const noexcept { return ampEnv.isReleasing(); }

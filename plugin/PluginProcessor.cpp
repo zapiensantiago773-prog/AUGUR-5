@@ -9,7 +9,7 @@ Augur5Processor::Augur5Processor()
       engine (std::make_unique<augur::SynthEngine>())
 {
     // A fresh instance opens on the showcase patch, not a bare init sound.
-    presets.loadFactory (1);
+    presets.loadFactory (presets.findFactory ("Warm Horizon"));
     presets.onPresetLoaded = [this] { warmUpEngine(); };
     undoManager.clearUndoHistory();
 }

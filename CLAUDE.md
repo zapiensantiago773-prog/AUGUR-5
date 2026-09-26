@@ -4,7 +4,8 @@
 
 - **Nombre:** AUGUR-5, modelo **"3340"** (subtítulo que se muestra en la GUI).
 - **Nombre de binario / PRODUCT_NAME:** `AUGUR-5` (sin comillas en nombres de archivo).
-- **Códigos:** fabricante `Augr`, plugin `Au53` (AU: fabricante ≥1 mayúscula, plugin exactamente 1 mayúscula). **No cambiarlos nunca**: los DAWs identifican el plugin y sus presets guardados por estos códigos.
+- **Empresa:** **TONAL LAB** (fabricante que muestran los DAWs; leyenda "A TONAL LAB INSTRUMENT" en el panel).
+- **Códigos:** fabricante `Tnlb`, plugin `Au53`, bundle `com.tonallab.augur5` (AU: fabricante ≥1 mayúscula, plugin exactamente 1 mayúscula). **No cambiarlos nunca a partir de ahora**: los DAWs identifican el plugin y sus presets guardados por estos códigos.
 - **Formatos objetivo:** VST3 (Windows + macOS), AU (macOS/Logic), Standalone. Futuro opcional: CLAP, AAX (Pro Tools, requiere SDK de Avid + firma PACE).
 - **DAWs objetivo:** todos los principales — Ableton Live, Logic Pro, Cubase, FL Studio, Reaper, Bitwig, Studio One.
 

@@ -12,7 +12,7 @@ JUCE 8.0.15 y Catch2 v3.16.0 en `external/`, fijados a tag. Alternativa descarta
 El plugin se tiene que cargar en cualquier PC, aunque no tenga el VC++ Redistributable instalado (la computadora con Ableton del usuario, clientes). Costo: binario un poco más grande. Se aplica a todo el proyecto para evitar mezclar runtimes.
 
 ## D-004 · Identidad del plugin (inmutable)
-`PRODUCT_NAME "AUGUR-5"`, fabricante `Augr`, plugin `Au53`, bundle `com.auguraudio.augur5`. Los DAWs guardan proyectos y presets con estos valores; cambiarlos después del release rompe las sesiones de los usuarios. "3340" es el nombre del modelo y solo aparece en la GUI (las comillas no son válidas en nombres de archivo).
+`PRODUCT_NAME "AUGUR-5"`, empresa **TONAL LAB**, fabricante `Tnlb`, plugin `Au53`, bundle `com.tonallab.augur5` (cambiado el 2026-09-26, antes del primer uso en un DAW; antes era `Augr` / `com.auguraudio.augur5`). Los DAWs guardan proyectos y presets con estos valores; cambiarlos después del release rompe las sesiones de los usuarios. "3340" es el nombre del modelo y solo aparece en la GUI (las comillas no son válidas en nombres de archivo).
 
 ## D-005 · Formatos y cobertura de DAWs
 - VST3: Ableton, Cubase/Nuendo, FL Studio, Reaper, Bitwig y Studio One (Windows y macOS).
@@ -97,3 +97,39 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
 **CPU:** 5 voces a 48 kHz = **11.7–12.2 %** de un núcleo (antes 25 %). Objetivo < 5 %: sigue pendiente el SIMD.
 
 **Pendiente conocido:** la primera nota después de cargar el plugin puede llevar un escalón de DC de hasta −45 dBFS por debajo de 25 Hz. Se debe a la saturación del filtro con la carga del C4165 aún no establecida. Desaparece desde la segunda nota.
+
+
+## D-017 · Pitch dentro del sample, golpe de DC, asignación de voces y CPU (2026-09-26)
+- **FM a audio rate:** la tasa de carga del VCO (CEM3340) y el incremento de fase (SSM2030) varían linealmente dentro de cada sample. Los tiempos de evento se resuelven con la ecuación cuadrática exacta. Aliasing de FM: **−102 → −141 dB**.
+- **Golpe de la primera nota:** los capacitores de acople (DC del mixer y C4165 entre VCF y VCA) se "cargan" al preparar el plugin, al cargar una sesión y al cambiar de preset. Una voz se ejecuta en silencio y se mide la media real con ventana de Hann, no con un filtro de un polo, que seguía el rizado. Se copia la carga y el estado del filtro a las demás voces, y una voz que despierta toma el estado de una activa. Primera nota: **−40 → −61 dBFS** en el peor caso (filtro a 25 Hz, nivel máximo).
+- **Bug corregido:** las notas del primer bloque, o justo después de cambiar VOICES/UNISON, se asignaban con parámetros viejos y luego se soltaban. La asignación usa ahora siempre los parámetros vigentes, y bajar VOICES solo suelta las voces sobrantes.
+- **CPU** (5 voces a 48 kHz, 2x): **12.1 % → 8.5 %**; 8 voces 17.3 % → 12.2 %; reposo 1.8 % → 0.8 %.
+  - Las voces en silencio solo avanzan el drift.
+  - Caché de constantes por chunk.
+  - OSC B se omite si es inaudible y nada lo usa.
+  - Camino rápido en línea en los VCOs.
+  - **La mitad posterior de la voz** (drive, exp2 del cutoff, filtro, acople, VCA, paneo) **corre con SIMD, 4 voces por instrucción** (SSE2/NEON), idéntica al filtro escalar (test: diferencia 0).
+  - Medido sin mejora y descartado: `/fp:fast` e intercalar voces muestra a muestra.
+  - Lo que falta para llegar a < 5 % es la mitad frontal: los VCOs, 2.6 %, orientados a eventos.
+
+## D-018 · TONAL LAB y librería de fábrica (2026-09-26)
+- Empresa **TONAL LAB**: fabricante en los DAWs, código `Tnlb`, bundle `com.tonallab.augur5`, leyenda "A TONAL LAB INSTRUMENT" en el panel y presets de usuario en `TONAL LAB/AUGUR-5/Presets`.
+- **Librería base, 66 sonidos + Init**, enfocada a progressive y melodic techno:
+
+| Categoría | Sonidos |
+|---|---|
+| Bass | 8 |
+| Lead | 8 |
+| Pad | 8 |
+| Pluck | 9 |
+| Keys | 7 |
+| Stab | 6 |
+| Arp | 6 |
+| Drums | 9 |
+| Atmos & FX | 7 |
+
+  Los nombres son propios, sin nombres de artistas. Los delays están a ~123 BPM y la mod wheel abre el filtro en la mayoría.
+- **Plucks** (prioridad): envolvente RC de filtro rápida y profunda, velocity→brillo, keytrack y un blip de poly-mod de la envolvente al pitch de OSC A en el ataque.
+- **Drums** sintetizados con el propio motor: barrido de pitch vía matriz (FILTER ENV → OSC FREQ), ruido y dos pulsos inarmónicos.
+- **Auditoría** (`augur_preset_audit`, también en la CI): cada preset pasa por el procesador real con notas de su categoría, con un procesador nuevo por preset para que sea determinista. Falla si hay silencio, valores no finitos o saturación.
+- **Nivelación** (`tools/level_presets.py`): volumen de corto plazo (RMS máximo en 50 ms) a −18 dB para lo melódico; drums −16 (bombo/tom), −20 (snare) y −25 (clap, rim, hats, cowbell); pico ≤ −3 dBFS.

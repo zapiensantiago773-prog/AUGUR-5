@@ -280,6 +280,8 @@ public:
         drawLogo (g, 52.0f, 984.0f, 30.0f / 34.0f, colours::headerButton);
         drawTracked (g, juce::String (juce::CharPointer_UTF8 ("AUGUR-5 \xe2\x80\x9c" "3340\xe2\x80\x9d")), { 96, 984, 400, 18 },
                      Fonts::michroma (11.0f, 0.24f), colours::headerButton, juce::Justification::centredLeft);
+        drawTracked (g, "A  TONAL LAB  INSTRUMENT", { 568, 984, 400, 18 }, Fonts::michroma (10.0f, 0.3f),
+                     colours::accent.withAlpha (0.85f), juce::Justification::centred);
         drawTracked (g, "ANALOG SOUL  /  DIGITAL PRECISION", { 1084, 984, 400, 18 }, Fonts::jost (10.0f, false, 0.26f),
                      colours::caption, juce::Justification::centredRight);
     }
@@ -443,10 +445,21 @@ void Augur5Editor::timerCallback()
 void Augur5Editor::showBrowserMenu()
 {
     auto& presets = processor.getPresets();
+    // Factory presets grouped by category (in bank order), each category as a sub-menu.
     juce::PopupMenu menu;
-    menu.addSectionHeader ("FACTORY");
+    juce::StringArray categories;
     for (int i = 0; i < presets.getNumFactoryPresets(); ++i)
-        menu.addItem (presets.getFactoryName (i), [this, i] { processor.getPresets().loadFactory (i); });
+        categories.addIfNotAlreadyThere (presets.getFactoryCategory (i));
+    menu.addSectionHeader ("FACTORY");
+    for (const auto& category : categories)
+    {
+        juce::PopupMenu sub;
+        for (int i = 0; i < presets.getNumFactoryPresets(); ++i)
+            if (presets.getFactoryCategory (i) == category)
+                sub.addItem (presets.getFactoryName (i), true, presets.getCurrentName() == presets.getFactoryName (i),
+                             [this, i] { processor.getPresets().loadFactory (i); });
+        menu.addSubMenu (category, sub);
+    }
 
     const auto users = presets.getUserPresets();
     if (! users.isEmpty())
@@ -504,7 +517,7 @@ void Augur5Editor::showSettingsMenu()
     menu.addItem ("Vintage 7-bit knobs (Rev 3)", true, vintage,
                   [setParam, vintage] { setParam (augur5::params::vintage_cv, vintage ? 0.0f : 1.0f); });
     menu.addSeparator();
-    menu.addItem (juce::String ("AUGUR-5 v") + JucePlugin_VersionString, false, false, [] {});
+    menu.addItem (juce::String ("AUGUR-5 v") + JucePlugin_VersionString + "  -  TONAL LAB", false, false, [] {});
 
     menu.setLookAndFeel (&lookAndFeel);
     menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (canvas->settings).withParentComponent (this));

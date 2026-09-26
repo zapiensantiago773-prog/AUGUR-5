@@ -8,7 +8,7 @@ namespace augur5
 {
 
 // Factory bank (defined in code, so it can never go missing) plus user presets stored as XML files in
-// <user app data>/AUGUR-5/Presets. Loading sets every parameter through the host-notifying path, so
+// <user app data>/TONAL LAB/AUGUR-5/Presets. Loading sets every parameter through the host-notifying path, so
 // automation, undo and the UI all follow.
 class PresetManager
 {
@@ -19,6 +19,8 @@ public:
 
     int getNumFactoryPresets() const noexcept;
     juce::String getFactoryName (int index) const;
+    juce::String getFactoryCategory (int index) const;
+    int findFactory (const juce::String& name) const;
     void loadFactory (int index);
 
     juce::Array<juce::File> getUserPresets() const;

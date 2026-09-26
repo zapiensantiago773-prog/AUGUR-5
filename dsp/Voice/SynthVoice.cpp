@@ -39,6 +39,11 @@ float mapMatrixAmount (ModDest d, float a) noexcept
 }
 } // namespace
 
+float SynthVoice::outputScale() noexcept
+{
+    return voiceOutputScale;
+}
+
 void SynthVoice::prepare (double internalRate, double controlRate, std::uint64_t seed) noexcept
 {
     sampleRate = internalRate;
@@ -382,6 +387,33 @@ void SynthVoice::beginRender (const ChunkSignals& sig) noexcept
 
 void SynthVoice::tick (const ChunkSignals& sig, size_t i, float& left, float& right) noexcept
 {
+    Front f;
+    tickFront (sig, i, f);
+
+    const float pre = f.bus * (0.9f + 3.0f * sig.drive[i]);
+    const float x = fastmath::tanh (pre * 0.5f) * 2.0f;
+    const float fc = fastmath::exp2 (std::min (f.cutoffOct, 15.0f));
+
+    // AC coupling into the VCA (C4165): removes the DC the filter's own saturation produces.
+    const float yRaw = filter.process (x, fc, f.resonance);
+    if (warmPhase == 2)
+    {
+        const double w = hannWeight();
+        warmY += static_cast<double> (yRaw) * w;
+        warmW += w;
+        warmPos += warmInc;
+    }
+    const float y = yRaw - filterDc;
+    filterDc += y * dcTrimCoeff;
+
+    // VCA with a little OTA colour.
+    const float out = fastmath::tanh (y * f.gain * 0.6f) * (voiceOutputScale / 0.6f);
+    left += out * f.panL;
+    right += out * f.panR;
+}
+
+void SynthVoice::tickFront (const ChunkSignals& sig, size_t i, Front& front) noexcept
+{
     const SynthParams& p = *sig.params;
     const float velGain = tickVelGain;
     const float filterVelOct = tickFilterVelOct;
@@ -473,34 +505,17 @@ void SynthVoice::tick (const ChunkSignals& sig, size_t i, float& left, float& ri
 
         // Mixer bus (AC-coupled) + noise + OTA feed-through, then the DRIVE stage into the filter.
         const float bus = mA * sig.mix1[i] + lastOscB * sig.mix2[i] + white * sig.mixNoise[i] * 0.8f + (mA + lastOscB) * bleed;
-        const float pre = bus * (0.9f + 3.0f * sig.drive[i]);
-        const float x = fastmath::tanh (pre * 0.5f) * 2.0f;
-
-        const float cutoffOct = sig.cutoffOct[i] + cutoffOffset + sig.envAmount[i] * fenv * envCutoffRange
+        front.bus = bus;
+        front.cutoffOct = sig.cutoffOct[i] + cutoffOffset + sig.envAmount[i] * fenv * envCutoffRange
                                 + keytrack * (notePitch - 60.0f) * (1.0f / 12.0f) + filterVelOct + atOct
                                 + dst[static_cast<size_t> (ModDest::FilterCutoff)] + (p.pmFilter ? pm * polyModCutoffRange : 0.0f);
-        const float fc = fastmath::exp2 (std::min (cutoffOct, 15.0f));
-        const float res = (sig.resonance[i] + dst[static_cast<size_t> (ModDest::Resonance)]) * resonanceTrim;
-        // AC coupling into the VCA (C4165): removes the DC the filter's own saturation produces.
-        const float yRaw = filter.process (x, fc, res);
-        if (warmPhase == 2)
-        {
-            const double w = hannWeight();
-            warmY += static_cast<double> (yRaw) * w;
-            warmW += w;
-            warmPos += warmInc;
-        }
-        const float y = yRaw - filterDc;
-        filterDc += y * dcTrimCoeff;
-
-        // VCA with a little OTA colour.
-        const float gain = aenv * velGain * std::max (0.0f, 1.0f + dst[static_cast<size_t> (ModDest::AmpLevel)]) * vcaTrim;
-        const float out = fastmath::tanh (y * gain * 0.6f) * (voiceOutputScale / 0.6f);
+        front.resonance = (sig.resonance[i] + dst[static_cast<size_t> (ModDest::Resonance)]) * resonanceTrim;
+        front.gain = aenv * velGain * std::max (0.0f, 1.0f + dst[static_cast<size_t> (ModDest::AmpLevel)]) * vcaTrim;
 
         // Pan interpolates across the whole chunk by absolute position, independent of sub-ranges.
         const float t = static_cast<float> (i + 1) * invChunk;
-        left += out * (panL + (panLTarget - panL) * t);
-        right += out * (panR + (panRTarget - panR) * t);
+        front.panL = panL + (panLTarget - panL) * t;
+        front.panR = panR + (panRTarget - panR) * t;
     }
 }
 

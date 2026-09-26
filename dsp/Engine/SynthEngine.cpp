@@ -1,6 +1,7 @@
 #include "Engine/SynthEngine.h"
 
 #include "Util/FastMath.h"
+#include "Util/Simd4.h"
 
 #include <algorithm>
 #include <cmath>
@@ -31,6 +32,8 @@ void SynthEngine::prepare (double hostSampleRate, std::uint64_t unitSeed)
     for (size_t i = 0; i < voices.size(); ++i)
         voices[i].prepare (internalRate, controlRate, deriveSeed (unitSeed, 100 + i));
 
+    for (auto& f : spareFilters)
+        f.prepare (internalRate);
     lfo.prepare (internalRate, deriveSeed (unitSeed, 7));
     floorNoise.setSeed (deriveSeed (unitSeed, 8));
     chorus.prepare (hostSampleRate);
@@ -443,8 +446,10 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
     std::fill_n (busL.begin(), iCount, 0.0f);
     std::fill_n (busR.begin(), iCount, 0.0f);
 
-    // Voices are interleaved sample by sample (same summation order as rendering them one after another,
-    // so the result is identical) to let the CPU overlap their independent dependency chains.
+    // Active voices are processed in groups of four: each voice runs its front half (oscillators, CV path,
+    // modulation, mixer) and the group runs the back half (drive, filter, coupling capacitor, VCA, pan)
+    // with one voice per SIMD lane. Filter state and coupling charge are loaded per segment and written
+    // back, so the scalar voice objects stay the reference state.
     std::array<SynthVoice*, maxVoices> active {};
     int numActive = 0;
     for (auto& voice : voices)
@@ -453,12 +458,65 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
             voice.beginRender (sig);
             active[static_cast<size_t> (numActive++)] = &voice;
         }
-    for (int j = 0; j < iCount; ++j)
+
+    using namespace simd;
+    const float outScale = SynthVoice::outputScale();
+    for (int g0 = 0; g0 < numActive; g0 += 4)
     {
-        const auto i = static_cast<size_t> (iStart + j);
-        const auto jj = static_cast<size_t> (j);
-        for (int k = 0; k < numActive; ++k)
-            active[static_cast<size_t> (k)]->tick (sig, i, busL[jj], busR[jj]);
+        const int lanes = std::min (4, numActive - g0);
+        std::array<SynthVoice*, 4> group {};
+        std::array<LadderFilter*, 4> filters {};
+        float charge[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        for (int k = 0; k < 4; ++k)
+        {
+            if (k < lanes)
+            {
+                group[static_cast<size_t> (k)] = active[static_cast<size_t> (g0 + k)];
+                filters[static_cast<size_t> (k)] = &group[static_cast<size_t> (k)]->getFilter();
+                charge[k] = group[static_cast<size_t> (k)]->couplingCharge();
+            }
+            else
+            {
+                filters[static_cast<size_t> (k)] = &spareFilters[static_cast<size_t> (k)];
+            }
+        }
+
+        LadderFilter::Lanes state;
+        LadderFilter::gather (state, filters.data());
+        F4 dc = load (charge);
+        const F4 coeff = splat (group[0]->couplingCoeff());
+
+        for (int j = 0; j < iCount; ++j)
+        {
+            const auto i = static_cast<size_t> (iStart + j);
+            SynthVoice::Front fr[4];
+            for (int k = 0; k < lanes; ++k)
+                group[static_cast<size_t> (k)]->tickFront (sig, i, fr[k]);
+
+            const F4 bus = set (fr[0].bus, fr[1].bus, fr[2].bus, fr[3].bus);
+            const F4 pre = bus * splat (0.9f + 3.0f * sig.drive[i]);
+            const F4 x = simd::tanh (pre * splat (0.5f)) * splat (2.0f);
+            const F4 fc = simd::exp2 (min (set (fr[0].cutoffOct, fr[1].cutoffOct, fr[2].cutoffOct, fr[3].cutoffOct), splat (15.0f)));
+            const F4 yRaw = filters[0]->process4 (state, x, fc, set (fr[0].resonance, fr[1].resonance, fr[2].resonance, fr[3].resonance));
+            const F4 y = yRaw - dc;
+            dc = dc + y * coeff;
+            const F4 out = simd::tanh (y * set (fr[0].gain, fr[1].gain, fr[2].gain, fr[3].gain) * splat (0.6f)) * splat (outScale / 0.6f);
+
+            alignas (16) float l[4], r[4];
+            store (l, out * set (fr[0].panL, fr[1].panL, fr[2].panL, fr[3].panL));
+            store (r, out * set (fr[0].panR, fr[1].panR, fr[2].panR, fr[3].panR));
+            const auto jj = static_cast<size_t> (j);
+            for (int k = 0; k < lanes; ++k)
+            {
+                busL[jj] += l[k];
+                busR[jj] += r[k];
+            }
+        }
+
+        LadderFilter::scatter (state, filters.data(), lanes);
+        store (charge, dc);
+        for (int k = 0; k < lanes; ++k)
+            group[static_cast<size_t> (k)]->couplingCharge() = charge[k];
     }
     for (size_t v = 0; v < voices.size(); ++v)
         voiceLevels[v].store (voices[v].isActive() ? voices[v].getLevel() : 0.0f, std::memory_order_relaxed);

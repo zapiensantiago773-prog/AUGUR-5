@@ -50,6 +50,13 @@ jobs:
       - name: DSP tests
         run: ctest --preset ${{ matrix.preset }}
 
+      - name: Factory library audit (every preset through the real processor)
+        shell: bash
+        run: |
+          AUDIT=$(find build/${{ matrix.preset }}/plugin -name 'augur_preset_audit' -type f -perm -u+x 2>/dev/null | head -1)
+          [ -z "$AUDIT" ] && AUDIT=$(find build/${{ matrix.preset }}/plugin -name 'augur_preset_audit.exe' | head -1)
+          "$AUDIT"
+
       - name: pluginval (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -61,7 +68,7 @@ jobs:
 
       - name: auval (Logic compatibility)
         if: runner.os == 'macOS'
-        run: auval -v aumu Au53 Augr
+        run: auval -v aumu Au53 Tnlb
 
       - name: Upload plugin binaries
         uses: actions/upload-artifact@v4

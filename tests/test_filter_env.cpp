@@ -7,6 +7,7 @@
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+#include <array>
 #include <cmath>
 
 using augur::LadderFilter;
@@ -106,4 +107,43 @@ TEST_CASE ("RC envelope: attack reaches full level at the set time, release fall
         ++n;
     }
     CHECK_THAT (n / sr, Catch::Matchers::WithinRel (0.3, 0.01));
+}
+
+TEST_CASE ("SIMD 4-lane filter matches the scalar filter", "[filter][simd]")
+{
+    const auto model = GENERATE (LadderFilter::Model::Cem3320, LadderFilter::Model::Ssm2040);
+    std::array<LadderFilter, 4> scalar, lanes;
+    for (size_t k = 0; k < 4; ++k)
+    {
+        scalar[k].prepare (96000.0);
+        lanes[k].prepare (96000.0);
+        scalar[k].setModel (model);
+        lanes[k].setModel (model);
+    }
+    std::array<LadderFilter*, 4> ptrs { &lanes[0], &lanes[1], &lanes[2], &lanes[3] };
+    augur::Random r (7);
+    float worst = 0.0f;
+    for (int block = 0; block < 300; ++block)
+    {
+        LadderFilter::Lanes st;
+        LadderFilter::gather (st, ptrs.data());
+        for (int n = 0; n < 64; ++n)
+        {
+            float x[4], fc[4], res[4], ref[4];
+            for (size_t k = 0; k < 4; ++k)
+            {
+                x[k] = r.nextBipolar() * 1.5f;
+                fc[k] = 30.0f * std::pow (600.0f, r.nextFloat());
+                res[k] = r.nextFloat() * 1.05f;
+                ref[k] = scalar[k].process (x[k], fc[k], res[k]);
+            }
+            float got[4];
+            augur::simd::store (got, lanes[0].process4 (st, augur::simd::load (x), augur::simd::load (fc), augur::simd::load (res)));
+            for (size_t k = 0; k < 4; ++k)
+                worst = std::max (worst, std::abs (got[k] - ref[k]));
+        }
+        LadderFilter::scatter (st, ptrs.data(), 4);
+    }
+    INFO ("max difference " << worst);
+    CHECK (worst < 1.0e-4f);
 }

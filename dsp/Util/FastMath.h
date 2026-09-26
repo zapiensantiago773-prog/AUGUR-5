@@ -44,11 +44,13 @@ inline float tan (float x) noexcept
 // 2^x with ~1e-7 relative error (0.0002 cents): centred 6th-order polynomial + exponent bits.
 inline float exp2 (float x) noexcept
 {
-    x = std::clamp (x, -126.0f, 126.0f);
-    const float fi = std::floor (x);
-    const float g = x - fi - 0.5f;
+    x = x < -126.0f ? -126.0f : (x > 126.0f ? 126.0f : x);
+    // floor() without a library call: truncate, then step down for negative non-integers.
+    std::int32_t i = static_cast<std::int32_t> (x);
+    i -= (static_cast<float> (i) > x) ? 1 : 0;
+    const float g = x - static_cast<float> (i) - 0.5f;
     const float p = 1.0f + g * (0.69314718f + g * (0.24022651f + g * (0.05550411f + g * (0.00961813f + g * (0.00133336f + g * 0.00015404f)))));
-    const std::int32_t bits = (static_cast<std::int32_t> (fi) + 127) << 23;
+    const std::int32_t bits = (i + 127) << 23;
     float scale;
     std::memcpy (&scale, &bits, sizeof (scale));
     return p * scale * 1.41421356f;

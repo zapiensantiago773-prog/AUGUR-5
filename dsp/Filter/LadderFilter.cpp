@@ -87,4 +87,66 @@ float LadderFilter::process (float x, float cutoffHz, float resonance) noexcept
     return y[3];
 }
 
+void LadderFilter::gather (Lanes& lanes, LadderFilter* const* f) noexcept
+{
+    for (size_t k = 0; k < 4; ++k)
+    {
+        lanes.s[k] = simd::set (f[0]->s[k], f[1]->s[k], f[2]->s[k], f[3]->s[k]);
+        lanes.v[k] = simd::set (f[0]->v[k], f[1]->v[k], f[2]->v[k], f[3]->v[k]);
+    }
+    lanes.u = simd::set (f[0]->u, f[1]->u, f[2]->u, f[3]->u);
+}
+
+void LadderFilter::scatter (const Lanes& lanes, LadderFilter* const* f, int count) noexcept
+{
+    for (int lane = 0; lane < count; ++lane)
+    {
+        for (size_t k = 0; k < 4; ++k)
+        {
+            f[lane]->s[k] = simd::get (lanes.s[k], lane);
+            f[lane]->v[k] = simd::get (lanes.v[k], lane);
+        }
+        f[lane]->u = simd::get (lanes.u, lane);
+    }
+}
+
+simd::F4 LadderFilter::process4 (Lanes& l, simd::F4 x, simd::F4 cutoffHz, simd::F4 resonance) const noexcept
+{
+    using namespace simd;
+    const auto& mc = model == Model::Cem3320 ? cem3320 : ssm2040;
+    const F4 fc = min (max (cutoffHz, splat (5.0f)), splat (maxCutoff));
+    const F4 g = simd::tan (fc * splat (piOverFs));
+    const F4 k = min (max (resonance, splat (0.0f)), splat (1.1f)) * splat (mc.maxFeedback);
+    const F4 xin = x * (splat (1.0f) + splat (mc.passbandComp * 0.5f) * k);
+
+    // Same semi-implicit solve as process(), one voice per lane.
+    const F4 aIn = tanhRatio (l.u * splat (mc.inputDrive));
+    F4 alpha[4], beta[4];
+    for (size_t i = 0; i < 4; ++i)
+    {
+        const F4 G = g * tanhRatio (l.v[i] * splat (mc.stageDrive));
+        const F4 inv = splat (1.0f) / (splat (1.0f) + G);
+        alpha[i] = G * inv;
+        beta[i] = l.s[i] * inv;
+    }
+    F4 A = splat (1.0f), B = splat (0.0f);
+    for (size_t i = 0; i < 4; ++i)
+    {
+        A = A * alpha[i];
+        B = alpha[i] * B + beta[i];
+    }
+    const F4 y4 = (A * aIn * xin + B) / (splat (1.0f) + A * aIn * k);
+
+    l.u = xin - k * y4;
+    F4 stageIn = aIn * l.u;
+    for (size_t i = 0; i < 4; ++i)
+    {
+        const F4 y = alpha[i] * stageIn + beta[i];
+        l.v[i] = stageIn - y;
+        l.s[i] = splat (2.0f) * y - l.s[i];
+        stageIn = y;
+    }
+    return stageIn;
+}
+
 } // namespace augur

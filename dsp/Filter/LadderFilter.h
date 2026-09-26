@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Util/Simd4.h"
+
 #include <array>
 
 namespace augur
@@ -21,6 +23,16 @@ public:
 
     void prepare (double sampleRate) noexcept;
     void reset() noexcept;
+    // Four filters processed at once (one voice per SIMD lane). All lanes use this filter's model and
+    // sample rate; the state is gathered from / scattered back to the scalar filters per segment.
+    struct Lanes
+    {
+        simd::F4 s[4], v[4], u;
+    };
+    static void gather (Lanes& lanes, LadderFilter* const* filters) noexcept;
+    static void scatter (const Lanes& lanes, LadderFilter* const* filters, int count) noexcept;
+    simd::F4 process4 (Lanes& lanes, simd::F4 x, simd::F4 cutoffHz, simd::F4 resonance) const noexcept;
+
     void copyStateFrom (const LadderFilter& other) noexcept
     {
         s = other.s;

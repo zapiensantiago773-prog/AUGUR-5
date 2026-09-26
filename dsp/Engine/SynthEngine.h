@@ -80,6 +80,7 @@ private:
 
     // Voices
     std::array<SynthVoice, maxVoices> voices;
+    std::array<LadderFilter, 4> spareFilters; // idle lanes of a partly filled SIMD group
     std::array<std::atomic<float>, maxVoices> voiceLevels {};
     std::uint64_t noteCounter = 0;
     int nextVoice = 0;
