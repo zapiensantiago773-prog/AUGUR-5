@@ -663,12 +663,20 @@ void PresetManager::setParam (const juce::String& id, float value)
     }
 }
 
+bool PresetManager::isGlobalSetting (const juce::String& id)
+{
+    // Instrument-wide settings that stay where the user left them when a sound is loaded.
+    return id == params::master_volume || id == params::quality || id == params::offline_quality;
+}
+
 void PresetManager::resetToDefaults()
 {
     for (auto* p : state.processor.getParameters())
     {
         if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (p))
         {
+            if (isGlobalSetting (rp->getParameterID()))
+                continue;
             rp->beginChangeGesture();
             rp->setValueNotifyingHost (rp->getDefaultValue());
             rp->endChangeGesture();
@@ -714,7 +722,8 @@ void PresetManager::loadUser (const juce::File& file)
     resetToDefaults();
     if (auto* paramsXml = xml->getChildByName ("PARAMS"))
         for (auto* e : paramsXml->getChildIterator())
-            setParam (e->getStringAttribute ("id"), static_cast<float> (e->getDoubleAttribute ("value")));
+            if (! isGlobalSetting (e->getStringAttribute ("id")))
+                setParam (e->getStringAttribute ("id"), static_cast<float> (e->getDoubleAttribute ("value")));
 
     currentUserFile = file;
     currentName = file.getFileNameWithoutExtension();
@@ -734,7 +743,7 @@ bool PresetManager::saveUser (const juce::String& name)
     auto* paramsXml = root.createNewChildElement ("PARAMS");
     for (auto* p : state.processor.getParameters())
     {
-        if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (p))
+        if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (p); rp != nullptr && ! isGlobalSetting (rp->getParameterID()))
         {
             auto* e = paramsXml->createNewChildElement ("P");
             e->setAttribute ("id", rp->getParameterID());

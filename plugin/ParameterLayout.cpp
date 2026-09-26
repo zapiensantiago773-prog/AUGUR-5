@@ -149,6 +149,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (percent (P::flt_velocity, "Velocity to Filter", 0.0f));
 
     // Amplifier
+    layout.add (std::make_unique<APF> (pid (P::master_volume), "Master Volume", Range (-60.0f, 6.0f, 0.1f, 2.5f), 0.0f,
+                                       juce::AudioParameterFloatAttributes().withStringFromValueFunction (
+                                           [] (float v, int) { return v <= -59.9f ? juce::String ("-inf dB") : juce::String (v, 1) + " dB"; })));
     layout.add (std::make_unique<APF> (pid (P::amp_level), "Level", Range (-60.0f, 6.0f, 0.1f), -6.0f,
                                        juce::AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) {
                                            return v <= -59.9f ? juce::String ("-inf dB") : juce::String (v, 1) + " dB";
@@ -319,7 +322,7 @@ struct ParameterBinding::Raw
     A chOn, chRate, chDepth, chMix, dlOn, dlTime, dlFb, dlMix, rvOn, rvSize, rvDecay, rvMix;
     A tune, glide, unison, legato, pbRange, vintage;
     A arpOn, arpMode, arpOct, arpRate, arpGate, arpSwing, arpLatch;
-    A fltSlope, fltMode, hpf, voiceMode, osc1Oct, osc2Oct;
+    A fltSlope, fltMode, hpf, voiceMode, osc1Oct, osc2Oct, master;
     A ecOn, ecMode, ecRate, ecInt, ecBass, ecTreb, ecWow, ecIn, ecVol, ecRev;
     std::array<A, 8> trimTune, trimCut;
     A fzOn, fzSus, fzTone, fzVol, fzMix, phOn, phRate, phDepth, phFb, phMix, chMode, dlSync, dlDiv, dlPing, rvType;
@@ -394,6 +397,7 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     r.phFb = get (P::phaser_fb); r.phMix = get (P::phaser_mix); r.chMode = get (P::chorus_mode); r.dlSync = get (P::delay_sync);
     r.dlDiv = get (P::delay_div); r.dlPing = get (P::delay_pingpong); r.rvType = get (P::reverb_type);
     r.voiceMode = get (P::voice_mode);
+    r.master = get (P::master_volume);
     r.ecOn = get (P::echo_on); r.ecMode = get (P::echo_mode); r.ecRate = get (P::echo_rate); r.ecInt = get (P::echo_intensity);
     r.ecBass = get (P::echo_bass); r.ecTreb = get (P::echo_treble); r.ecWow = get (P::echo_wow); r.ecIn = get (P::echo_input);
     r.ecVol = get (P::echo_volume); r.ecRev = get (P::echo_reverb);
@@ -460,6 +464,7 @@ void ParameterBinding::fill (augur::SynthParams& p) noexcept
     p.chorusMode = i (r.chMode); p.delaySync = b (r.dlSync); p.delayDivision = i (r.dlDiv); p.delayPingPong = b (r.dlPing);
     p.reverbType = i (r.rvType);
     p.voiceMode = i (r.voiceMode);
+    p.masterVolumeDb = f (r.master);
     p.echoOn = b (r.ecOn); p.echoMode = i (r.ecMode); p.echoRate = f (r.ecRate); p.echoIntensity = f (r.ecInt);
     p.echoBass = f (r.ecBass); p.echoTreble = f (r.ecTreb); p.echoWow = f (r.ecWow); p.echoInput = f (r.ecIn);
     p.echoVolume = f (r.ecVol); p.echoReverb = f (r.ecRev);

@@ -42,7 +42,8 @@ namespace augur5::params
     inline constexpr auto flt_velocity = "flt_velocity"; // 0..1
 
     // ---------- AMPLIFIER ----------
-    inline constexpr auto amp_level    = "amp_level";    // dB -inf..+6
+    inline constexpr auto amp_level    = "amp_level";    // dB -inf..+6 (part of each preset: its loudness match)
+    inline constexpr auto master_volume = "master_volume"; // dB -60..+6: instrument output, NOT stored in presets
     inline constexpr auto amp_velocity = "amp_velocity"; // 0..1
     inline constexpr auto at_amount    = "at_amount";    // aftertouch 0..1
 

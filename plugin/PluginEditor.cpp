@@ -274,6 +274,9 @@ public:
             add (std::make_unique<FxLed> (state, id), { to.getRight() - 44, to.getY() + 14, 22, 14 });
         }
 
+        // Master volume: instrument output, independent of the presets (their LEVEL matches their loudness).
+        knob (P::master_volume, "MASTER", 36, 2112, 12);
+
         // Header (the preset box sits in the middle of the wide panel)
         prevPreset = add (std::make_unique<ArrowButton> (false), { presetBoxX + 6, 27, 30, 30 });
         nextPreset = add (std::make_unique<ArrowButton> (true), { presetBoxX + 264, 27, 30, 30 });

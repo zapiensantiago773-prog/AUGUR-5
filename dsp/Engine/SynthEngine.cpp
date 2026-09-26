@@ -547,7 +547,7 @@ void SynthEngine::controlUpdate() noexcept
     };
 
     const float cutoffOct = std::log2 (std::clamp (params.cutoffHz, 10.0f, 25000.0f));
-    const float level = dbToGain (params.levelDb);
+    const float level = dbToGain (params.levelDb) * dbToGain (params.masterVolumeDb);
     const auto onOff = [] (bool b) { return b ? 1.0f : 0.0f; };
 
     if (! paramsInitialised)

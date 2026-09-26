@@ -12,7 +12,7 @@ namespace augur5::ui
 using APVTS = juce::AudioProcessorValueTreeState;
 
 //==============================================================================
-// Rotary knob with ticks and label. Bounds: (size + 24) x (size + 34) like the mockup's Knob.
+// Rotary knob with ticks and label. Bounds: (size + 24) x (size + 42): room below for the enlarged label.
 // Drag vertically; Shift = fine; double-click = default; value bubble while dragging.
 class Knob final : public juce::Component
 {
@@ -21,7 +21,7 @@ public:
 
     // Labels may be wider than the knob: the component carries a side margin that ignores clicks.
     static constexpr int labelMargin = 18;
-    static juce::Rectangle<int> boundsFor (int size) { return { -labelMargin, 0, size + 24 + 2 * labelMargin, size + 34 }; }
+    static juce::Rectangle<int> boundsFor (int size) { return { -labelMargin, 0, size + 24 + 2 * labelMargin, size + 42 }; }
     bool hitTest (int x, int y) override { return slider.getBounds().contains (x, y); }
     void paint (juce::Graphics&) override;
     void resized() override;

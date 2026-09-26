@@ -86,6 +86,7 @@ struct SynthParams
 
     // Amplifier
     float levelDb = -6.0f; // <= -60 means silence
+    float masterVolumeDb = 0.0f; // instrument output on top of the preset level
     float ampVelocity = 0.5f;
     float aftertouchAmount = 0.0f;
 

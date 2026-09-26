@@ -333,3 +333,9 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
 - Tests: posición de las cabezas por modo, runaway acotado, RT60 del muelle y determinismo con bloques aleatorios.
 - CPU a 48 kHz: +2.9 % el tape echo con muelles, +1.8 % la reverb de muelles.
 - 6 presets nuevos (168 sonidos): Dub Tape Chords, Runaway Tape Lead, Spring Tine Keys, Tape Loop Pad, Echo Chamber Pluck y Spring Drip Stab.
+
+## D-032 · MASTER VOLUME y etiquetas completas (2026-09-26)
+- **MASTER** (`master_volume`, −60 … +6 dB, por defecto 0 dB), en la cabecera junto a UNDO. Se multiplica por el LEVEL del preset con el mismo suavizado.
+  - LEVEL (`amp_level`) sigue siendo parte de cada sonido: es su nivelación de volumen.
+  - MASTER es global y no se guarda en presets: `PresetManager::isGlobalSetting` lo excluye (igual que QUALITY y OFFLINE QUALITY) al restablecer, cargar y guardar presets de usuario. Sí se guarda con la sesión del DAW.
+- **Corrección** (reporte del usuario: "las letras se cortan de la mitad para abajo"): al agrandar el texto (D-030), la etiqueta de cada perilla quedaba más alta que el área de su componente y se recortaba. La perilla ahora reserva size + 42 px de alto (antes + 34) y un área de etiqueta de 20 px.
