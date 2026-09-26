@@ -125,7 +125,12 @@ namespace augur5::params
     inline constexpr auto delay_sync     = "delay_sync";     // bool
     inline constexpr auto delay_div      = "delay_div";      // choice: 1/32 .. 1 BAR (when synced)
     inline constexpr auto delay_pingpong = "delay_pingpong"; // bool
-    inline constexpr auto reverb_type    = "reverb_type";    // choice: HALL, PLATE
+    inline constexpr auto reverb_type    = "reverb_type";    // choice: HALL, PLATE, SPRING
+
+    // ---------- TAPE ECHO (multi-head tape loop + spring) ----------
+    inline constexpr auto echo_on = "echo_on", echo_mode = "echo_mode", echo_rate = "echo_rate", echo_intensity = "echo_intensity",
+                          echo_bass = "echo_bass", echo_treble = "echo_treble", echo_wow = "echo_wow", echo_input = "echo_input",
+                          echo_volume = "echo_volume", echo_reverb = "echo_reverb";
 
     // ---------- VOICE MODE / TRIMS ----------
     inline constexpr auto voice_mode = "voice_mode"; // choice: POLY, DUO

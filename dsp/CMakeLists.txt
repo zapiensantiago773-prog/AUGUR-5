@@ -30,6 +30,10 @@ add_library(augur_dsp STATIC
     Effects/Phaser.cpp
     Effects/PlateReverb.h
     Effects/PlateReverb.cpp
+    Effects/SpringReverb.h
+    Effects/SpringReverb.cpp
+    Effects/TapeEcho.h
+    Effects/TapeEcho.cpp
     Effects/Chorus.h
     Effects/Chorus.cpp
     Effects/TapeDelay.h

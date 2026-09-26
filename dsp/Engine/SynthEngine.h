@@ -4,6 +4,8 @@
 #include "Effects/Fuzz.h"
 #include "Effects/Phaser.h"
 #include "Effects/PlateReverb.h"
+#include "Effects/SpringReverb.h"
+#include "Effects/TapeEcho.h"
 #include "Effects/Reverb.h"
 #include "Effects/TapeDelay.h"
 #include "Engine/ChunkSignals.h"
@@ -147,9 +149,9 @@ private:
     LinearSmoother smLevel, smMixRing, smMixSub, smCrossMod;
     double lfo2Phase = 0.0; // free-running LFO 2 (voices start from it when not retriggered)
     float chorusMix = 0.0f, delayMix = 0.0f, reverbMix = 0.0f, fxCoeff = 0.1f;
-    float fuzzMix = 0.0f, phaserMix = 0.0f, hallMix = 0.0f, plateMix = 0.0f;
+    float fuzzMix = 0.0f, phaserMix = 0.0f, hallMix = 0.0f, plateMix = 0.0f, springMix = 0.0f, echoMix = 0.0f;
     bool chorusActive = false, delayActive = false, reverbActive = false;
-    bool fuzzActive = false, phaserActive = false, plateActive = false;
+    bool fuzzActive = false, phaserActive = false, plateActive = false, springActive = false, echoActive = false;
 
     // Output stage
     std::array<float, ChunkSignals::maxSamples> busL {}, busR {};
@@ -161,6 +163,8 @@ private:
     TapeDelay delay;
     Reverb reverb;
     PlateReverb plate;
+    SpringReverb springReverb;
+    TapeEcho tapeEcho;
     Fuzz fuzz;
     Phaser phaser;
 };

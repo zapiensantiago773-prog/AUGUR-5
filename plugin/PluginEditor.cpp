@@ -246,7 +246,7 @@ public:
         toggle (P::delay_sync, "SYNC", 752, 1230, 72);
         dropdown (P::delay_div, 832, 1230, 76);
         toggle (P::delay_pingpong, "PING-PONG", 916, 1230, 116);
-        choice (P::reverb_type, { "HALL", "PLATE" }, { 64, 64 }, 752, 1280);
+        choice (P::reverb_type, { "HALL", "PLATE", "SPRING" }, { 58, 62, 70 }, 752, 1280);
 
         for (int v = 1; v <= P::kNumTrims; ++v)
         {
@@ -256,6 +256,18 @@ public:
         }
 
         moveExpansion = false;
+
+        // ---- Row 4: tape echo (full width, like a rack unit) ----
+        add (std::make_unique<FxLed> (state, P::echo_on), { width - 52 - 44, 936, 22, 14 });
+        dropdown (P::echo_mode, 72, 978, 176);
+        {
+            const char* ids[8] = { P::echo_rate, P::echo_intensity, P::echo_bass, P::echo_treble,
+                                   P::echo_wow, P::echo_input, P::echo_volume, P::echo_reverb };
+            const char* labels[8] = { "REPEAT", "INTENSITY", "BASS", "TREBLE", "WOW", "INPUT", "ECHO", "REVERB" };
+            for (int k = 0; k < 8; ++k)
+                knob (ids[k], labels[k], 44, 300 + 112 * k + (k >= 6 ? 30 : 0), 962);
+        }
+        echoMode = state.getRawParameterValue (P::echo_mode);
         for (const auto& [id, panel] : { std::pair { P::fuzz_on, 6 }, std::pair { P::phaser_on, 7 } })
         {
             const auto to = expansionPanels()[static_cast<size_t> (panel)].to;
@@ -288,6 +300,11 @@ public:
         for (auto* e : envelopes)
             e->poll();
         voices->poll();
+        if (echoMode != nullptr && juce::roundToInt (echoMode->load()) != shownEchoMode)
+        {
+            shownEchoMode = juce::roundToInt (echoMode->load());
+            repaint (echoPanel().toNearestInt());
+        }
         const auto name = presetName ? presetName() : juce::String();
         if (name != shownPreset)
         {
@@ -358,6 +375,8 @@ public:
             drawSubPanel (g, { fxBoxX (f), 776.0f, 211.33f, 118.0f }, fxNames[f], 11.0f);
         drawPanel (g, { 1238, 732, 246, 178 }, "GLOBAL");
 
+        paintTapeEcho (g);
+
         // Expansion block (right-hand side)
         for (const auto& p : expansionPanels())
             drawPanel (g, p.to.toFloat(), p.title);
@@ -383,20 +402,20 @@ public:
 
         // Footer
         g.setColour (juce::Colour (0xff1f1f23));
-        g.fillRect (52.0f, 970.0f, w - 104.0f, 1.0f);
-        drawLogo (g, 52.0f, 984.0f, 30.0f / 34.0f, colours::headerButton);
-        drawTracked (g, juce::String (juce::CharPointer_UTF8 ("AUGUR-5 \xe2\x80\x9c" "3340\xe2\x80\x9d")), { 96, 984, 400, 18 },
+        g.fillRect (52.0f, 1162.0f, w - 104.0f, 1.0f);
+        drawLogo (g, 52.0f, 1176.0f, 30.0f / 34.0f, colours::headerButton);
+        drawTracked (g, juce::String (juce::CharPointer_UTF8 ("AUGUR-5 \xe2\x80\x9c" "3340\xe2\x80\x9d")), { 96, 1176, 400, 18 },
                      Fonts::michroma (11.0f, 0.24f), colours::headerButton, juce::Justification::centredLeft);
-        drawTracked (g, "A  TONAL LAB  INSTRUMENT", { w * 0.5f - 200.0f, 984, 400, 18 }, Fonts::michroma (10.0f, 0.3f),
+        drawTracked (g, "A  TONAL LAB  INSTRUMENT", { w * 0.5f - 200.0f, 1176, 400, 18 }, Fonts::michroma (10.0f, 0.3f),
                      colours::accent.withAlpha (0.85f), juce::Justification::centred);
-        drawTracked (g, "ANALOG SOUL  /  DIGITAL PRECISION", { w - 452.0f, 984, 400, 18 }, Fonts::jost (10.0f, false, 0.26f),
+        drawTracked (g, "ANALOG SOUL  /  DIGITAL PRECISION", { w - 452.0f, 1176, 400, 18 }, Fonts::jost (10.0f, false, 0.26f),
                      colours::caption, juce::Justification::centredRight);
     }
 
 private:
     static float fxBoxX (int f) { return 552.0f + 223.33f * static_cast<float> (f); }
     // Wide layout: the original three rows on the left, the expansion modules in a block on the right.
-    static constexpr int width = 2608, height = 1024;
+    static constexpr int width = 2608, height = 1216;
     static constexpr int headerShift = width - 1536;
     static constexpr int presetBoxX = width / 2 - 150;
     static juce::Rectangle<float> presetBox() { return { static_cast<float> (presetBoxX), 22.0f, 300.0f, 40.0f }; }
@@ -432,6 +451,81 @@ private:
         return p;
     }
     bool moveExpansion = false;
+    std::atomic<float>* echoMode = nullptr;
+    int shownEchoMode = -1;
+
+    static juce::Rectangle<float> echoPanel() { return { 52.0f, 922.0f, static_cast<float> (width - 104), 190.0f }; }
+
+    // Tape echo row: the selector, the playback heads it uses and a drawing of the tape loop.
+    void paintTapeEcho (juce::Graphics& g)
+    {
+        static constexpr int headMask[12] = { 1, 2, 4, 6, 1, 2, 4, 3, 6, 5, 7, 0 };
+        const int mode = juce::jlimit (0, 11, shownEchoMode < 0 ? 3 : shownEchoMode);
+        const bool reverb = mode >= 4;
+
+        const auto panel = echoPanel();
+        drawPanel (g, panel, "TAPE ECHO");
+        drawCaption (g, "MODE SELECTOR", 72, 962);
+        drawCaption (g, "PLAYBACK HEADS", 72, 1022);
+        for (int h = 0; h < 3; ++h)
+        {
+            const juce::Rectangle<float> led { 72.0f + 46.0f * static_cast<float> (h), 1040.0f, 38.0f, 26.0f };
+            const bool on = (headMask[mode] >> h & 1) != 0;
+            g.setColour (on ? colours::accent.withAlpha (0.9f) : colours::ledOff);
+            g.fillRoundedRectangle (led, 4.0f);
+            drawTracked (g, juce::String (h + 1), led, Fonts::jost (11.0f, true), on ? juce::Colours::black : colours::caption,
+                         juce::Justification::centred);
+        }
+        {
+            const juce::Rectangle<float> led { 210.0f, 1040.0f, 64.0f, 26.0f };
+            g.setColour (reverb ? colours::accent.withAlpha (0.9f) : colours::ledOff);
+            g.fillRoundedRectangle (led, 4.0f);
+            drawTracked (g, "SPRING", led, Fonts::jost (9.0f, true, 0.1f), reverb ? juce::Colours::black : colours::caption,
+                         juce::Justification::centred);
+        }
+
+        // Tape loop: two reels, the tape path and the heads (record + three playback heads).
+        const float x0 = 1300.0f, y0 = 952.0f, x1 = panel.getRight() - 90.0f;
+        const float reelR = 58.0f, cy = y0 + 70.0f;
+        const juce::Point<float> leftReel { x0 + reelR, cy }, rightReel { x1 - reelR, cy };
+        for (const auto& c : { leftReel, rightReel })
+        {
+            g.setColour (juce::Colour (0xff111113));
+            g.fillEllipse (c.x - reelR, c.y - reelR, reelR * 2.0f, reelR * 2.0f);
+            g.setColour (colours::panelBorder.brighter (0.3f));
+            g.drawEllipse (c.x - reelR, c.y - reelR, reelR * 2.0f, reelR * 2.0f, 1.5f);
+            g.drawEllipse (c.x - 12.0f, c.y - 12.0f, 24.0f, 24.0f, 1.5f);
+            for (int spoke = 0; spoke < 3; ++spoke)
+            {
+                const float a = juce::MathConstants<float>::twoPi * static_cast<float> (spoke) / 3.0f;
+                g.drawLine (c.x + 14.0f * std::cos (a), c.y + 14.0f * std::sin (a), c.x + (reelR - 8.0f) * std::cos (a),
+                            c.y + (reelR - 8.0f) * std::sin (a), 1.2f);
+            }
+        }
+        // Tape path across the head block, below the reels.
+        const float tapeY = cy + reelR + 6.0f;
+        g.setColour (juce::Colour (0xff6a4a2f));
+        g.drawLine (leftReel.x, cy - reelR, rightReel.x, cy - reelR, 2.0f);
+        g.drawLine (leftReel.x - reelR + 2.0f, cy, leftReel.x - reelR + 2.0f, tapeY - 6.0f, 2.0f);
+        g.drawLine (rightReel.x + reelR - 2.0f, cy, rightReel.x + reelR - 2.0f, tapeY - 6.0f, 2.0f);
+        g.drawLine (leftReel.x - reelR + 2.0f, tapeY - 6.0f, rightReel.x + reelR - 2.0f, tapeY - 6.0f, 2.0f);
+
+        const float span = (rightReel.x - leftReel.x) - 2.0f * reelR;
+        const float headY = tapeY - 22.0f;
+        const auto head = [&] (float x, const juce::String& text, bool on, bool record) {
+            const juce::Rectangle<float> r { x - 17.0f, headY, 34.0f, 18.0f };
+            g.setColour (on ? colours::accent : (record ? colours::label.darker (0.3f) : colours::ledOff));
+            g.fillRoundedRectangle (r, 3.0f);
+            drawTracked (g, text, r.translated (0.0f, -20.0f), Fonts::jost (9.0f, true, 0.1f), on ? colours::accent : colours::caption,
+                         juce::Justification::centred);
+        };
+        const float start = leftReel.x + reelR + span * 0.12f;
+        const float unit = span * 0.2f;
+        head (start, "REC", false, true);
+        const float ratio[3] = { 1.0f, 1.95f, 2.9f };
+        for (int h = 0; h < 3; ++h)
+            head (start + unit * ratio[h], "HEAD " + juce::String (h + 1), (headMask[mode] >> h & 1) != 0, false);
+    }
 
     void paintHeader (juce::Graphics& g)
     {

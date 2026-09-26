@@ -246,7 +246,22 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         layout.add (std::make_unique<APC> (pid (P::delay_div), "Delay Division", divs, 6));
     }
     layout.add (toggle (P::delay_pingpong, "Delay Ping-Pong", false));
-    layout.add (std::make_unique<APC> (pid (P::reverb_type), "Reverb Type", juce::StringArray { "HALL", "PLATE" }, 0));
+    layout.add (std::make_unique<APC> (pid (P::reverb_type), "Reverb Type", juce::StringArray { "HALL", "PLATE", "SPRING" }, 0));
+
+    // Tape echo
+    layout.add (toggle (P::echo_on, "Tape Echo On", false));
+    layout.add (std::make_unique<APC> (pid (P::echo_mode), "Tape Echo Mode",
+                                       juce::StringArray { "1: HEAD 1", "2: HEAD 2", "3: HEAD 3", "4: HEADS 2+3", "5: H1 + REV", "6: H2 + REV",
+                                                           "7: H3 + REV", "8: H1+2 + REV", "9: H2+3 + REV", "10: H1+3 + REV",
+                                                           "11: ALL + REV", "12: REVERB" }, 3));
+    layout.add (percent (P::echo_rate, "Tape Echo Repeat Rate", 0.5f));
+    layout.add (percent (P::echo_intensity, "Tape Echo Intensity", 0.45f));
+    layout.add (bipolar (P::echo_bass, "Tape Echo Bass", 0.0f));
+    layout.add (bipolar (P::echo_treble, "Tape Echo Treble", 0.0f));
+    layout.add (percent (P::echo_wow, "Tape Echo Wow/Flutter", 0.4f));
+    layout.add (percent (P::echo_input, "Tape Echo Input", 0.5f));
+    layout.add (percent (P::echo_volume, "Tape Echo Volume", 0.5f));
+    layout.add (percent (P::echo_reverb, "Tape Echo Reverb", 0.35f));
 
     // Voice mode / trims
     layout.add (std::make_unique<APC> (pid (P::voice_mode), "Voice Mode", juce::StringArray { "POLY", "DUO" }, 0));
@@ -305,6 +320,7 @@ struct ParameterBinding::Raw
     A tune, glide, unison, legato, pbRange, vintage;
     A arpOn, arpMode, arpOct, arpRate, arpGate, arpSwing, arpLatch;
     A fltSlope, fltMode, hpf, voiceMode, osc1Oct, osc2Oct;
+    A ecOn, ecMode, ecRate, ecInt, ecBass, ecTreb, ecWow, ecIn, ecVol, ecRev;
     std::array<A, 8> trimTune, trimCut;
     A fzOn, fzSus, fzTone, fzVol, fzMix, phOn, phRate, phDepth, phFb, phMix, chMode, dlSync, dlDiv, dlPing, rvType;
 
@@ -378,6 +394,9 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     r.phFb = get (P::phaser_fb); r.phMix = get (P::phaser_mix); r.chMode = get (P::chorus_mode); r.dlSync = get (P::delay_sync);
     r.dlDiv = get (P::delay_div); r.dlPing = get (P::delay_pingpong); r.rvType = get (P::reverb_type);
     r.voiceMode = get (P::voice_mode);
+    r.ecOn = get (P::echo_on); r.ecMode = get (P::echo_mode); r.ecRate = get (P::echo_rate); r.ecInt = get (P::echo_intensity);
+    r.ecBass = get (P::echo_bass); r.ecTreb = get (P::echo_treble); r.ecWow = get (P::echo_wow); r.ecIn = get (P::echo_input);
+    r.ecVol = get (P::echo_volume); r.ecRev = get (P::echo_reverb);
     r.osc1Oct = get (P::osc1_oct);
     r.osc2Oct = get (P::osc2_oct);
     for (int v = 0; v < P::kNumTrims; ++v)
@@ -441,6 +460,9 @@ void ParameterBinding::fill (augur::SynthParams& p) noexcept
     p.chorusMode = i (r.chMode); p.delaySync = b (r.dlSync); p.delayDivision = i (r.dlDiv); p.delayPingPong = b (r.dlPing);
     p.reverbType = i (r.rvType);
     p.voiceMode = i (r.voiceMode);
+    p.echoOn = b (r.ecOn); p.echoMode = i (r.ecMode); p.echoRate = f (r.ecRate); p.echoIntensity = f (r.ecInt);
+    p.echoBass = f (r.ecBass); p.echoTreble = f (r.ecTreb); p.echoWow = f (r.ecWow); p.echoInput = f (r.ecIn);
+    p.echoVolume = f (r.ecVol); p.echoReverb = f (r.ecRev);
     p.osc1Octave = i (r.osc1Oct) - 2;
     p.osc2Octave = i (r.osc2Oct) - 2;
     for (size_t v = 0; v < 8; ++v)

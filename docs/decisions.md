@@ -311,3 +311,25 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
   - Rótulos y captions más claros, con más contraste sobre el fondo negro.
   - Todo texto que no cabe en su área se reduce solo (hasta el 60 %) en lugar de cortarse.
   - La etiqueta de cada perilla se limita al ancho de su perilla, así que nunca toca la vecina.
+
+## D-031 · TAPE ECHO (multicabezal de cinta) y reverb de muelles (2026-09-26)
+- Pedido del usuario: el reverb no le gustó; quiere algo tipo la unidad clásica de eco de cinta con muelles de los 70. No se usan sus marcas: el módulo se llama "TAPE ECHO" y la reverb "SPRING".
+- **`SpringReverb`**: tres muelles. Cada uno es un lazo de realimentación alrededor de una cadena dispersiva de 48 all-pass estirados, H(z) = (a + z^-K)/(1 + a z^-K), con K ≈ fs/8 kHz y a = 0.62 (modelo de muelle de Parker y Välimäki).
+  - La cadena retrasa más los graves, así que cada transitorio se convierte en el "chirp" característico del muelle.
+  - En el lazo hay un retardo de ida y vuelta (37/43/51 ms), una caída a 4.5 kHz y una deriva aleatoria lenta del 0.3 %.
+  - La entrada pasa por un HP de 180 Hz, porque el muelle es delgado en graves.
+  - Salida: muelle 1 a L, muelle 2 a R y muelle 3 al centro.
+  - RT60 medido dentro de ±40 % (test a 1.5 y 3 s). Es además el tercer tipo de la reverb principal (HALL / PLATE / SPRING): SIZE fija la tensión y DECAY el RT60.
+- **`TapeEcho`**:
+  - Cinta en bucle con cabeza de grabación y 3 de reproducción (1 : 1.95 : 2.9). REPEAT RATE va de 250 a 55 ms en la cabeza 1, con inercia de transporte: el cambio de velocidad desliza el pitch.
+  - Wow de 0.55 Hz, flutter de 7.3 Hz y deriva aleatoria, con profundidad regulable.
+  - Grabación: entrada con LP de 7 kHz y saturación de cinta suave y algo asimétrica; INPUT controla el drive.
+  - Reproducción: ancho de banda 110 Hz–3.8 kHz y BASS/TREBLE (±) en el preamp. Como el preamp está antes del lazo, los controles también dan forma a las repeticiones.
+  - INTENSITY llega a una ganancia de lazo de 1.15, así que se desboca en autooscilación, y la saturación lo contiene (test: pico acotado con todo al máximo).
+  - Selector de 12 modos: 1–4 solo eco (H1, H2, H3, H2+3); 5–11 eco + muelles (H1, H2, H3, H1+2, H2+3, H1+3, todas); 12 solo muelles. Las cabezas 1 y 2 van algo abiertas en estéreo.
+  - El muelle recibe la entrada más el eco.
+- Cadena: … DELAY → TAPE ECHO → REVERB.
+- Panel: fila nueva a lo ancho (lienzo 2608×1216; en pantallas de 1920 queda a la misma escala que antes). Incluye selector de modo, indicadores de cabezas y muelle, 8 perillas y un dibujo del bucle de cinta con las cabezas activas encendidas.
+- Tests: posición de las cabezas por modo, runaway acotado, RT60 del muelle y determinismo con bloques aleatorios.
+- CPU a 48 kHz: +2.9 % el tape echo con muelles, +1.8 % la reverb de muelles.
+- 6 presets nuevos (168 sonidos): Dub Tape Chords, Runaway Tape Lead, Spring Tine Keys, Tape Loop Pad, Echo Chamber Pluck y Spring Drip Stab.

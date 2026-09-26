@@ -60,6 +60,8 @@ const std::map<std::string, Setter>& setters()
         { "phaser_on", [] (P& p, float v) { p.phaserOn = v > 0.5f; } },
         { "reverb_type", [] (P& p, float v) { p.reverbType = static_cast<int> (v); } },
         { "chorus_mode", [] (P& p, float v) { p.chorusMode = static_cast<int> (v); } },
+        { "echo_on", [] (P& p, float v) { p.echoOn = v > 0.5f; } },
+        { "echo_mode", [] (P& p, float v) { p.echoMode = static_cast<int> (v); } },
         { "flt_slope", [] (P& p, float v) { p.filterSlope = static_cast<int> (v); } },
         { "flt_mode", [] (P& p, float v) { p.filterMode = static_cast<int> (v); } },
         { "hpf_cutoff", [] (P& p, float v) { p.hpfHz = v; } },

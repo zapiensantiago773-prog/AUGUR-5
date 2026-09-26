@@ -381,7 +381,7 @@
         { "Hollow Pipe Pluck", {
             { "flt_model", 3.0f }, { "flt_mode", 1.0f }, { "flt_cutoff", 900.0f }, { "flt_reso", 0.42f }, { "flt_env_amt", 0.35f },
             { "fenv_d", 0.3f }, { "fenv_s", 0.0f }, { "mix_osc2", 0.6f }, { "aenv_a", 0.001f }, { "aenv_d", 0.7f }, { "aenv_s", 0.0f }, { "aenv_r", 0.5f },
-            { "delay_on", 1.0f }, { "delay_sync", 1.0f }, { "delay_div", 6.0f }, { "delay_mix", 0.25f }, { "amp_level", -14.6f } }, "Pluck" },
+            { "delay_on", 1.0f }, { "delay_sync", 1.0f }, { "delay_div", 6.0f }, { "delay_mix", 0.25f }, { "amp_level", -18.0f } }, "Pluck" },
 
         // ================= KEYS =================
         { "Tine Piano FM", {
@@ -391,12 +391,12 @@
             { "mm6_src", 5.0f }, { "mm6_dst", 8.0f }, { "mm6_amt", 0.2f }, { "flt_cutoff", 3500.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 2.5f }, { "aenv_s", 0.2f }, { "aenv_r", 0.8f },
             { "lfo2_wave", 0.0f }, { "lfo2_rate", 4.5f }, { "mm7_src", 9.0f }, { "mm7_dst", 6.0f }, { "mm7_amt", -0.15f },
-            { "chorus_on", 1.0f }, { "chorus_mode", 1.0f }, { "chorus_mix", 0.3f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.2f }, { "amp_level", -11.9f } }, "Keys" },
+            { "chorus_on", 1.0f }, { "chorus_mode", 1.0f }, { "chorus_mix", 0.3f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.2f }, { "amp_level", -12.0f } }, "Keys" },
 
         { "Warm Clav Bite", {
             { "flt_model", 4.0f }, { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 18.0f }, { "mix_osc2", 0.0f },
             { "flt_cutoff", 700.0f }, { "flt_reso", 0.45f }, { "flt_env_amt", 0.4f }, { "fenv_d", 0.18f }, { "fenv_s", 0.1f },
-            { "aenv_a", 0.001f }, { "aenv_d", 0.5f }, { "aenv_s", 0.3f }, { "aenv_r", 0.1f }, { "phaser_on", 1.0f }, { "phaser_mix", 0.3f }, { "amp_level", -13.1f } }, "Keys" },
+            { "aenv_a", 0.001f }, { "aenv_d", 0.5f }, { "aenv_s", 0.3f }, { "aenv_r", 0.1f }, { "phaser_on", 1.0f }, { "phaser_mix", 0.3f }, { "amp_level", -14.1f } }, "Keys" },
 
         { "Ring Bell Keys", {
             { "osc2_freq", 17.0f }, { "osc2_tri", 1.0f }, { "osc2_saw", 0.0f }, { "mix_osc1", 0.3f }, { "mix_osc2", 0.2f }, { "mix_ring", 0.7f },
@@ -448,7 +448,7 @@
         { "Bite Chord Stab", {
             { "flt_model", 4.0f }, { "mix_osc2", 0.6f }, { "flt_cutoff", 800.0f }, { "flt_reso", 0.55f }, { "flt_env_amt", 0.45f },
             { "fenv_d", 0.15f }, { "fenv_s", 0.0f }, { "aenv_a", 0.001f }, { "aenv_d", 0.25f }, { "aenv_s", 0.0f }, { "aenv_r", 0.2f },
-            { "delay_on", 1.0f }, { "delay_sync", 1.0f }, { "delay_div", 5.0f }, { "delay_mix", 0.25f }, { "amp_level", -9.6f } }, "Stab" },
+            { "delay_on", 1.0f }, { "delay_sync", 1.0f }, { "delay_div", 5.0f }, { "delay_mix", 0.25f }, { "amp_level", -10.0f } }, "Stab" },
 
         { "Phased Stab", {
             { "mix_osc2", 0.7f }, { "osc2_freq", 7.0f }, { "flt_cutoff", 1500.0f }, { "flt_env_amt", 0.3f }, { "fenv_d", 0.3f }, { "fenv_s", 0.0f },
@@ -465,7 +465,7 @@
             { "flt_model", 3.0f }, { "flt_mode", 1.0f }, { "flt_cutoff", 700.0f }, { "flt_reso", 0.55f }, { "mix_osc2", 0.7f }, { "osc2_freq", 7.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.3f }, { "aenv_s", 0.0f }, { "aenv_r", 0.2f },
             { "delay_on", 1.0f }, { "delay_sync", 1.0f }, { "delay_div", 6.0f }, { "delay_fb", 0.65f }, { "delay_mix", 0.4f },
-            { "reverb_on", 1.0f }, { "reverb_type", 1.0f }, { "reverb_mix", 0.3f }, { "amp_level", -17.3f } }, "Stab" },
+            { "reverb_on", 1.0f }, { "reverb_type", 1.0f }, { "reverb_mix", 0.3f }, { "amp_level", -22.9f } }, "Stab" },
 
         // ================= ARP (built-in arpeggiator) =================
         { "Up Pulse Sequence", {
@@ -609,3 +609,41 @@
             { "lfo2_wave", 0.0f }, { "lfo2_rate", 0.05f }, { "lfo2_retrig", 0.0f }, { "mm5_src", 9.0f }, { "mm5_dst", 4.0f }, { "mm5_amt", 0.3f },
             { "aenv_a", 4.0f }, { "aenv_s", 1.0f }, { "aenv_r", 6.0f },
             { "reverb_on", 1.0f }, { "reverb_size", 1.0f }, { "reverb_decay", 16.0f }, { "reverb_mix", 0.5f }, { "amp_level", -4.1f } }, "Atmos & FX" },
+
+        // ================= TAPE ECHO & SPRING =================
+        { "Dub Tape Chords", {
+            { "mix_osc2", 0.7f }, { "osc2_fine", 7.0f }, { "flt_slope", 1.0f }, { "flt_cutoff", 900.0f }, { "flt_env_amt", 0.35f },
+            { "fenv_d", 0.25f }, { "fenv_s", 0.0f }, { "aenv_a", 0.002f }, { "aenv_d", 0.35f }, { "aenv_s", 0.0f }, { "aenv_r", 0.25f },
+            { "echo_on", 1.0f }, { "echo_mode", 8.0f }, { "echo_rate", 0.35f }, { "echo_intensity", 0.6f }, { "echo_bass", -0.3f },
+            { "echo_treble", -0.2f }, { "echo_wow", 0.5f }, { "echo_volume", 0.6f }, { "echo_reverb", 0.4f }, { "amp_level", -4.2f } }, "Stab" },
+
+        { "Runaway Tape Lead", {
+            { "voice_count", 1.0f }, { "legato", 1.0f }, { "glide", 0.05f }, { "mix_osc2", 0.6f }, { "osc2_fine", 5.0f },
+            { "flt_cutoff", 2200.0f }, { "flt_reso", 0.25f }, { "lfo_rate", 5.0f }, { "lfo_delay", 0.6f },
+            { "mm4_src", 3.0f }, { "mm4_dst", 0.0f }, { "mm4_amt", 0.08f },
+            { "echo_on", 1.0f }, { "echo_mode", 3.0f }, { "echo_rate", 0.55f }, { "echo_intensity", 0.8f }, { "echo_wow", 0.6f },
+            { "echo_input", 0.65f }, { "echo_volume", 0.55f }, { "amp_level", -0.2f } }, "Lead" },
+
+        { "Spring Tine Keys", {
+            { "osc2_tri", 1.0f }, { "osc2_saw", 0.0f }, { "osc2_freq", 12.0f }, { "mix_osc2", 0.5f }, { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f },
+            { "osc_xmod", 0.08f }, { "flt_cutoff", 2000.0f }, { "flt_env_amt", 0.3f }, { "flt_velocity", 0.4f }, { "fenv_d", 0.8f }, { "fenv_s", 0.2f },
+            { "aenv_a", 0.001f }, { "aenv_d", 2.2f }, { "aenv_s", 0.25f }, { "aenv_r", 0.7f },
+            { "reverb_on", 1.0f }, { "reverb_type", 2.0f }, { "reverb_size", 0.5f }, { "reverb_decay", 2.5f }, { "reverb_mix", 0.4f }, { "amp_level", -10.4f } }, "Keys" },
+
+        { "Tape Loop Pad", {
+            { "mix_osc2", 0.8f }, { "osc2_fine", 9.0f }, { "flt_cutoff", 1300.0f }, { "flt_reso", 0.2f },
+            { "aenv_a", 1.2f }, { "aenv_s", 1.0f }, { "aenv_r", 3.0f }, { "analog_age", 0.7f },
+            { "echo_on", 1.0f }, { "echo_mode", 10.0f }, { "echo_rate", 0.2f }, { "echo_intensity", 0.55f }, { "echo_treble", -0.4f },
+            { "echo_wow", 0.8f }, { "echo_volume", 0.45f }, { "echo_reverb", 0.5f }, { "amp_level", -8.5f } }, "Pad" },
+
+        { "Echo Chamber Pluck", {
+            { "mix_osc2", 0.6f }, { "osc2_freq", 12.0f }, { "flt_cutoff", 400.0f }, { "flt_reso", 0.35f }, { "flt_env_amt", 0.55f },
+            { "fenv_d", 0.25f }, { "fenv_s", 0.0f }, { "aenv_a", 0.001f }, { "aenv_d", 0.8f }, { "aenv_s", 0.0f }, { "aenv_r", 0.5f },
+            { "echo_on", 1.0f }, { "echo_mode", 7.0f }, { "echo_rate", 0.6f }, { "echo_intensity", 0.5f }, { "echo_volume", 0.55f },
+            { "echo_reverb", 0.45f }, { "amp_level", 1.9f } }, "Pluck" },
+
+        { "Spring Drip Stab", {
+            { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 30.0f }, { "mix_osc2", 0.5f }, { "osc2_freq", 7.0f },
+            { "flt_cutoff", 1500.0f }, { "flt_env_amt", 0.3f }, { "fenv_d", 0.15f }, { "fenv_s", 0.0f },
+            { "aenv_a", 0.001f }, { "aenv_d", 0.25f }, { "aenv_s", 0.0f }, { "aenv_r", 0.15f },
+            { "echo_on", 1.0f }, { "echo_mode", 11.0f }, { "echo_reverb", 0.8f }, { "amp_level", -4.6f } }, "Stab" },
