@@ -445,3 +445,64 @@ TEST_CASE ("Diagnostic: strongest spectral peaks of the driven filter per qualit
         std::printf ("\n");
     }
 }
+
+TEST_CASE ("DUO plays two detuned voices per note and releases both", "[engine][voices]")
+{
+    SynthParams p;
+    p.voiceMode = 1;
+    p.voiceCount = 8;
+    p.voiceDetune = 1.0f;
+    p.aenvR = 0.01f;
+    auto e = std::make_unique<SynthEngine>();
+    e->prepare (48000.0);
+    e->setParams (p);
+    std::vector<float> l (4800), r (4800);
+    const auto active = [&] {
+        int n = 0;
+        for (int v = 0; v < SynthEngine::maxVoices; ++v)
+            n += e->getVoiceLevel (v) > 0.0f ? 1 : 0;
+        return n;
+    };
+
+    e->noteOn (60, 0.8f);
+    e->process (l.data(), r.data(), 4800);
+    CHECK (active() == 2);
+    e->noteOn (64, 0.8f);
+    e->process (l.data(), r.data(), 4800);
+    CHECK (active() == 4);
+    e->noteOff (60);
+    e->noteOff (64);
+    for (int i = 0; i < 20; ++i)
+        e->process (l.data(), r.data(), 4800);
+    CHECK (active() == 0);
+}
+
+TEST_CASE ("Voice trims detune and re-voice individual voices", "[engine][voices]")
+{
+    SynthParams p;
+    p.mixOsc2 = 0.0f;
+    p.cutoffHz = 20000.0f;
+    p.resonance = 0.0f;
+    p.envAmount = 0.0f;
+    p.aenvS = 1.0f;
+    p.analogAge = 0.0f;
+    p.voiceDetune = 0.0f;
+    p.voiceCount = 1; // the first note always lands on voice 1
+    const auto pitchOf = [&] (const SynthParams& q) {
+        auto e = std::make_unique<SynthEngine>();
+        e->prepare (48000.0);
+        e->setParams (q);
+        e->noteOn (57, 1.0f);
+        std::vector<float> l (48000), r (48000);
+        e->process (l.data(), r.data(), 48000);
+        return augur::test::measureFrequency (l, 48000.0, 24000);
+    };
+    const double base = pitchOf (p);
+    auto q = p;
+    q.trimTune[0] = 50.0f;
+    const double trimmed = pitchOf (q);
+    CHECK_THAT (1200.0 * std::log2 (trimmed / base), Catch::Matchers::WithinAbs (50.0, 2.0));
+    q = p;
+    q.trimTune[1] = 50.0f; // another voice's trim leaves voice 1 alone
+    CHECK_THAT (1200.0 * std::log2 (pitchOf (q) / base), Catch::Matchers::WithinAbs (0.0, 1.0));
+}

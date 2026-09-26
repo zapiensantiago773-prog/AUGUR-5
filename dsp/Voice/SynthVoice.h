@@ -46,6 +46,7 @@ public:
     void noteOn (const NoteOn& n) noexcept;
     void noteOff() noexcept;
     void setPressure (float p) noexcept { polyPressure = p; }
+    void setTrimIndex (int index) noexcept { trimIndex = index; } // which of the 8 voice trims applies
 
     // Charges the voice's coupling capacitors (mixer AC coupling, VCF->VCA C4165) by running it silently,
     // as a powered-up instrument would have them. Non-realtime use (prepare, state/preset changes).
@@ -136,6 +137,7 @@ private:
     double sampleRate = 96000.0;
     int model = -1;          // 0 = CEM3340 (Rev 3), 1 = SSM2030 (Rev 1/2)
     int tunedAgeBucket = -1; // units/autotune are rebuilt when ANALOG AGE moves to another bucket
+    int trimIndex = 0;
 
     // Note state
     int note = -1;

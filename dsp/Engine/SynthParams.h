@@ -115,6 +115,9 @@ struct SynthParams
     float voiceDetune = 0.3f, voiceSpread = 0.3f, voicePan = 0.0f;
     int voiceCount = 5;
     float analogAge = 0.35f;
+    int voiceMode = 0; // 0 = POLY, 1 = DUO (two voices per note, detuned and spread)
+    std::array<float, 8> trimTune {};   // per-voice tuning trims, cents (voices 9..16 reuse 1..8)
+    std::array<float, 8> trimCutoff {}; // per-voice cutoff trims, octaves
 
     // Effects
     bool chorusOn = false;

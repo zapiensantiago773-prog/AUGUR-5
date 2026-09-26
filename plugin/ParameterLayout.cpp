@@ -248,6 +248,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (toggle (P::delay_pingpong, "Delay Ping-Pong", false));
     layout.add (std::make_unique<APC> (pid (P::reverb_type), "Reverb Type", juce::StringArray { "HALL", "PLATE" }, 0));
 
+    // Voice mode / trims
+    layout.add (std::make_unique<APC> (pid (P::voice_mode), "Voice Mode", juce::StringArray { "POLY", "DUO" }, 0));
+    for (int v = 1; v <= P::kNumTrims; ++v)
+    {
+        layout.add (std::make_unique<APF> (pid (P::trimTune (v)), "Voice " + juce::String (v) + " Tune Trim", Range (-50.0f, 50.0f), 0.0f, cents));
+        layout.add (std::make_unique<APF> (pid (P::trimCut (v)), "Voice " + juce::String (v) + " Cutoff Trim", Range (-1.0f, 1.0f), 0.0f,
+                                           juce::AudioParameterFloatAttributes().withStringFromValueFunction (
+                                               [] (float x, int) { return (x > 0.0f ? "+" : "") + juce::String (x, 2) + " oct"; })));
+    }
+
     // Quality
     layout.add (std::make_unique<APC> (pid (P::quality), "Quality", juce::StringArray { "ECO", "GREAT", "DIVINE" }, 1));
     layout.add (std::make_unique<APC> (pid (P::offline_quality), "Offline Quality", juce::StringArray { "SAME", "DIVINE" }, 1));
@@ -290,7 +300,8 @@ struct ParameterBinding::Raw
     A chOn, chRate, chDepth, chMix, dlOn, dlTime, dlFb, dlMix, rvOn, rvSize, rvDecay, rvMix;
     A tune, glide, unison, legato, pbRange, vintage;
     A arpOn, arpMode, arpOct, arpRate, arpGate, arpSwing, arpLatch;
-    A fltSlope, fltMode, hpf;
+    A fltSlope, fltMode, hpf, voiceMode;
+    std::array<A, 8> trimTune, trimCut;
     A fzOn, fzSus, fzTone, fzVol, fzMix, phOn, phRate, phDepth, phFb, phMix, chMode, dlSync, dlDiv, dlPing, rvType;
 
     // Rev 3 knob digitiser: 7 bits, two-step software hysteresis (service manual 2-12).
@@ -362,6 +373,12 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     r.fzMix = get (P::fuzz_mix); r.phOn = get (P::phaser_on); r.phRate = get (P::phaser_rate); r.phDepth = get (P::phaser_depth);
     r.phFb = get (P::phaser_fb); r.phMix = get (P::phaser_mix); r.chMode = get (P::chorus_mode); r.dlSync = get (P::delay_sync);
     r.dlDiv = get (P::delay_div); r.dlPing = get (P::delay_pingpong); r.rvType = get (P::reverb_type);
+    r.voiceMode = get (P::voice_mode);
+    for (int v = 0; v < P::kNumTrims; ++v)
+    {
+        r.trimTune[static_cast<size_t> (v)] = get (P::trimTune (v + 1));
+        r.trimCut[static_cast<size_t> (v)] = get (P::trimCut (v + 1));
+    }
     r.fltSlope = get (P::flt_slope); r.fltMode = get (P::flt_mode); r.hpf = get (P::hpf_cutoff);
     r.arpOn = get (P::arp_on); r.arpMode = get (P::arp_mode); r.arpOct = get (P::arp_oct); r.arpRate = get (P::arp_rate);
     r.arpGate = get (P::arp_gate); r.arpSwing = get (P::arp_swing); r.arpLatch = get (P::arp_latch);
@@ -417,6 +434,12 @@ void ParameterBinding::fill (augur::SynthParams& p) noexcept
     p.phaserOn = b (r.phOn); p.phaserRate = f (r.phRate); p.phaserDepth = f (r.phDepth); p.phaserFeedback = f (r.phFb); p.phaserMix = f (r.phMix);
     p.chorusMode = i (r.chMode); p.delaySync = b (r.dlSync); p.delayDivision = i (r.dlDiv); p.delayPingPong = b (r.dlPing);
     p.reverbType = i (r.rvType);
+    p.voiceMode = i (r.voiceMode);
+    for (size_t v = 0; v < 8; ++v)
+    {
+        p.trimTune[v] = f (r.trimTune[v]);
+        p.trimCutoff[v] = f (r.trimCut[v]);
+    }
     p.filterSlope = i (r.fltSlope); p.filterMode = i (r.fltMode); p.hpfHz = f (r.hpf);
     p.arpOn = b (r.arpOn); p.arpMode = i (r.arpMode); p.arpOctaves = i (r.arpOct); p.arpRate = i (r.arpRate);
     p.arpGate = f (r.arpGate); p.arpSwing = f (r.arpSwing); p.arpLatch = b (r.arpLatch);

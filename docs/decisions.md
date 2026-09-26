@@ -250,3 +250,13 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
   - Mismo parche: el peor tono no armónico bajo 15 kHz baja de **−9 a −37 dB** en GREAT y a **−61 dB** en DIVINE.
   - Test de regresión incluido.
 - **Otras causas descartadas** con la prueba de uso prolongado (D-021): no hay acumulación de ruido ni deriva de afinación, y los denormales ya se eliminan.
+
+## D-026 · Modos de voz DUO y trims por voz (2026-09-26)
+- **VOICE MODE**:
+  - POLY: como hasta ahora.
+  - DUO: cada nota toca dos voces, desafinadas en sentidos opuestos (hasta ±25 cents con VOICE DETUNE) y abiertas en estéreo. La polifonía se reduce a VOICES/2.
+  - Cambiar de modo suelta las notas, igual que al pasar de poly a mono.
+- **TRIMS** (como los trimmers por voz de Diva): afinación ±50 cents y corte ±1 octava para las voces 1–8; las voces 9–16 reutilizan los mismos de forma cíclica. Se suman a la huella analógica de cada voz, no la reemplazan.
+- Tests:
+  - DUO: 2 voces por nota, 4 con dos notas, y todas se liberan al soltar;
+  - trim de afinación medido: +50 cents ±2 en su voz y 0 ±1 en las demás.

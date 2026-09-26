@@ -51,7 +51,10 @@ void SynthEngine::prepare (double hostSampleRate, std::uint64_t unitSeed, int ov
     const double controlRate = hostSampleRate / controlInterval;
 
     for (size_t i = 0; i < voices.size(); ++i)
+    {
         voices[i].prepare (internalRate, controlRate, deriveSeed (unitSeed, 100 + i));
+        voices[i].setTrimIndex (static_cast<int> (i % 8));
+    }
 
     for (auto& f : spareFilters)
         f.prepare (internalRate);
@@ -256,46 +259,63 @@ void SynthEngine::triggerNote (int note, float velocity) noexcept
     }
 
     const int count = activeVoiceCount();
-    int chosen = -1;
+    const int stack = pending.voiceMode == 1 && count >= 2 ? 2 : 1; // DUO: two voices per note
+    int taken = -1;
 
-    // 1. The voice that last played this note (keeps a key's "personality", avoids double voices).
-    for (int i = 0; i < count && chosen < 0; ++i)
-        if (voices[static_cast<size_t> (i)].getNote() == note && voices[static_cast<size_t> (i)].isActive())
-            chosen = i;
-
-    // 2. Rotate through free voices (shows the per-voice analog variation, like the original assigner).
-    for (int k = 0; k < count && chosen < 0; ++k)
+    for (int layer = 0; layer < stack; ++layer)
     {
-        const int i = (nextVoice + k) % count;
-        if (! voices[static_cast<size_t> (i)].isActive())
-            chosen = i;
-    }
+        int chosen = -1;
 
-    // 3. Oldest releasing voice, 4. oldest held voice.
-    for (int pass = 0; pass < 2 && chosen < 0; ++pass)
-    {
-        std::uint64_t oldest = UINT64_MAX;
-        for (int i = 0; i < count; ++i)
-        {
-            const auto& v = voices[static_cast<size_t> (i)];
-            if ((pass == 0 ? v.isReleasing() : true) && v.getOrder() < oldest)
-            {
-                oldest = v.getOrder();
+        // 1. A voice that last played this note (keeps a key's "personality", avoids double voices).
+        for (int i = 0; i < count && chosen < 0; ++i)
+            if (i != taken && voices[static_cast<size_t> (i)].getNote() == note && voices[static_cast<size_t> (i)].isActive())
                 chosen = i;
+
+        // 2. Rotate through free voices (shows the per-voice analog variation, like the original assigner).
+        for (int k = 0; k < count && chosen < 0; ++k)
+        {
+            const int i = (nextVoice + k) % count;
+            if (i != taken && ! voices[static_cast<size_t> (i)].isActive())
+                chosen = i;
+        }
+
+        // 3. Oldest releasing voice, 4. oldest held voice.
+        for (int pass = 0; pass < 2 && chosen < 0; ++pass)
+        {
+            std::uint64_t oldest = UINT64_MAX;
+            for (int i = 0; i < count; ++i)
+            {
+                const auto& v = voices[static_cast<size_t> (i)];
+                if (i != taken && (pass == 0 ? v.isReleasing() : true) && v.getOrder() < oldest)
+                {
+                    oldest = v.getOrder();
+                    chosen = i;
+                }
             }
         }
-    }
 
-    SynthVoice::NoteOn on;
-    on.note = note;
-    on.velocity = velocity;
-    on.retrigger = true;
-    on.glide = pending.glide > 0.0005f;
-    on.panPosition = panPositionFor (chosen, count);
-    on.order = ++noteCounter;
-    on.lfo2Phase = lfo2PhaseNow();
-    startVoice (voices[static_cast<size_t> (chosen)], on);
-    nextVoice = (chosen + 1) % count;
+        SynthVoice::NoteOn on;
+        on.note = note;
+        on.velocity = velocity;
+        on.retrigger = true;
+        on.glide = pending.glide > 0.0005f;
+        if (stack == 2)
+        {
+            // DUO: the two layers detune in opposite directions (up to +-25 cents) and open in stereo.
+            const float side = layer == 0 ? -1.0f : 1.0f;
+            on.unisonOffset = side * pending.voiceDetune * 0.25f;
+            on.panPosition = side;
+        }
+        else
+        {
+            on.panPosition = panPositionFor (chosen, count);
+        }
+        on.order = ++noteCounter;
+        on.lfo2Phase = lfo2PhaseNow();
+        startVoice (voices[static_cast<size_t> (chosen)], on);
+        nextVoice = (chosen + 1) % count;
+        taken = chosen;
+    }
 }
 
 void SynthEngine::startVoice (SynthVoice& voice, const SynthVoice::NoteOn& on) noexcept
@@ -448,7 +468,7 @@ void SynthEngine::syncMode() noexcept
 {
     const bool mono = isMonoMode();
     const int count = activeVoiceCount();
-    if (mono != lastMonoMode)
+    if (mono != lastMonoMode || pending.voiceMode != lastVoiceMode)
     {
         // Poly <-> mono/unison: the assignment scheme changes, start clean.
         for (auto& v : voices)
@@ -466,6 +486,7 @@ void SynthEngine::syncMode() noexcept
     }
     lastMonoMode = mono;
     lastVoiceCount = count;
+    lastVoiceMode = pending.voiceMode;
 
     if (pending.arpOn != lastArpOn)
     {

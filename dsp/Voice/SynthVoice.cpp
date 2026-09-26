@@ -303,8 +303,9 @@ void SynthVoice::computeConstants (const ChunkSignals& sig) noexcept
 
     // Analog (unquantised) pitch terms: drift, deliberate per-voice detune, FINE.
     const float detune = p.voiceDetune * 0.07f;
-    analogTune[0] = dA + fp.oscDetune[0] * detune + p.osc1Fine * 0.01f;
-    analogTune[1] = dB + fp.oscDetune[1] * detune + p.osc2Fine * 0.01f;
+    const float trim = p.trimTune[static_cast<size_t> (trimIndex & 7)] * 0.01f;
+    analogTune[0] = dA + fp.oscDetune[0] * detune + p.osc1Fine * 0.01f + trim;
+    analogTune[1] = dB + fp.oscDetune[1] * detune + p.osc2Fine * 0.01f + trim;
 
     // Digital part of the CV: KBD + FREQ knob + autotune bias on the 14-bit grid.
     knobSemis[0] = static_cast<float> (p.osc1Semi);
@@ -350,7 +351,7 @@ void SynthVoice::computeConstants (const ChunkSignals& sig) noexcept
                || sig.crossMod[0] > 0.0f || sig.crossMod[last] > 0.0f || sig.mixRing[0] > 0.0f || sig.mixRing[last] > 0.0f
                || (p.pmOn && (sig.pmOsc2[0] > 0.0f || sig.pmOsc2[last] > 0.0f));
 
-    cutoffOffset = fp.cutoff * 0.04f * spread + dF;
+    cutoffOffset = fp.cutoff * 0.04f * spread + dF + p.trimCutoff[static_cast<size_t> (trimIndex & 7)];
     resonanceTrim = 1.0f + fp.resonance * 0.03f * spread;
     vcaTrim = 1.0f + fp.vcaGain * 0.03f * spread;
     bleed = 0.0005f + 0.004f * age;

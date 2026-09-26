@@ -127,6 +127,12 @@ namespace augur5::params
     inline constexpr auto delay_pingpong = "delay_pingpong"; // bool
     inline constexpr auto reverb_type    = "reverb_type";    // choice: HALL, PLATE
 
+    // ---------- VOICE MODE / TRIMS ----------
+    inline constexpr auto voice_mode = "voice_mode"; // choice: POLY, DUO
+    inline juce::String trimTune (int voice) { return "trim_tune_" + juce::String (voice); } // cents -50..50, voices 1..8
+    inline juce::String trimCut (int voice) { return "trim_cut_" + juce::String (voice); }   // octaves -1..1
+    inline constexpr int kNumTrims = 8;
+
     // ---------- QUALITY ----------
     inline constexpr auto quality         = "quality";         // choice: ECO (1x), GREAT (2x), DIVINE (4x)
     inline constexpr auto offline_quality = "offline_quality"; // choice: SAME, DIVINE (used while the host renders offline)

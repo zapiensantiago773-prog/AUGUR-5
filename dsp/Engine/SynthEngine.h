@@ -120,6 +120,7 @@ private:
     bool sustainDown = false;
     bool lastMonoMode = false;
     int lastVoiceCount = 5;
+    int lastVoiceMode = 0;
     bool lastArpOn = false, lastArpLatch = false;
 
     Arpeggiator arp;
