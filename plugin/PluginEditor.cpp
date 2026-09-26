@@ -91,6 +91,7 @@ public:
         knob (P::osc1_fine, "FINE", 36, 181, 255);
         knob (P::osc1_pw, "WIDTH", 36, 254, 255);
         toggle (P::osc1_sync, "SYNC", 80, 352, 72);
+        dropdown (P::osc1_oct, 240, 352, 72);
 
         wave (P::osc2_saw, WaveIcon::Saw, 470, 174);
         wave (P::osc2_tri, WaveIcon::Triangle, 510, 174);
@@ -100,6 +101,7 @@ public:
         knob (P::osc2_pw, "WIDTH", 36, 524, 255);
         toggle (P::osc2_lofreq, "LO FREQ", 350, 352, 84);
         toggle (P::osc2_kbd, "KBD", 442, 352, 64);
+        dropdown (P::osc2_oct, 514, 352, 72);
 
         // Mixer
         knob (P::mix_osc1, "OSC 1", 36, 648, 199);
@@ -323,6 +325,8 @@ public:
         drawPanel (g, { 52, 118, 560, 290 }, "OSCILLATORS");
         drawSubPanel (g, { 68, 162, 258, 230 }, "OSC 1");
         drawSubPanel (g, { 338, 162, 258, 230 }, "OSC 2");
+        drawCaption (g, "OCTAVE", 240, 338);
+        drawCaption (g, "OCTAVE", 514, 338);
         drawPanel (g, { 624, 118, 190, 290 }, "MIXER");
         drawPanel (g, { 826, 118, 280, 290 }, "FILTER");
         drawCaption (g, "MODEL", 842, 292);

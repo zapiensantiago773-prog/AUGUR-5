@@ -73,7 +73,10 @@ void Knob::resized()
 
 void Knob::paint (juce::Graphics& g)
 {
-    const auto area = juce::Rectangle<float> (0.0f, static_cast<float> (size + 16 + 5), static_cast<float> (getWidth()), 13.0f);
+    // The label may use a little more than the knob's own width, never its neighbour's (it shrinks to fit).
+    const float labelWidth = static_cast<float> (size + 26);
+    const auto area = juce::Rectangle<float> ((static_cast<float> (getWidth()) - labelWidth) * 0.5f, static_cast<float> (size + 16 + 5),
+                                              labelWidth, 15.0f);
     drawTracked (g, label, area, Fonts::jost (10.0f, true, 0.12f), colours::label, juce::Justification::centredTop);
 }
 

@@ -133,6 +133,10 @@ namespace augur5::params
     inline juce::String trimCut (int voice) { return "trim_cut_" + juce::String (voice); }   // octaves -1..1
     inline constexpr int kNumTrims = 8;
 
+    // ---------- OSCILLATOR OCTAVE ----------
+    inline constexpr auto osc1_oct = "osc1_oct"; // choice: -2, -1, 0, +1, +2 octaves (default 0)
+    inline constexpr auto osc2_oct = "osc2_oct";
+
     // ---------- QUALITY ----------
     inline constexpr auto quality         = "quality";         // choice: ECO (1x), GREAT (2x), DIVINE (4x)
     inline constexpr auto offline_quality = "offline_quality"; // choice: SAME, DIVINE (used while the host renders offline)

@@ -258,6 +258,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
                                                [] (float x, int) { return (x > 0.0f ? "+" : "") + juce::String (x, 2) + " oct"; })));
     }
 
+    // Oscillator octave switches
+    layout.add (std::make_unique<APC> (pid (P::osc1_oct), "Osc 1 Octave", juce::StringArray { "-2", "-1", "0", "+1", "+2" }, 2));
+    layout.add (std::make_unique<APC> (pid (P::osc2_oct), "Osc 2 Octave", juce::StringArray { "-2", "-1", "0", "+1", "+2" }, 2));
+
     // Quality
     layout.add (std::make_unique<APC> (pid (P::quality), "Quality", juce::StringArray { "ECO", "GREAT", "DIVINE" }, 1));
     layout.add (std::make_unique<APC> (pid (P::offline_quality), "Offline Quality", juce::StringArray { "SAME", "DIVINE" }, 1));
@@ -300,7 +304,7 @@ struct ParameterBinding::Raw
     A chOn, chRate, chDepth, chMix, dlOn, dlTime, dlFb, dlMix, rvOn, rvSize, rvDecay, rvMix;
     A tune, glide, unison, legato, pbRange, vintage;
     A arpOn, arpMode, arpOct, arpRate, arpGate, arpSwing, arpLatch;
-    A fltSlope, fltMode, hpf, voiceMode;
+    A fltSlope, fltMode, hpf, voiceMode, osc1Oct, osc2Oct;
     std::array<A, 8> trimTune, trimCut;
     A fzOn, fzSus, fzTone, fzVol, fzMix, phOn, phRate, phDepth, phFb, phMix, chMode, dlSync, dlDiv, dlPing, rvType;
 
@@ -374,6 +378,8 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     r.phFb = get (P::phaser_fb); r.phMix = get (P::phaser_mix); r.chMode = get (P::chorus_mode); r.dlSync = get (P::delay_sync);
     r.dlDiv = get (P::delay_div); r.dlPing = get (P::delay_pingpong); r.rvType = get (P::reverb_type);
     r.voiceMode = get (P::voice_mode);
+    r.osc1Oct = get (P::osc1_oct);
+    r.osc2Oct = get (P::osc2_oct);
     for (int v = 0; v < P::kNumTrims; ++v)
     {
         r.trimTune[static_cast<size_t> (v)] = get (P::trimTune (v + 1));
@@ -435,6 +441,8 @@ void ParameterBinding::fill (augur::SynthParams& p) noexcept
     p.chorusMode = i (r.chMode); p.delaySync = b (r.dlSync); p.delayDivision = i (r.dlDiv); p.delayPingPong = b (r.dlPing);
     p.reverbType = i (r.rvType);
     p.voiceMode = i (r.voiceMode);
+    p.osc1Octave = i (r.osc1Oct) - 2;
+    p.osc2Octave = i (r.osc2Oct) - 2;
     for (size_t v = 0; v < 8; ++v)
     {
         p.trimTune[v] = f (r.trimTune[v]);

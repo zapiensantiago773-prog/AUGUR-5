@@ -196,7 +196,7 @@ void AugurLookAndFeel::drawComboBox (juce::Graphics& g, int w, int h, bool, int,
     g.strokePath (chevron, juce::PathStrokeType (1.3f), juce::AffineTransform::translation (static_cast<float> (w) - 18.0f, static_cast<float> (h) * 0.5f - 3.0f));
 }
 
-juce::Font AugurLookAndFeel::getComboBoxFont (juce::ComboBox&) { return Fonts::jost (11.0f, false, 0.06f); }
+juce::Font AugurLookAndFeel::getComboBoxFont (juce::ComboBox&) { return Fonts::jost (10.0f, false, 0.04f); }
 
 void AugurLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& label)
 {

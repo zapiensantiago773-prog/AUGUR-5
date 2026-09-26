@@ -18,10 +18,10 @@ namespace colours
     inline const juce::Colour fieldBorder { 0xff2e2e33 };
     inline const juce::Colour title { 0xffdcd6cc };
     inline const juce::Colour subTitle { 0xffcfc8bd };
-    inline const juce::Colour label { 0xff9a948b };
-    inline const juce::Colour caption { 0xff6e6961 };
-    inline const juce::Colour captionLight { 0xff7e786f };
-    inline const juce::Colour headerButton { 0xff8c867d };
+    inline const juce::Colour label { 0xffb9b2a7 };   // lightened for legibility
+    inline const juce::Colour caption { 0xff948d83 }; // lightened for legibility
+    inline const juce::Colour captionLight { 0xffa29b90 };
+    inline const juce::Colour headerButton { 0xffa59e94 };
     inline const juce::Colour text { 0xffe4ddd2 };
     inline const juce::Colour icon { 0xffcfc6b8 };
     inline const juce::Colour accent { 0xffe8833a };

@@ -303,3 +303,11 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
 - Escala por defecto 65 %: 1695×666 px, que cabe en 1920×1080 con la ventana del DAW.
 - Al abrir, la ventana se limita al área útil de la pantalla, por si una sesión se guardó en un monitor más grande.
 - Tamaños de 45 % a 100 %; mínimo 40 % (1043 px), para portátiles de 1366 px.
+
+## D-030 · Octava por oscilador y legibilidad (2026-09-26)
+- **OCTAVE** (−2 … +2) en OSC 1 y OSC 2 (`osc1_oct`, `osc2_oct`). Se suma en semitonos enteros a la parte digital del CV, junto con FREQUENCY, y pasa por la misma cuantización del DAC. Test: ±1 y ±2 octavas exactas (log2 ±0.003).
+- **Legibilidad** (reporte del usuario: "las letras se ven muy chiquitas aunque aumente el tamaño"):
+  - Los rótulos de 9–11 px del mockup quedaban en ~6 px en pantalla al 65 %. Ahora el texto pequeño crece ×1.32, el mediano ×1.18 y el grande ×1.06, con menos espaciado entre letras.
+  - Rótulos y captions más claros, con más contraste sobre el fondo negro.
+  - Todo texto que no cabe en su área se reduce solo (hasta el 60 %) en lugar de cortarse.
+  - La etiqueta de cada perilla se limita al ancho de su perilla, así que nunca toca la vecina.

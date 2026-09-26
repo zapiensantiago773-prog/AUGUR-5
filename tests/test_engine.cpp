@@ -506,3 +506,32 @@ TEST_CASE ("Voice trims detune and re-voice individual voices", "[engine][voices
     q.trimTune[1] = 50.0f; // another voice's trim leaves voice 1 alone
     CHECK_THAT (1200.0 * std::log2 (pitchOf (q) / base), Catch::Matchers::WithinAbs (0.0, 1.0));
 }
+
+TEST_CASE ("Oscillator octave switches move the pitch by whole octaves", "[engine][osc]")
+{
+    SynthParams p;
+    p.mixOsc2 = 0.0f;
+    p.cutoffHz = 20000.0f;
+    p.resonance = 0.0f;
+    p.envAmount = 0.0f;
+    p.aenvS = 1.0f;
+    p.analogAge = 0.0f;
+    p.voiceDetune = 0.0f;
+    const auto pitchOf = [] (const SynthParams& q) {
+        auto e = std::make_unique<SynthEngine>();
+        e->prepare (48000.0);
+        e->setParams (q);
+        e->noteOn (57, 1.0f);
+        std::vector<float> l (48000), r (48000);
+        e->process (l.data(), r.data(), 48000);
+        return augur::test::measureFrequency (l, 48000.0, 24000);
+    };
+    const double base = pitchOf (p);
+    for (int oct : { -2, -1, 1, 2 })
+    {
+        auto q = p;
+        q.osc1Octave = oct;
+        INFO ("octave " << oct);
+        CHECK_THAT (std::log2 (pitchOf (q) / base), Catch::Matchers::WithinAbs (static_cast<double> (oct), 0.003));
+    }
+}

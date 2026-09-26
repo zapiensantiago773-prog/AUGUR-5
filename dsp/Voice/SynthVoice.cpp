@@ -308,8 +308,9 @@ void SynthVoice::computeConstants (const ChunkSignals& sig) noexcept
     analogTune[1] = dB + fp.oscDetune[1] * detune + p.osc2Fine * 0.01f + trim;
 
     // Digital part of the CV: KBD + FREQ knob + autotune bias on the 14-bit grid.
-    knobSemis[0] = static_cast<float> (p.osc1Semi);
-    knobSemis[1] = static_cast<float> (p.osc2Semi) * (p.osc2LoFreq ? 2.0f : 1.0f); // INIT FREQ range doubles
+    knobSemis[0] = static_cast<float> (p.osc1Semi + 12 * p.osc1Octave);
+    knobSemis[1] = static_cast<float> (p.osc2Semi) * (p.osc2LoFreq ? 2.0f : 1.0f) // INIT FREQ range doubles
+                   + static_cast<float> (12 * p.osc2Octave);
     loFreqOffset = p.osc2LoFreq ? loFreqSemitones : 0.0f;
     kbdB = p.osc2Kbd;
     updateCvOffsets();

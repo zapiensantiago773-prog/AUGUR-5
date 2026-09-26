@@ -56,11 +56,13 @@ struct SynthParams
 {
     // Oscillators
     int osc1Semi = 0;
+    int osc1Octave = 0; // -2..+2
     float osc1Fine = 0.0f;  // cents
     float osc1Pw = 0.5f;    // 0.05..0.95
     bool osc1Saw = true, osc1Pulse = false, osc1Sync = false;
 
     int osc2Semi = 0;
+    int osc2Octave = 0; // -2..+2
     float osc2Fine = 0.0f;
     float osc2Pw = 0.5f;
     bool osc2Saw = true, osc2Tri = false, osc2Pulse = false, osc2LoFreq = false, osc2Kbd = true;
