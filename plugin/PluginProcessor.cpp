@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Parameters.h"
 
 Augur5Processor::Augur5Processor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
@@ -12,9 +13,44 @@ Augur5Processor::Augur5Processor()
     presets.loadFactory (presets.findFactory ("Warm Horizon"));
     presets.onPresetLoaded = [this] { warmUpEngine(); };
     undoManager.clearUndoHistory();
+    qualityParam = parameters.getRawParameterValue (augur5::params::quality);
+    offlineQualityParam = parameters.getRawParameterValue (augur5::params::offline_quality);
 }
 
-Augur5Processor::~Augur5Processor() = default;
+Augur5Processor::~Augur5Processor()
+{
+    cancelPendingUpdate();
+}
+
+int Augur5Processor::wantedOversampling (bool offline) const noexcept
+{
+    int q = juce::roundToInt (qualityParam->load (std::memory_order_relaxed));
+    if (offline && juce::roundToInt (offlineQualityParam->load (std::memory_order_relaxed)) == 1)
+        q = 2; // DIVINE for the render
+    return augur::SynthEngine::oversamplingFor (q, getSampleRate() > 0.0 ? getSampleRate() : 48000.0);
+}
+
+void Augur5Processor::configureEngine (double sampleRate, int oversampling)
+{
+    engine->prepare (sampleRate, augur::SynthEngine::defaultUnitSeed, oversampling);
+    binding.fill (snapshot);
+    engine->setParams (snapshot);
+    engine->warmUp();
+    setLatencySamples (engine->getLatencySamples());
+}
+
+void Augur5Processor::handleAsyncUpdate()
+{
+    if (! prepared)
+        return;
+    const int wanted = wantedOversampling (isNonRealtime());
+    if (wanted == engine->getOversampling())
+        return;
+    suspendProcessing (true);
+    configureEngine (getSampleRate(), wanted);
+    suspendProcessing (false);
+}
+
 
 bool Augur5Processor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
@@ -24,16 +60,12 @@ bool Augur5Processor::isBusesLayoutSupported (const BusesLayout& layouts) const
 
 void Augur5Processor::prepareToPlay (double sampleRate, int)
 {
-    engine->prepare (sampleRate);
-    binding.fill (snapshot);
-    engine->setParams (snapshot);
-    engine->warmUp();
+    // Latency (BLEP kernels + decimators) is reported so hosts can align us with other tracks.
+    int q = juce::roundToInt (qualityParam->load());
+    if (isNonRealtime() && juce::roundToInt (offlineQualityParam->load()) == 1)
+        q = 2;
+    configureEngine (sampleRate, augur::SynthEngine::oversamplingFor (q, sampleRate));
     prepared = true;
-
-    // Oversampling decimator + BLEP delay, so hosts can align us with other tracks.
-    const int latency = engine->getOversampling() == 2 ? (augur::HalfbandDecimator::centre + augur::BlepRing::latency) / 2
-                                                       : augur::BlepRing::latency;
-    setLatencySamples (latency);
 }
 
 void Augur5Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
@@ -44,6 +76,15 @@ void Augur5Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     const int numChannels = buffer.getNumChannels();
     if (numChannels == 0)
         return;
+
+    // Quality changed (or the host switched between realtime and offline rendering).
+    if (const int wanted = wantedOversampling (isNonRealtime()); wanted != engine->getOversampling())
+    {
+        if (isNonRealtime())
+            configureEngine (getSampleRate(), wanted); // offline: no deadline, switch right here
+        else
+            triggerAsyncUpdate();
+    }
 
     binding.fill (snapshot);
     engine->setParams (snapshot);

@@ -11,6 +11,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -28,7 +29,7 @@ TEST_CASE ("Fuzz aliasing at full sustain (measured, oversampled bus)", "[fx][fu
     std::vector<float> l (n + skip), r (n + skip);
     for (std::size_t i = 0; i < l.size(); ++i)
         l[i] = r[i] = 0.3f * static_cast<float> (std::sin (2.0 * 3.14159265358979 * f0 * static_cast<double> (i) / sr));
-    fuzz.process (l.data(), r.data(), static_cast<int> (l.size()), 1.0f, 0.5f, 0.7f, 1.0f);
+    fuzz.process (l.data(), r.data(), static_cast<int> (l.size()), true, 1.0f, 0.5f, 0.7f, 1.0f);
 
     // Only what lands below 20 kHz survives the half-band decimator to the host rate.
     const double worst = augur::test::worstAliasDb (l, sr, f0, 20000.0, skip, n);
@@ -180,4 +181,23 @@ TEST_CASE ("Engine with every effect on is bit-identical however the host slices
     REQUIRE (a == render (&rng));
     for (float v : a)
         REQUIRE (std::isfinite (v));
+}
+
+TEST_CASE ("Fuzz MIX blends time-aligned signals (no comb filter)", "[fx][fuzz]")
+{
+    // At MIX 0 with the pedal engaged, the output is the dry signal through the resampling chain:
+    // a pure delay, flat in magnitude (a misaligned dry path would notch it).
+    constexpr double sr = 96000.0;
+    for (double f : { 2400.0, 7000.0, 15000.0 })
+    {
+        Fuzz fuzz;
+        fuzz.prepare (sr);
+        std::vector<float> l (24000), r (24000);
+        for (std::size_t i = 0; i < l.size(); ++i)
+            l[i] = r[i] = 0.2f * static_cast<float> (std::sin (2.0 * 3.14159265358979 * f * static_cast<double> (i) / sr));
+        std::vector<float> in (l);
+        fuzz.process (l.data(), r.data(), static_cast<int> (l.size()), true, 1.0f, 0.5f, 0.7f, 0.0f);
+        INFO ("f " << f);
+        CHECK_THAT (augur::test::rms (l, 4000) / augur::test::rms (in, 4000), Catch::Matchers::WithinAbs (1.0, 0.002));
+    }
 }

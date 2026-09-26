@@ -22,10 +22,31 @@ float panPositionFor (int index, int count) noexcept
 }
 } // namespace
 
-void SynthEngine::prepare (double hostSampleRate, std::uint64_t unitSeed)
+int SynthEngine::oversamplingFor (int quality, double hostSampleRate) noexcept
+{
+    const double target = quality <= 0 ? 0.0 : (quality == 1 ? 88200.0 : 176400.0);
+    int factor = 1;
+    while (factor < 4 && hostSampleRate * factor < target - 1.0)
+        factor *= 2;
+    return factor;
+}
+
+int SynthEngine::getLatencySamples() const noexcept
+{
+    // BLEP kernel latency (internal samples) + 127-tap decimator (2x) + 27-tap stage (4x).
+    double latency = static_cast<double> (BlepRing::latency) / oversampling;
+    if (oversampling >= 2)
+        latency += HalfbandDecimator::centre / 2.0;
+    if (oversampling == 4)
+        latency += HalfbandKernel<27>::centre / 4.0;
+    return static_cast<int> (std::lround (latency));
+}
+
+void SynthEngine::prepare (double hostSampleRate, std::uint64_t unitSeed, int oversamplingFactor)
 {
     hostRate = hostSampleRate;
-    oversampling = hostSampleRate < 80000.0 ? 2 : 1;
+    oversampling = oversamplingFactor == 1 || oversamplingFactor == 2 || oversamplingFactor == 4 ? oversamplingFactor
+                                                                                                 : oversamplingFor (1, hostSampleRate);
     internalRate = hostSampleRate * oversampling;
     const double controlRate = hostSampleRate / controlInterval;
 
@@ -67,6 +88,8 @@ void SynthEngine::reset() noexcept
 
     decimL.reset();
     decimR.reset();
+    quadL.reset();
+    quadR.reset();
     dcL = dcR = 0.0f;
     chorus.reset();
     delay.reset();
@@ -620,7 +643,6 @@ void SynthEngine::controlUpdate() noexcept
     reverbMix += ((params.reverbOn ? params.reverbMix : 0.0f) - reverbMix) * fxCoeff;
     hallMix += ((params.reverbOn && params.reverbType == 0 ? params.reverbMix : 0.0f) - hallMix) * fxCoeff;
     plateMix += ((params.reverbOn && params.reverbType == 1 ? params.reverbMix : 0.0f) - plateMix) * fxCoeff;
-    fuzzMix += ((params.fuzzOn ? params.fuzzMix : 0.0f) - fuzzMix) * fxCoeff;
     phaserMix += ((params.phaserOn ? params.phaserMix : 0.0f) - phaserMix) * fxCoeff;
 }
 
@@ -707,15 +729,16 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
         voiceLevels[v].store (voices[v].isActive() ? voices[v].getLevel() : 0.0f, std::memory_order_relaxed);
 
     // FUZZ pedal on the oversampled bus, before the decimator (it oversamples further inside).
-    if (params.fuzzOn || fuzzMix > 1.0e-4f)
+    if (params.fuzzOn || fuzzActive)
     {
         fuzzActive = true;
-        fuzz.process (busL.data(), busR.data(), iCount, params.fuzzSustain, params.fuzzTone, params.fuzzVolume, fuzzMix);
-    }
-    else if (fuzzActive)
-    {
-        fuzzActive = false;
-        fuzz.reset();
+        fuzz.process (busL.data(), busR.data(), iCount, params.fuzzOn, params.fuzzSustain, params.fuzzTone, params.fuzzVolume,
+                      params.fuzzMix);
+        if (! params.fuzzOn && fuzz.isIdle())
+        {
+            fuzzActive = false;
+            fuzz.reset();
+        }
     }
 
     const float floorAmp = 1.6e-5f * params.analogAge;
@@ -723,7 +746,14 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
     {
         const auto kk = static_cast<size_t> (k);
         float l, r;
-        if (oversampling == 2)
+        if (oversampling == 4)
+        {
+            const float l0 = quadL.process (busL[4 * kk], busL[4 * kk + 1]), l1 = quadL.process (busL[4 * kk + 2], busL[4 * kk + 3]);
+            const float r0 = quadR.process (busR[4 * kk], busR[4 * kk + 1]), r1 = quadR.process (busR[4 * kk + 2], busR[4 * kk + 3]);
+            l = decimL.process (l0, l1);
+            r = decimR.process (r0, r1);
+        }
+        else if (oversampling == 2)
         {
             l = decimL.process (busL[2 * kk], busL[2 * kk + 1]);
             r = decimR.process (busR[2 * kk], busR[2 * kk + 1]);

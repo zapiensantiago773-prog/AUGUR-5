@@ -12,7 +12,7 @@ namespace augur
 // the result never depends on how the host splits its blocks.
 struct ChunkSignals
 {
-    static constexpr int maxSamples = 64; // 32 host samples x 2 (oversampling)
+    static constexpr int maxSamples = 128; // 32 host samples x 4 (DIVINE oversampling)
 
     using Buffer = std::array<float, maxSamples>;
 

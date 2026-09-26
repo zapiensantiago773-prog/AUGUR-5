@@ -248,6 +248,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (toggle (P::delay_pingpong, "Delay Ping-Pong", false));
     layout.add (std::make_unique<APC> (pid (P::reverb_type), "Reverb Type", juce::StringArray { "HALL", "PLATE" }, 0));
 
+    // Quality
+    layout.add (std::make_unique<APC> (pid (P::quality), "Quality", juce::StringArray { "ECO", "GREAT", "DIVINE" }, 1));
+    layout.add (std::make_unique<APC> (pid (P::offline_quality), "Offline Quality", juce::StringArray { "SAME", "DIVINE" }, 1));
+
     // Arpeggiator
     layout.add (toggle (P::arp_on, "Arp On", false));
     layout.add (std::make_unique<APC> (pid (P::arp_mode), "Arp Mode", juce::StringArray { "UP", "DOWN", "UP-DOWN", "RANDOM", "ORDER" }, 0));

@@ -6,7 +6,8 @@
 #include "ParameterLayout.h"
 #include "Presets.h"
 
-class Augur5Processor final : public juce::AudioProcessor
+class Augur5Processor final : public juce::AudioProcessor,
+                              private juce::AsyncUpdater
 {
 public:
     // Bump when the saved-state layout changes; setStateInformation migrates older versions.
@@ -29,7 +30,7 @@ public:
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
-    double getTailLengthSeconds() const override { return 0.0; }
+    double getTailLengthSeconds() const override { return 12.0; } // delay/reverb tails, so offline renders keep them
 
     int getNumPrograms() override { return 1; }
     int getCurrentProgram() override { return 0; }
@@ -55,6 +56,14 @@ public:
 
 private:
     void handleMidi (const juce::uint8* data, int numBytes) noexcept;
+
+    // Quality (oversampling) changes rebuild the voices: done off the audio thread with processing
+    // suspended, or directly while the host renders offline (no deadline there).
+    int wantedOversampling (bool offline) const noexcept;
+    void configureEngine (double sampleRate, int oversampling);
+    void handleAsyncUpdate() override;
+    std::atomic<float>* qualityParam = nullptr;
+    std::atomic<float>* offlineQualityParam = nullptr;
 
     juce::UndoManager undoManager;
     juce::AudioProcessorValueTreeState parameters;

@@ -41,6 +41,7 @@ void Fuzz::prepare (double busSampleRate) noexcept
     gToneHp = g (1850.0); // tone stack high-pass arm
     gOutHp = g (20.0);    // output coupling
     smoothCoeff = static_cast<float> (1.0 - std::exp (-1.0 / (0.02 * busSampleRate)));
+    engageStep = static_cast<float> (1.0 / (0.005 * busSampleRate));
     reset();
 }
 
@@ -57,6 +58,7 @@ void Fuzz::reset() noexcept
     down2.reset();
     down3.reset();
     smSustain = -1.0f;
+    engage = 0.0f;
 }
 
 F4 Fuzz::core (F4 x, F4 gain1, F4 tone, F4 out) noexcept
@@ -76,10 +78,12 @@ F4 Fuzz::core (F4 x, F4 gain1, F4 tone, F4 out) noexcept
     const F4 hi = toneHp.hp (s, gToneHp);
     s = lo * (splat (1.0f) - tone) + hi * tone * splat (1.6f);
 
-    return outHp.hp (s, gOutHp) * out;
+    // Lanes 2/3 carry the dry signal: pass the core's input straight through there.
+    const F4 wetLanes = simd::set (1.0f, 1.0f, 0.0f, 0.0f);
+    return outHp.hp (s, gOutHp) * out * wetLanes + x * (splat (1.0f) - wetLanes);
 }
 
-void Fuzz::process (float* l, float* r, int numSamples, float sustain, float tone, float volume, float mix) noexcept
+void Fuzz::process (float* l, float* r, int numSamples, bool enabled, float sustain, float tone, float volume, float mix) noexcept
 {
     if (smSustain < 0.0f)
     {
@@ -101,8 +105,8 @@ void Fuzz::process (float* l, float* r, int numSamples, float sustain, float ton
         const F4 toneV = splat (smTone);
         const float wet = std::clamp (smMix, 0.0f, 1.0f);
 
-        // Left and right in lanes 0 and 1: 8x up, core, 8x down.
-        const F4 x = simd::set (l[n], r[n], 0.0f, 0.0f);
+        // Left and right in lanes 0 and 1 (processed), again in 2 and 3 (dry): 8x up, core, 8x down.
+        const F4 x = simd::set (l[n], r[n], l[n], r[n]);
         F4 a[2], mid[2];
         up1.process (x, a[0], a[1]);
         for (int i = 0; i < 2; ++i)
@@ -121,8 +125,11 @@ void Fuzz::process (float* l, float* r, int numSamples, float sustain, float ton
         }
         const F4 y = down1.process (mid[0], mid[1]);
 
-        l[n] = l[n] * (1.0f - wet) + simd::get (y, 0) * wet;
-        r[n] = r[n] * (1.0f - wet) + simd::get (y, 1) * wet;
+        engage = enabled ? std::min (1.0f, engage + engageStep) : std::max (0.0f, engage - engageStep);
+        const float pedalL = simd::get (y, 2) * (1.0f - wet) + simd::get (y, 0) * wet;
+        const float pedalR = simd::get (y, 3) * (1.0f - wet) + simd::get (y, 1) * wet;
+        l[n] += (pedalL - l[n]) * engage;
+        r[n] += (pedalR - r[n]) * engage;
     }
 }
 

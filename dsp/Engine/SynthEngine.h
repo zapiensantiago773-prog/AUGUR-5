@@ -11,6 +11,7 @@
 #include "Modulation/Arpeggiator.h"
 #include "Modulation/Lfo.h"
 #include "Util/Halfband.h"
+#include "Util/HalfbandFir.h"
 #include "Util/Random.h"
 #include "Util/Smoother.h"
 #include "Voice/SynthVoice.h"
@@ -23,8 +24,9 @@ namespace augur
 {
 
 // The whole instrument, independent of any plugin framework.
-// Voices run at an internal rate >= 88.2 kHz (2x oversampling at 44.1/48 kHz), are summed, and a single
-// half-band decimator brings the stereo mix back to the host rate before the effects.
+// Voices run at an internal rate of 1x, 2x or 4x the host rate (quality ECO / GREAT / DIVINE; GREAT keeps
+// it >= 88.2 kHz), are summed, and half-band decimators bring the stereo mix back to the host rate
+// before the effects.
 class SynthEngine
 {
 public:
@@ -32,7 +34,15 @@ public:
     static constexpr int controlInterval = 32; // host samples per control update
     static constexpr std::uint64_t defaultUnitSeed = 0xA06E53340ull;
 
-    void prepare (double hostSampleRate, std::uint64_t unitSeed = defaultUnitSeed);
+    // oversamplingFactor: 1, 2 or 4; 0 = GREAT (2x below 80 kHz, otherwise 1x).
+    void prepare (double hostSampleRate, std::uint64_t unitSeed = defaultUnitSeed, int oversamplingFactor = 0);
+
+    // Internal-rate factor for a quality setting: 0 = ECO (1x), 1 = GREAT (internal >= 88.2 kHz),
+    // 2 = DIVINE (internal >= 176.4 kHz); never more than 4x.
+    static int oversamplingFor (int quality, double hostSampleRate) noexcept;
+
+    // Total delay of the output against the MIDI input, in host samples (BLEP kernels + decimators).
+    int getLatencySamples() const noexcept;
     void reset() noexcept;
 
     // Called once per host block (or more often); takes effect at the next control update.
@@ -143,6 +153,7 @@ private:
     // Output stage
     std::array<float, ChunkSignals::maxSamples> busL {}, busR {};
     HalfbandDecimator decimL, decimR;
+    HalfbandDownsampler<27> quadL, quadR; // DIVINE: 4x -> 2x before the main decimator
     float dcL = 0.0f, dcR = 0.0f, dcCoeff = 0.0f;
     Random floorNoise;
     Chorus chorus;

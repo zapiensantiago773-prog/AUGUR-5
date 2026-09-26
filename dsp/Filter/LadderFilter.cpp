@@ -42,7 +42,10 @@ void LadderFilter::prepare (double newSampleRate) noexcept
 {
     sampleRate = newSampleRate;
     piOverFs = static_cast<float> (3.14159265358979 / newSampleRate);
-    maxCutoff = static_cast<float> (0.45 * newSampleRate);
+    // Top of the range: the instrument's 20 kHz, and never so close to Nyquist that the discretised
+    // resonance smears (at 1x / 48 kHz that is 16.8 kHz). Pinning the cutoff near Nyquist let the
+    // resonance ring ultrasonically and intermodulate with the note into audible non-harmonic tones.
+    maxCutoff = static_cast<float> (std::min (20000.0, 0.35 * newSampleRate));
     hpfOn = false; // set again by the voice's next control update
     reset();
 }

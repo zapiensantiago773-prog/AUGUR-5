@@ -121,6 +121,7 @@ int main (int argc, char** argv)
     float velocity = 0.8f;
     double hold = 1.5, release = 1.0, benchSeconds = 0.0;
     std::uint32_t sampleRate = 48000;
+    int quality = 1; // 0 ECO, 1 GREAT, 2 DIVINE
     int benchVoices = 5;
     std::string out = "render.wav";
     augur::SynthParams params;
@@ -137,6 +138,7 @@ int main (int argc, char** argv)
         else if (key == "--hold")      hold = std::atof (value.c_str());
         else if (key == "--release")   release = std::atof (value.c_str());
         else if (key == "--sr")        sampleRate = static_cast<std::uint32_t> (std::atoi (value.c_str()));
+        else if (key == "--quality")   quality = std::atoi (value.c_str());
         else if (key == "--out")       out = value;
         else if (key == "--bench")     benchSeconds = std::atof (value.c_str());
         else if (key == "--voices")    benchVoices = std::atoi (value.c_str());
@@ -156,7 +158,7 @@ int main (int argc, char** argv)
     }
 
     auto engine = std::make_unique<augur::SynthEngine>();
-    engine->prepare (sampleRate);
+    engine->prepare (sampleRate, augur::SynthEngine::defaultUnitSeed, augur::SynthEngine::oversamplingFor (quality, sampleRate));
     constexpr int block = 256;
     std::vector<float> l (block), r (block);
 

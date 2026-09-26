@@ -14,7 +14,12 @@ namespace augur
 // Runs on the oversampled voice bus (before decimation) and oversamples 8x more inside (768 kHz at a
 // 48 kHz host) with half-band stages sized per rate (27/19/19 taps). The clippers are diode-like
 // algebraic curves x / sqrt(1 + x^2) with first-order antiderivative anti-aliasing (ADAA); measured
-// fold-back is in the test suite. Left and right run together in one SIMD register.
+// fold-back is in the test suite. Left and right run together in one SIMD register; lanes 2 and 3
+// carry the dry signal through the same resampling chain, so MIX blends two equally delayed signals
+// (no comb filtering). Switching the pedal on/off crossfades against the direct signal over 5 ms.
+//
+// Once enabled goes false and the crossfade has finished, isIdle() turns true and the caller can stop
+// calling process().
 class Fuzz
 {
 public:
@@ -22,7 +27,9 @@ public:
     void reset() noexcept;
 
     // sustain 0..1 (gain into the clippers), tone 0..1 (dark .. bright), volume 0..1, mix 0..1.
-    void process (float* left, float* right, int numSamples, float sustain, float tone, float volume, float mix) noexcept;
+    void process (float* left, float* right, int numSamples, bool enabled, float sustain, float tone, float volume,
+                  float mix) noexcept;
+    bool isIdle() const noexcept { return engage <= 0.0f; }
 
 private:
     using F4 = simd::F4;
@@ -60,6 +67,7 @@ private:
     HalfbandDownsampler<19, F4> down2, down3;
 
     float smSustain = -1.0f, smTone = 0.5f, smVolume = 0.5f, smMix = 1.0f, smoothCoeff = 0.001f;
+    float engage = 0.0f, engageStep = 0.001f;
 };
 
 } // namespace augur

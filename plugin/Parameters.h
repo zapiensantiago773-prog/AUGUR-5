@@ -127,6 +127,10 @@ namespace augur5::params
     inline constexpr auto delay_pingpong = "delay_pingpong"; // bool
     inline constexpr auto reverb_type    = "reverb_type";    // choice: HALL, PLATE
 
+    // ---------- QUALITY ----------
+    inline constexpr auto quality         = "quality";         // choice: ECO (1x), GREAT (2x), DIVINE (4x)
+    inline constexpr auto offline_quality = "offline_quality"; // choice: SAME, DIVINE (used while the host renders offline)
+
     // ---------- ARPEGGIATOR ----------
     inline constexpr auto arp_on    = "arp_on";    // bool
     inline constexpr auto arp_mode  = "arp_mode";  // choice: UP, DOWN, UP-DOWN, RANDOM, ORDER

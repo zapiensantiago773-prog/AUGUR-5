@@ -211,3 +211,42 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
   - ping-pong: la entrada va a L y cada repetición cruza de lado (test).
 - **PLATE**: tanque de figura 8 de Dattorro (JAES 1997) escalado a cualquier frecuencia de muestreo y por SIZE. El decay se aplica dos veces por mitad del tanque y la ganancia sale del RT60 pedido: **RT60 medido con integración de Schroeder dentro de ±30 %** (test a 1 y 3 s).
 - Test de determinismo con todos los efectos activos y bloques aleatorios: bit-idéntico.
+
+## D-024 · Modos de calidad ECO / GREAT / DIVINE y render offline (2026-09-26)
+- **ECO** = 1x, **GREAT** = frecuencia interna ≥ 88.2 kHz (2x a 44.1/48 kHz, como hasta ahora) y **DIVINE** = ≥ 176.4 kHz (4x a 44.1/48 kHz). El 4x usa una etapa half-band de 27 taps (4x→2x) antes del decimador de 127 taps.
+- **OFFLINE QUALITY** (SAME / DIVINE, por defecto DIVINE): al exportar desde el DAW (`isNonRealtime`) el motor pasa a DIVINE.
+- El cambio reconstruye las voces:
+  - en tiempo real se hace fuera del hilo de audio, con el procesamiento suspendido (`AsyncUpdater`);
+  - en offline se hace directamente, porque no hay deadline.
+  - Luego se precargan los condensadores de acople (warm-up) y se reporta la latencia nueva al host: kernels BLEP + decimadores, calculada por modo.
+- `getTailLengthSeconds` = 12 s, para que los renders conserven las colas de delay y reverb.
+- CPU a 48 kHz, 5 voces:
+
+| Modo | CPU |
+|---|---|
+| ECO | 4.7 % |
+| GREAT | 9.3 % |
+| DIVINE | 17.2 % |
+
+- Tests:
+  - tabla de factores por frecuencia de muestreo;
+  - bit-idéntico con bloques aleatorios en 1x/2x/4x;
+  - repliegue del filtro saturado (DRIVE 1, resonancia 0.6, nota de 1568 Hz):
+
+| Modo | Repliegue |
+|---|---|
+| ECO | −40 dB |
+| GREAT | −47 dB |
+| DIVINE | −51 dB |
+
+- **Hallazgo:** con DRIVE a fondo, la saturación de la entrada del filtro y de sus etapas es ahora el límite de aliasing del motor (los VCOs están en −138 dB). Pendiente: ADAA en el DRIVE, que requiere compensar la caída de agudos que introduce a 2x.
+
+## D-025 · Corrección: silbido / "crush" agudo con resonancia y keytrack (2026-09-26)
+- **Síntoma reportado:** después de un rato de uso se oye un silbido o "crush" muy agudo, "como viejo".
+- **Causa** (medida con `[.diag]`):
+  - Con KEYTRACK y notas agudas, el corte se clavaba en 0.45 × la frecuencia interna (43 kHz en GREAT).
+  - Ahí la resonancia sonaba ultrasónica y se intermodulaba con los armónicos de la nota, generando tonos no armónicos audibles. Con esta nota de prueba: **6.6 kHz a −9 dB** en GREAT. En ECO lo más fuerte de la salida era un silbido de ~19.9 kHz.
+- **Corrección:** el corte llega como máximo a **20 kHz**, el rango del instrumento, y nunca pasa de 0.35 fs (16.8 kHz en ECO a 48 kHz).
+  - Mismo parche: el peor tono no armónico bajo 15 kHz baja de **−9 a −37 dB** en GREAT y a **−61 dB** en DIVINE.
+  - Test de regresión incluido.
+- **Otras causas descartadas** con la prueba de uso prolongado (D-021): no hay acumulación de ruido ni deriva de afinación, y los denormales ya se eliminan.

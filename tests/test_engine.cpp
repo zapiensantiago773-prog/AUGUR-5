@@ -303,3 +303,145 @@ TEST_CASE ("Notes in the very first block use the current VOICES setting", "[eng
         sustaining += e->getVoiceLevel (v) > 0.5f ? 1 : 0;
     CHECK (sustaining == 6);
 }
+
+TEST_CASE ("Quality modes pick the right internal rate", "[engine][quality]")
+{
+    CHECK (SynthEngine::oversamplingFor (0, 48000.0) == 1);
+    CHECK (SynthEngine::oversamplingFor (1, 44100.0) == 2);
+    CHECK (SynthEngine::oversamplingFor (1, 48000.0) == 2);
+    CHECK (SynthEngine::oversamplingFor (2, 48000.0) == 4);
+    CHECK (SynthEngine::oversamplingFor (1, 96000.0) == 1);
+    CHECK (SynthEngine::oversamplingFor (2, 96000.0) == 2);
+    CHECK (SynthEngine::oversamplingFor (2, 192000.0) == 1);
+}
+
+TEST_CASE ("Every quality mode renders deterministically", "[engine][quality]")
+{
+    const int factor = GENERATE (1, 2, 4);
+    SynthParams p;
+    p.resonance = 0.7f;
+    p.mixDrive = 0.8f;
+    const auto render = [&] (augur::Random* rng) {
+        auto e = std::make_unique<SynthEngine>();
+        e->prepare (48000.0, SynthEngine::defaultUnitSeed, factor);
+        e->setParams (p);
+        e->noteOn (60, 0.9f);
+        e->noteOn (67, 0.9f);
+        std::vector<float> l (24000), r (24000);
+        int pos = 0;
+        while (pos < 24000)
+        {
+            int len = rng != nullptr ? 1 + static_cast<int> (rng->nextFloat() * 700.0f) : 480;
+            len = std::min (len, 24000 - pos);
+            e->process (l.data() + pos, r.data() + pos, len);
+            pos += len;
+        }
+        return l;
+    };
+    augur::Random rng (21);
+    const auto a = render (nullptr);
+    INFO ("oversampling x" << factor);
+    REQUIRE (a == render (&rng));
+    CHECK (augur::test::rms (a, 4800) > 0.01);
+    for (float v : a)
+        REQUIRE (std::isfinite (v));
+}
+
+namespace
+{
+double worstNonHarmonic (const SynthParams& p, int factor, int note, double maxHz)
+{
+    auto e = std::make_unique<SynthEngine>();
+    e->prepare (48000.0, SynthEngine::defaultUnitSeed, factor);
+    e->setParams (p);
+    e->noteOn (note, 1.0f);
+    std::vector<float> l (48000 + 65536), r (l.size());
+    e->process (l.data(), r.data(), static_cast<int> (l.size()));
+    // f0 from the spectral peak near the note (parabolic interpolation): zero crossings are ambiguous
+    // on a resonant waveform.
+    const auto db = augur::test::spectrumDb (l, 48000, 65536);
+    const double binHz = 48000.0 / 65536.0;
+    const double nominal = 440.0 * std::exp2 ((note - 69) / 12.0);
+    std::size_t peak = 0;
+    for (auto b = static_cast<std::size_t> (nominal * 0.97 / binHz); b < static_cast<std::size_t> (nominal * 1.03 / binHz); ++b)
+        if (peak == 0 || db[b] > db[peak])
+            peak = b;
+    const double a = db[peak - 1], c = db[peak], d = db[peak + 1];
+    const double f0 = (static_cast<double> (peak) + 0.5 * (a - d) / (a - 2.0 * c + d)) * binHz;
+    return augur::test::worstAliasDb (l, 48000.0, f0, maxHz, 48000, 65536);
+}
+
+SynthParams drivenFilter()
+{
+    SynthParams p;
+    p.mixOsc2 = 0.0f;
+    p.mixDrive = 1.0f;
+    p.envAmount = 0.0f;
+    p.aenvS = 1.0f;
+    p.analogAge = 0.0f;
+    p.voiceDetune = 0.0f;
+    return p;
+}
+} // namespace
+
+TEST_CASE ("A resonant filter keytracked past the top of its range adds no audible non-harmonic tones", "[engine][filter][regression]")
+{
+    // Regression: the cutoff used to pin at 0.45 x the internal rate (43 kHz in GREAT), where the
+    // resonance rang ultrasonically and intermodulated with the note into an audible, "crushed"
+    // non-harmonic tone (6.6 kHz at -9 dB for this patch). It now stops at the instrument's 20 kHz.
+    auto p = drivenFilter();
+    p.cutoffHz = 9000.0f;
+    p.resonance = 0.85f; // above the self-oscillation threshold
+    const int factor = GENERATE (2, 4);
+    const double worst = worstNonHarmonic (p, factor, 91, 15000.0);
+    std::printf ("keytracked resonant filter x%d: worst non-harmonic below 15 kHz %.1f dB\n", factor, worst);
+    CHECK (worst < (factor == 2 ? -32.0 : -55.0)); // measured -37 / -61 (was -9 dB in GREAT before the fix)
+}
+
+TEST_CASE ("DIVINE lowers the filter's fold-back compared with ECO", "[engine][quality][aliasing]")
+{
+    // A high note through a resonant (not self-oscillating), hard-driven filter: the nonlinear stages
+    // create harmonics above Nyquist; more internal rate leaves less of them folded into the band.
+    auto p = drivenFilter();
+    p.cutoffHz = 5000.0f;
+    p.resonance = 0.6f;
+    p.keytrack = 0;
+    const double eco = worstNonHarmonic (p, 1, 91, 20000.0), great = worstNonHarmonic (p, 2, 91, 20000.0),
+                 divine = worstNonHarmonic (p, 4, 91, 20000.0);
+    std::printf ("driven filter fold-back: ECO %.1f dB, GREAT %.1f dB, DIVINE %.1f dB\n", eco, great, divine);
+    CHECK (great < eco - 6.0);
+    CHECK (divine < great);
+}
+
+TEST_CASE ("Diagnostic: strongest spectral peaks of the driven filter per quality", "[.diag]")
+{
+    SynthParams p;
+    p.mixOsc2 = 0.0f;
+    p.cutoffHz = 9000.0f;
+    p.resonance = 0.85f;
+    p.mixDrive = 1.0f;
+    p.envAmount = 0.0f;
+    p.aenvS = 1.0f;
+    p.analogAge = 0.0f;
+    p.voiceDetune = 0.0f;
+    for (int factor : { 1, 2, 4 })
+    {
+        auto e = std::make_unique<SynthEngine>();
+        e->prepare (48000.0, SynthEngine::defaultUnitSeed, factor);
+        e->setParams (p);
+        e->noteOn (91, 1.0f);
+        std::vector<float> l (48000 + 65536), r (l.size());
+        e->process (l.data(), r.data(), static_cast<int> (l.size()));
+        const auto db = augur::test::spectrumDb (l, 48000, 65536);
+        const double binHz = 48000.0 / 65536.0;
+        std::vector<std::pair<double, double>> peaks;
+        for (std::size_t b = 2; b + 2 < db.size(); ++b)
+            if (db[b] > db[b - 1] && db[b] >= db[b + 1] && db[b] > -80.0)
+                peaks.push_back ({ db[b], static_cast<double> (b) * binHz });
+        std::sort (peaks.begin(), peaks.end(), [] (auto& a, auto& b) { return a.first > b.first; });
+        std::printf ("x%d:", factor);
+        for (std::size_t i = 0; i < std::min<std::size_t> (12, peaks.size()); ++i)
+            std::printf (" %.0fHz/%.1f", peaks[i].second, peaks[i].first);
+        std::printf ("\n");
+    }
+}
