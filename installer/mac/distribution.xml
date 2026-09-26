@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>AUGUR-5 "3340" @VERSION@ - TONAL LAB</title>
+    <organization>com.tonallab</organization>
+    <welcome file="welcome.html"/>
+    <options customize="allow" require-scripts="false" hostArchitectures="arm64,x86_64"/>
+    <volume-check>
+        <allowed-os-versions><os-version min="11.0"/></allowed-os-versions>
+    </volume-check>
+    <choices-outline>
+        <line choice="vst3"/>
+        <line choice="au"/>
+        <line choice="app"/>
+    </choices-outline>
+    <choice id="vst3" title="VST3 plug-in" description="Ableton Live, Cubase, Bitwig, FL Studio, Reaper, Studio One.">
+        <pkg-ref id="com.tonallab.augur5.vst3"/>
+    </choice>
+    <choice id="au" title="Audio Unit" description="Logic Pro, GarageBand, MainStage.">
+        <pkg-ref id="com.tonallab.augur5.au"/>
+    </choice>
+    <choice id="app" title="Standalone application" description="AUGUR-5 without a DAW, in /Applications.">
+        <pkg-ref id="com.tonallab.augur5.app"/>
+    </choice>
+    <pkg-ref id="com.tonallab.augur5.vst3" version="@VERSION@">augur5-vst3.pkg</pkg-ref>
+    <pkg-ref id="com.tonallab.augur5.au" version="@VERSION@">augur5-au.pkg</pkg-ref>
+    <pkg-ref id="com.tonallab.augur5.app" version="@VERSION@">augur5-app.pkg</pkg-ref>
+</installer-gui-script>

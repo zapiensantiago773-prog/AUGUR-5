@@ -367,3 +367,18 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
   - Instalación en el plugin: BROWSER > Install expansion pack (.zip), o descomprimir y usar "Add presets folder".
   - Verificado con `--install-pack` y `--import-folder`: 500 instalados y 500 visibles en el browser.
   - El zip no va al repositorio (`packs/dist/` en `.gitignore`); los presets fuente sí.
+
+## D-035 · Versión 1.0.0 e instaladores (2026-09-26)
+- Versión del producto **1.0.0**: la primera completa.
+- **macOS** (`installer/mac/build_pkg.sh`, se ejecuta en la CI de macOS después de tests, pluginval y auval): `AUGUR-5 1.0.0 (macOS).pkg`, binarios universales (arm64 + x86_64), macOS 11+. El instalador tiene tres opciones:
+
+| Opción | Destino |
+|---|---|
+| VST3 | `/Library/Audio/Plug-Ins/VST3` |
+| AU | `/Library/Audio/Plug-Ins/Components` |
+| App | `/Applications` |
+
+  - Firma ad-hoc (sin Developer ID todavía). El postinstall quita la cuarentena y reinicia `AudioComponentRegistrar` para que Logic re-escanee.
+  - Cómo firmar y notarizar con certificado: `installer/mac/README.md`.
+- **Windows**: `AUGUR-5 1.0.0 (Windows).zip`, con el VST3 y el Standalone.
+- Cada push sube los instaladores como artefactos. Un tag `v*` publica un **GitHub Release** con el .pkg y el .zip.
