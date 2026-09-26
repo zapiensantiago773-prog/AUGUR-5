@@ -159,7 +159,7 @@ TEST_CASE ("CEM3340 audio-rate PWM and FM stay band-limited", "[cem3340][aliasin
     constexpr double fm = 377.0;
     constexpr double depthOct = 0.25; // FM: +-3 semitones
     const bool fmMode = GENERATE (false, true);
-    const double meanFactor = fmMode ? std::cyl_bessel_i (0.0, depthOct * 0.69314718055994531) : 1.0; // mean of 2^(d sin)
+    const double meanFactor = fmMode ? test::besselI0 (depthOct * 0.69314718055994531) : 1.0; // mean of 2^(d sin)
     const double f0 = 4.0 * fm / meanFactor;
 
     Cem3340Vco vco;

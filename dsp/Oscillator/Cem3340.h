@@ -41,7 +41,35 @@ public:
 
     // pitch: commanded pitch in MIDI semitones (the applied CV). pw: 0..1 (0 V..5 V).
     // syncD >= 0: the master's saw fell `syncD` samples before the end of this sample.
-    VcoOutputs process (float pitch, float pw, float syncD) noexcept;
+    VcoOutputs process (float pitch, float pw, float syncD) noexcept
+    {
+        // Fast path (inline): most samples contain no event at all. The charging rate is linear across
+        // the sample (continuous exponential FM); thresholds are 1 and 0 (the overshoot only extends them).
+        const double f = static_cast<double> (unit.expo.fastFrequency (pitch));
+        const double b1 = f > 0.0 ? (f * twoOverSampleRate < 0.8 ? f * twoOverSampleRate : 0.8) : 0.0;
+        const double b0 = basePrevious < 0.0 ? b1 : basePrevious;
+        const float p3 = pw + unit.pwOffset;
+        const float wNew = p3 < 0.0f ? 0.0f : (p3 > 1.0f ? 1.0f : p3);
+        if (hold <= 0.0 && pendingFall < 0.0 && syncD < 0.0f)
+        {
+            const double travel = 0.5 * (b0 + b1);
+            const double vEnd = dir > 0 ? v + (1.0 - 0.5 * unit.asymmetry) * travel : v - (1.0 + 0.5 * unit.asymmetry) * travel;
+            if (dir > 0 ? vEnd < 1.0 : vEnd > 0.0)
+            {
+                const bool highStart = saw (v, dir) < wHistory[1];
+                const bool highEnd = saw (vEnd, dir) < wHistory[2];
+                if (highStart == comparatorHigh && highEnd == comparatorHigh)
+                {
+                    basePrevious = b1;
+                    wHistory = { wHistory[1], wHistory[2], wNew };
+                    resetD = -1.0f;
+                    v = vEnd;
+                    return pushOutputs();
+                }
+            }
+        }
+        return processEvents (b0, b1, wNew, syncD);
+    }
 
     // Position of this oscillator's saw reset inside the last sample, or -1 (drives slaves).
     float lastResetD() const noexcept { return resetD; }
@@ -61,9 +89,23 @@ private:
         Sync
     };
 
-    double saw (double v, int direction) const noexcept;
+    double saw (double vv, int direction) const noexcept
+    {
+        // Tri->saw converter: pass the rising half (0..5 V -> 0..5 V), invert and lift the falling half
+        // (5..0 V -> 5..10 V). Saw units: 1 = 10 V.
+        return direction > 0 ? 0.5 * vv
+                             : 0.5 + 0.5 * static_cast<double> (unit.converterGain) * (1.0 - vv) + static_cast<double> (unit.converterOffset);
+    }
     double sawSlope (int direction, double su, double sd) const noexcept;
-    void pulseStep (float d, float step) noexcept;
+    VcoOutputs pushOutputs() noexcept
+    {
+        VcoOutputs out;
+        out.saw = sawRing.push (static_cast<float> (hold > 0.0 ? 0.0 : saw (v, dir))) * unit.sawLevel;
+        out.tri = triRing.push (static_cast<float> (hold > 0.0 ? 0.0 : v)) * unit.triLevel;
+        out.pulse = pulseRing.push (pulseHigh ? 1.0f : 0.0f) * unit.pulseLevel;
+        return out;
+    }
+    VcoOutputs processEvents (double b0, double b1, float wNew, float syncD) noexcept;
 
     const BlepTable* table = nullptr;
     Cem3340Unit unit;
@@ -71,12 +113,14 @@ private:
     BlepRing sawRing, triRing, pulseRing;
 
     double sampleRate = 96000.0;
+    double twoOverSampleRate = 2.0 / 96000.0;
     double v = 0.0;           // capacitor voltage, 1 = Vcc/3 (5 V)
     int dir = 1;              // +1 charging, -1 discharging
     double hold = 0.0;        // samples the sync still clamps the core at 0 V
     bool comparatorHigh = true; // saw below the PW threshold
     bool pulseHigh = true;      // pulse output (lags the comparator on falling edges)
     double pendingFall = -1.0;  // samples until a scheduled falling edge, or -1
+    double basePrevious = -1.0; // charging rate at the end of the previous sample
     std::array<float, 3> wHistory { 0.5f, 0.5f, 0.5f }; // PW CV of the last three samples (cubic interpolation)
     float resetD = -1.0f;
 };

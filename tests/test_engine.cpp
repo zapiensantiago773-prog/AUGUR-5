@@ -244,7 +244,7 @@ TEST_CASE ("OSC B LO FREQ drops 7.5 octaves (service manual 2-4)", "[engine]")
     CHECK_THAT (1.0 / period, Catch::Matchers::WithinRel (261.6255653 / std::exp2 (7.5), 0.01));
 }
 
-TEST_CASE ("Repeated notes carry no DC thump into the VCA", "[engine][dc]")
+TEST_CASE ("Even the first note carries no DC thump into the VCA", "[engine][dc]")
 {
     constexpr double sr = 48000.0;
     auto e = std::make_unique<SynthEngine>();
@@ -262,19 +262,44 @@ TEST_CASE ("Repeated notes carry no DC thump into the VCA", "[engine][dc]")
     p.voiceCount = 1;
     e->setParams (p);
 
+    e->warmUp(); // what the plugin does in prepareToPlay / after a preset or session change
+
     std::vector<float> l (static_cast<size_t> (2.0 * sr)), r (l.size());
-    for (int n = 0; n < 4; ++n) // let the coupling capacitor settle, as on a powered-up instrument
-    {
-        e->noteOn (69, 1.0f);
-        e->process (l.data(), r.data(), static_cast<int> (l.size()));
-        e->noteOff (69);
-        e->process (l.data(), r.data(), static_cast<int> (0.5 * sr));
-    }
-    e->noteOn (69, 1.0f);
+    e->noteOn (69, 1.0f); // the very first note
     e->process (l.data(), r.data(), static_cast<int> (0.3 * sr));
     float peak = 0.0f;
     for (size_t n = 0; n < static_cast<size_t> (0.3 * sr); ++n)
         peak = std::max (peak, std::abs (l[n]));
     INFO ("peak " << 20.0 * std::log10 (peak + 1e-12) << " dBFS");
     CHECK (peak < 0.001f); // < -60 dBFS at full level
+}
+
+TEST_CASE ("Notes in the very first block use the current VOICES setting", "[engine][voices]")
+{
+    auto e = std::make_unique<SynthEngine>();
+    e->prepare (48000.0);
+    SynthParams p;
+    p.voiceCount = 8;
+    p.aenvS = 1.0f;
+    e->setParams (p);
+    for (int n = 0; n < 8; ++n)
+        e->noteOn (48 + n, 1.0f); // before any audio has been processed
+    std::vector<float> l (2048), r (2048);
+    e->process (l.data(), r.data(), 2048);
+
+    int active = 0;
+    for (int v = 0; v < SynthEngine::maxVoices; ++v)
+        active += e->getVoiceLevel (v) > 0.0f ? 1 : 0;
+    CHECK (active == 8);
+
+    // Lowering VOICES releases only the voices that no longer exist.
+    p.voiceCount = 6;
+    e->setParams (p);
+    e->noteOn (80, 1.0f);
+    for (int b = 0; b < 30; ++b)
+        e->process (l.data(), r.data(), 2048);
+    int sustaining = 0;
+    for (int v = 0; v < 6; ++v)
+        sustaining += e->getVoiceLevel (v) > 0.5f ? 1 : 0;
+    CHECK (sustaining == 6);
 }

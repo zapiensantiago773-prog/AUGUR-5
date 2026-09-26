@@ -10,6 +10,7 @@ Augur5Processor::Augur5Processor()
 {
     // A fresh instance opens on the showcase patch, not a bare init sound.
     presets.loadFactory (1);
+    presets.onPresetLoaded = [this] { warmUpEngine(); };
     undoManager.clearUndoHistory();
 }
 
@@ -26,6 +27,8 @@ void Augur5Processor::prepareToPlay (double sampleRate, int)
     engine->prepare (sampleRate);
     binding.fill (snapshot);
     engine->setParams (snapshot);
+    engine->warmUp();
+    prepared = true;
 
     // Oversampling decimator + BLEP delay, so hosts can align us with other tracks.
     const int latency = engine->getOversampling() == 2 ? (augur::HalfbandDecimator::centre + augur::BlepRing::latency) / 2
@@ -154,8 +157,20 @@ void Augur5Processor::setStateInformation (const void* data, int sizeInBytes)
             presets.setCurrentName (tree.getProperty ("presetName", "Init").toString());
             uiScale = static_cast<float> (tree.getProperty ("uiScale", 0.75));
             undoManager.clearUndoHistory();
+            warmUpEngine();
         }
     }
+}
+
+void Augur5Processor::warmUpEngine()
+{
+    if (! prepared)
+        return; // prepareToPlay will do it
+    suspendProcessing (true);
+    binding.fill (snapshot);
+    engine->setParams (snapshot);
+    engine->warmUp();
+    suspendProcessing (false);
 }
 
 juce::AudioProcessorEditor* Augur5Processor::createEditor()

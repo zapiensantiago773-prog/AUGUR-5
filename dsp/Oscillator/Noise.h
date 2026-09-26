@@ -2,6 +2,8 @@
 
 #include "Util/Random.h"
 
+#include <cstdint>
+
 namespace augur
 {
 
@@ -17,6 +19,16 @@ public:
     }
 
     float white() noexcept { return rng.nextBipolar(); }
+
+    // Three independent bipolar white values from a single 64-bit draw (21 bits of resolution each).
+    void white3 (float& a, float& b, float& c) noexcept
+    {
+        const std::uint64_t r = rng.nextU64();
+        constexpr float scale = 2.0f / 2097152.0f;
+        a = static_cast<float> (r & 0x1FFFFF) * scale - 1.0f;
+        b = static_cast<float> ((r >> 21) & 0x1FFFFF) * scale - 1.0f;
+        c = static_cast<float> ((r >> 42) & 0x1FFFFF) * scale - 1.0f;
+    }
 
     float analog() noexcept
     {

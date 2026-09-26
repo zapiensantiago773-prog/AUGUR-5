@@ -49,6 +49,10 @@ public:
     float getUiScale() const noexcept { return uiScale; }
     void setUiScale (float s) noexcept { uiScale = s; }
 
+    // After a preset or session change: charge the coupling capacitors for the new sound (~2 ms, with
+    // processing briefly suspended), so the first note carries no DC step.
+    void warmUpEngine();
+
 private:
     void handleMidi (const juce::uint8* data, int numBytes) noexcept;
 
@@ -60,6 +64,7 @@ private:
     std::unique_ptr<augur::SynthEngine> engine;
     augur::SynthParams snapshot;
     float uiScale = 0.75f;
+    bool prepared = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Augur5Processor)
 };

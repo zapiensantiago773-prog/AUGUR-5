@@ -49,18 +49,26 @@ public:
     // Overwrites left/right with numSamples of output.
     void process (float* left, float* right, int numSamples) noexcept;
 
+    // Charges every voice's coupling capacitors for the current parameters (like an instrument that has
+    // been switched on for a while), so even the first note carries no DC step. Not for the audio thread
+    // while it is running: call after prepare(), or with processing suspended.
+    void warmUp() noexcept;
+
     int getOversampling() const noexcept { return oversampling; }
     float getVoiceLevel (int voice) const noexcept { return voiceLevels[static_cast<size_t> (voice)].load (std::memory_order_relaxed); }
 
 private:
     void controlUpdate() noexcept;
     void renderSegment (float* left, float* right, int offset, int numSamples) noexcept;
-    void applyModeChange() noexcept;
 
+    // Voice assignment always follows the latest parameters (not the last control chunk), so a note in
+    // the very first block, or right after VOICES/UNISON changed, is assigned correctly.
     int activeVoiceCount() const noexcept;
-    bool isMonoMode() const noexcept { return params.unison || params.voiceCount <= 1; }
+    bool isMonoMode() const noexcept { return pending.unison || pending.voiceCount <= 1; }
+    void syncMode() noexcept;
     void monoTrigger (int note, float velocity, bool retrigger) noexcept;
     void releaseNote (int note) noexcept;
+    void startVoice (SynthVoice& voice, const SynthVoice::NoteOn& on) noexcept;
 
     // Parameters
     SynthParams pending, params;

@@ -85,11 +85,12 @@ void SynthEngine::setTransport (double newBpm, bool isPlaying, double ppqAtBlock
 
 int SynthEngine::activeVoiceCount() const noexcept
 {
-    return std::clamp (params.voiceCount, 1, maxVoices);
+    return std::clamp (pending.voiceCount, 1, maxVoices);
 }
 
 void SynthEngine::noteOn (int note, float velocity) noexcept
 {
+    syncMode();
     note = std::clamp (note, 0, 127);
     const auto n = static_cast<size_t> (note);
     keyDown[n] = true;
@@ -106,7 +107,7 @@ void SynthEngine::noteOn (int note, float velocity) noexcept
         const bool wasHolding = monoStackSize > 0;
         if (monoStackSize < static_cast<int> (monoStack.size()))
             monoStack[static_cast<size_t> (monoStackSize++)] = note;
-        monoTrigger (note, velocity, ! (params.legato && wasHolding));
+        monoTrigger (note, velocity, ! (pending.legato && wasHolding));
         return;
     }
 
@@ -145,28 +146,51 @@ void SynthEngine::noteOn (int note, float velocity) noexcept
     on.note = note;
     on.velocity = velocity;
     on.retrigger = true;
-    on.glide = params.glide > 0.0005f;
+    on.glide = pending.glide > 0.0005f;
     on.panPosition = panPositionFor (chosen, count);
     on.order = ++noteCounter;
-    voices[static_cast<size_t> (chosen)].noteOn (on);
+    startVoice (voices[static_cast<size_t> (chosen)], on);
     nextVoice = (chosen + 1) % count;
+}
+
+void SynthEngine::startVoice (SynthVoice& voice, const SynthVoice::NoteOn& on) noexcept
+{
+    if (! voice.isActive())
+        for (const auto& other : voices)
+            if (&other != &voice && other.isActive())
+            {
+                voice.copyCouplingFrom (other);
+                break;
+            }
+    voice.noteOn (on);
+}
+
+void SynthEngine::warmUp() noexcept
+{
+    controlUpdate(); // current parameters into the chunk signals
+    constexpr double seconds = 0.06; // per measurement phase (see SynthVoice::warmUp)
+    const int chunks = static_cast<int> (seconds * hostRate / controlInterval) + 1;
+    voices[0].warmUp (sig, chunks);
+    for (size_t v = 1; v < voices.size(); ++v)
+        voices[v].copyCouplingFrom (voices[0]);
+    chunkPos = 0; // the next process() starts a fresh control chunk
 }
 
 void SynthEngine::monoTrigger (int note, float velocity, bool retrigger) noexcept
 {
-    const int count = params.unison ? activeVoiceCount() : 1;
+    const int count = pending.unison ? activeVoiceCount() : 1;
     for (int i = 0; i < count; ++i)
     {
         SynthVoice::NoteOn on;
         on.note = note;
         on.velocity = velocity;
         on.retrigger = retrigger;
-        on.glide = params.glide > 0.0005f;
+        on.glide = pending.glide > 0.0005f;
         // Unison: symmetric detune, up to +-25 cents at VOICE DETUNE = 1, spread across the stereo field.
-        on.unisonOffset = count > 1 ? panPositionFor (i, count) * params.voiceDetune * 0.25f : 0.0f;
+        on.unisonOffset = count > 1 ? panPositionFor (i, count) * pending.voiceDetune * 0.25f : 0.0f;
         on.panPosition = panPositionFor (i, count);
         on.order = ++noteCounter;
-        voices[static_cast<size_t> (i)].noteOn (on);
+        startVoice (voices[static_cast<size_t> (i)], on);
     }
 }
 
@@ -186,7 +210,7 @@ void SynthEngine::releaseNote (int note) noexcept
             if (wasTop)
             {
                 const int top = monoStack[static_cast<size_t> (monoStackSize - 1)];
-                monoTrigger (top, keyVelocity[static_cast<size_t> (top)], ! params.legato);
+                monoTrigger (top, keyVelocity[static_cast<size_t> (top)], ! pending.legato);
             }
         }
         else
@@ -205,6 +229,7 @@ void SynthEngine::releaseNote (int note) noexcept
 
 void SynthEngine::noteOff (int note) noexcept
 {
+    syncMode();
     note = std::clamp (note, 0, 127);
     keyDown[static_cast<size_t> (note)] = false;
     if (sustainDown)
@@ -255,18 +280,28 @@ void SynthEngine::allSoundOff() noexcept
         v.reset();
 }
 
-void SynthEngine::applyModeChange() noexcept
+void SynthEngine::syncMode() noexcept
 {
     const bool mono = isMonoMode();
-    if (mono != lastMonoMode || params.voiceCount != lastVoiceCount)
+    const int count = activeVoiceCount();
+    if (mono != lastMonoMode)
     {
+        // Poly <-> mono/unison: the assignment scheme changes, start clean.
         for (auto& v : voices)
             if (v.isActive())
                 v.noteOff();
         monoStackSize = 0;
-        lastMonoMode = mono;
-        lastVoiceCount = params.voiceCount;
     }
+    else if (! mono && count < lastVoiceCount)
+    {
+        // Fewer voices: only the ones that no longer exist are released.
+        for (int v = count; v < maxVoices; ++v)
+            if (voices[static_cast<size_t> (v)].isActive())
+                voices[static_cast<size_t> (v)].noteOff();
+        nextVoice %= count;
+    }
+    lastMonoMode = mono;
+    lastVoiceCount = count;
 }
 
 //==============================================================================
@@ -328,11 +363,11 @@ void SynthEngine::controlUpdate() noexcept
         initSmoother (smLfoAmount, 0.02, params.lfoAmount, internalRate);
         initSmoother (smLevel, 0.02, level, hostRate);
         lastMonoMode = isMonoMode();
-        lastVoiceCount = params.voiceCount;
+        lastVoiceCount = activeVoiceCount();
         paramsInitialised = true;
     }
 
-    applyModeChange();
+    syncMode();
 
     const auto fill = [n] (LinearSmoother& s, float target, ChunkSignals::Buffer& buf) {
         s.setTarget (target);
@@ -408,13 +443,25 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
     std::fill_n (busL.begin(), iCount, 0.0f);
     std::fill_n (busR.begin(), iCount, 0.0f);
 
-    for (size_t v = 0; v < voices.size(); ++v)
-    {
-        auto& voice = voices[v];
+    // Voices are interleaved sample by sample (same summation order as rendering them one after another,
+    // so the result is identical) to let the CPU overlap their independent dependency chains.
+    std::array<SynthVoice*, maxVoices> active {};
+    int numActive = 0;
+    for (auto& voice : voices)
         if (voice.isActive())
-            voice.render (sig, iStart, iCount, busL.data(), busR.data());
-        voiceLevels[v].store (voice.isActive() ? voice.getLevel() : 0.0f, std::memory_order_relaxed);
+        {
+            voice.beginRender (sig);
+            active[static_cast<size_t> (numActive++)] = &voice;
+        }
+    for (int j = 0; j < iCount; ++j)
+    {
+        const auto i = static_cast<size_t> (iStart + j);
+        const auto jj = static_cast<size_t> (j);
+        for (int k = 0; k < numActive; ++k)
+            active[static_cast<size_t> (k)]->tick (sig, i, busL[jj], busR[jj]);
     }
+    for (size_t v = 0; v < voices.size(); ++v)
+        voiceLevels[v].store (voices[v].isActive() ? voices[v].getLevel() : 0.0f, std::memory_order_relaxed);
 
     const float floorAmp = 1.6e-5f * params.analogAge;
     for (int k = 0; k < numSamples; ++k)

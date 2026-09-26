@@ -2,6 +2,8 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include <functional>
+
 namespace augur5
 {
 
@@ -29,6 +31,7 @@ public:
     void previous();
 
     juce::String getCurrentName() const { return currentName; }
+    std::function<void()> onPresetLoaded; // message thread, after every factory/user preset load
     void setCurrentName (const juce::String& n) { currentName = n; }
 
 private:

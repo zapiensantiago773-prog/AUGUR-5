@@ -1,6 +1,7 @@
 #include "Filter/LadderFilter.h"
 
 #include "Util/FastMath.h"
+#include "Util/Simd4.h"
 
 #include <algorithm>
 #include <cmath>
@@ -51,14 +52,15 @@ float LadderFilter::process (float x, float cutoffHz, float resonance) noexcept
 
     // Secant gains of every nonlinearity at the previous sample's operating point (semi-implicit:
     // the linear part of the loop is solved exactly, so it stays stable at any cutoff/resonance).
+    // The four stages are independent here, so they are computed together (SIMD).
     const float aIn = fastmath::tanhRatio (u * mc.inputDrive);
     float alpha[4], beta[4];
-    for (size_t i = 0; i < 4; ++i)
     {
-        const float G = g * fastmath::tanhRatio (v[i] * mc.stageDrive);
-        const float inv = 1.0f / (1.0f + G);
-        alpha[i] = G * inv;
-        beta[i] = s[i] * inv;
+        using namespace simd;
+        const F4 G = splat (g) * tanhRatio (load (v.data()) * splat (mc.stageDrive));
+        const F4 inv = splat (1.0f) / (splat (1.0f) + G);
+        store (alpha, G * inv);
+        store (beta, load (s.data()) * inv);
     }
 
     // y4 = A * u0 + B, with u0 = aIn * (xin - k * y4)
@@ -80,8 +82,7 @@ float LadderFilter::process (float x, float cutoffHz, float resonance) noexcept
         stageIn = y[i];
     }
 
-    for (size_t i = 0; i < 4; ++i)
-        s[i] = 2.0f * y[i] - s[i];
+    simd::store (s.data(), simd::splat (2.0f) * simd::load (y.data()) - simd::load (s.data()));
 
     return y[3];
 }

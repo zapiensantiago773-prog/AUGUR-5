@@ -170,7 +170,9 @@ void SynthVoice::noteOn (const NoteOn& n) noexcept
     if (! n.glide || ! hasPitch)
         pitch = pitchTarget;
     hasPitch = true;
-    if (model >= 0)
+    if (constantsDirty && lastSig != nullptr)
+        computeConstants (*lastSig); // the voice wakes up: bring its chunk constants up to date
+    else if (model >= 0)
         updateCvOffsets(); // the computer writes the new note's CV (with its own bias) immediately
 
     if (n.retrigger || ! ampEnv.isActive())
@@ -179,6 +181,56 @@ void SynthVoice::noteOn (const NoteOn& n) noexcept
         ampEnv.noteOn();
         lfoDelayGain = lfoDelayInc >= 1.0f ? 1.0f : 0.0f;
     }
+}
+
+void SynthVoice::warmUp (const ChunkSignals& sig, int chunks) noexcept
+{
+    NoteOn on;
+    on.note = 60;
+    noteOn (on);
+
+    const float normalCoeff = dcTrimCoeff;
+    dcTrimCoeff = 0.0f; // corrections are set from measured means, not tracked
+    dcTrimA = dcTrimB = filterDc = 0.0f;
+
+    float l[ChunkSignals::maxSamples], r[ChunkSignals::maxSamples];
+    const auto run = [&] (int numChunks, int phase) {
+        warmPhase = phase;
+        warmPos = 0.0;
+        warmInc = 1.0 / std::max (1.0, static_cast<double> (numChunks * sig.numSamples));
+        warmW = warmA = warmB = warmY = 0.0;
+        for (int c = 0; c < numChunks; ++c)
+        {
+            std::fill (std::begin (l), std::end (l), 0.0f);
+            std::fill (std::begin (r), std::end (r), 0.0f);
+            render (sig, 0, sig.numSamples, l, r);
+        }
+        warmPhase = 0;
+    };
+
+    const int quarter = std::max (1, chunks / 4);
+    run (quarter, 0);      // oscillators, envelopes and filter settle
+    run (chunks, 1);       // mixer means
+    if (warmW > 0.0)
+    {
+        dcTrimA = static_cast<float> (warmA / warmW);
+        dcTrimB = static_cast<float> (warmB / warmW);
+    }
+    run (chunks, 0);       // the filter settles with the corrected mixer
+    run (chunks, 2);       // filter output mean = charge of the coupling capacitor
+    if (warmW > 0.0)
+        filterDc = static_cast<float> (warmY / warmW);
+
+    dcTrimCoeff = normalCoeff;
+
+    // Silent and idle again. The filter keeps running state and the coupling capacitors keep their charge,
+    // exactly as in the instrument, where the voice circuitry never stops.
+    filterEnv.reset();
+    ampEnv.reset();
+    note = -1;
+    held = false;
+    hasPitch = false;
+    polyPressure = 0.0f;
 }
 
 void SynthVoice::noteOff() noexcept
@@ -190,6 +242,24 @@ void SynthVoice::noteOff() noexcept
 
 void SynthVoice::updateControl (const ChunkSignals& sig) noexcept
 {
+    lastSig = &sig;
+
+    // Drift since the last TUNE always advances, even when silent.
+    const float age = std::clamp (sig.params->analogAge, 0.0f, 1.0f);
+    const float driftSemis = 0.0015f + 0.035f * age; // ~0.15 .. 3.6 cents std-dev
+    driftNow[0] = driftA.next() * driftSemis;
+    driftNow[1] = driftB.next() * driftSemis;
+    driftNow[2] = driftF.next() * (0.004f + 0.03f * age); // octaves
+
+    if (isActive())
+        computeConstants (sig);
+    else
+        constantsDirty = true;
+}
+
+void SynthVoice::computeConstants (const ChunkSignals& sig) noexcept
+{
+    constantsDirty = false;
     const SynthParams& p = *sig.params;
     const float age = std::clamp (p.analogAge, 0.0f, 1.0f);
     const float spread = 0.25f + 0.75f * age;
@@ -203,11 +273,7 @@ void SynthVoice::updateControl (const ChunkSignals& sig) noexcept
         configureUnits (newModel, age);
     }
 
-    // Drift since the last TUNE always advances, even when silent.
-    const float driftSemis = 0.0015f + 0.035f * age; // ~0.15 .. 3.6 cents std-dev
-    const float dA = driftA.next() * driftSemis;
-    const float dB = driftB.next() * driftSemis;
-    const float dF = driftF.next() * (0.004f + 0.03f * age); // octaves
+    const float dA = driftNow[0], dB = driftNow[1], dF = driftNow[2];
 
     // Analog (unquantised) pitch terms: drift, deliberate per-voice detune, FINE.
     const float detune = p.voiceDetune * 0.07f;
@@ -238,8 +304,21 @@ void SynthVoice::updateControl (const ChunkSignals& sig) noexcept
         }
         return ota::dc (gS * ls, gT * lt, gP * lp, w + pwo);
     };
-    dcA = unitDc (0, sig.saw1[last], 0.0f, sig.pulse1[last], sig.osc1Pw[last]);
-    dcB = unitDc (1, sig.saw2[last], sig.tri2[last], sig.pulse2[last], sig.osc2Pw[last]);
+    const std::array<float, 8> dcKey { sig.saw1[last], sig.pulse1[last], sig.osc1Pw[last], sig.saw2[last],
+                                       sig.tri2[last], sig.pulse2[last], sig.osc2Pw[last], static_cast<float> (model) };
+    if (dcKey != dcCache)
+    {
+        dcCache = dcKey;
+        dcA = unitDc (0, sig.saw1[last], 0.0f, sig.pulse1[last], sig.osc1Pw[last]);
+        dcB = unitDc (1, sig.saw2[last], sig.tri2[last], sig.pulse2[last], sig.osc2Pw[last]);
+    }
+
+    // OSC B only has to run when it can be heard or when something depends on it.
+    bool matrixUsesB = false;
+    for (const auto& s : p.matrix)
+        matrixUsesB = matrixUsesB || (s.amount != 0.0f && s.source == ModSource::Osc2);
+    needOscB = sig.mix2[0] > 0.0f || sig.mix2[last] > 0.0f || p.osc1Sync || matrixUsesB
+               || (p.pmOn && (sig.pmOsc2[0] > 0.0f || sig.pmOsc2[last] > 0.0f));
 
     cutoffOffset = fp.cutoff * 0.04f * spread + dF;
     resonanceTrim = 1.0f + fp.resonance * 0.03f * spread;
@@ -248,11 +327,16 @@ void SynthVoice::updateControl (const ChunkSignals& sig) noexcept
 
     filter.setModel (p.filterModel == 0 ? LadderFilter::Model::Cem3320 : LadderFilter::Model::Ssm2040);
 
-    const float envSpread = 0.05f * spread;
-    filterEnv.setParameters (p.fenvA * (1.0f + envSpread * fp.envTime[0]), p.fenvD * (1.0f + envSpread * fp.envTime[0]),
-                             p.fenvS, p.fenvR * (1.0f + envSpread * fp.envTime[0]));
-    ampEnv.setParameters (p.aenvA * (1.0f + envSpread * fp.envTime[1]), p.aenvD * (1.0f + envSpread * fp.envTime[1]),
-                          p.aenvS, p.aenvR * (1.0f + envSpread * fp.envTime[1]));
+    const std::array<float, 9> envKey { p.fenvA, p.fenvD, p.fenvS, p.fenvR, p.aenvA, p.aenvD, p.aenvS, p.aenvR, age };
+    if (envKey != envCache)
+    {
+        envCache = envKey;
+        const float envSpread = 0.05f * spread;
+        filterEnv.setParameters (p.fenvA * (1.0f + envSpread * fp.envTime[0]), p.fenvD * (1.0f + envSpread * fp.envTime[0]),
+                                 p.fenvS, p.fenvR * (1.0f + envSpread * fp.envTime[0]));
+        ampEnv.setParameters (p.aenvA * (1.0f + envSpread * fp.envTime[1]), p.aenvD * (1.0f + envSpread * fp.envTime[1]),
+                              p.aenvS, p.aenvR * (1.0f + envSpread * fp.envTime[1]));
+    }
 
     // Glide: RC portamento, GLIDE = time to cover ~95% of the interval.
     glideCoeff = p.glide <= 0.0005f ? 1.0f
@@ -280,27 +364,43 @@ void SynthVoice::updateControl (const ChunkSignals& sig) noexcept
 
 void SynthVoice::render (const ChunkSignals& sig, int start, int count, float* left, float* right) noexcept
 {
+    beginRender (sig);
+    for (int j = 0; j < count; ++j)
+        tick (sig, static_cast<size_t> (start + j), left[j], right[j]);
+}
+
+void SynthVoice::beginRender (const ChunkSignals& sig) noexcept
+{
     const SynthParams& p = *sig.params;
-    const float velGain = 1.0f - p.ampVelocity + p.ampVelocity * velocity;
-    const float filterVelOct = p.filterVelocity * velocity * 3.0f;
-    const float pressure = std::max (sig.channelPressure, polyPressure);
-    const float atOct = p.aftertouchAmount * pressure * 3.0f;
+    tickVelGain = 1.0f - p.ampVelocity + p.ampVelocity * velocity;
+    tickFilterVelOct = p.filterVelocity * velocity * 3.0f;
+    tickPressure = std::max (sig.channelPressure, polyPressure);
+    tickAtOct = p.aftertouchAmount * tickPressure * 3.0f;
+    tickCommon = sig.bendSemitones + sig.tuneSemitones; // analog: master tune, pitch wheel
+    tickInvChunk = 1.0f / static_cast<float> (std::max (1, sig.numSamples));
+}
+
+void SynthVoice::tick (const ChunkSignals& sig, size_t i, float& left, float& right) noexcept
+{
+    const SynthParams& p = *sig.params;
+    const float velGain = tickVelGain;
+    const float filterVelOct = tickFilterVelOct;
+    const float pressure = tickPressure;
+    const float atOct = tickAtOct;
     const bool sync = p.osc1Sync;
     const bool pmOn = p.pmOn;
     const bool rev3 = model == 0;
-    const float common = sig.bendSemitones + sig.tuneSemitones; // analog: master tune, pitch wheel
-    const float invChunk = 1.0f / static_cast<float> (std::max (1, sig.numSamples));
-
-    for (int j = 0; j < count; ++j)
+    const float common = tickCommon;
+    const float invChunk = tickInvChunk;
     {
-        const size_t i = static_cast<size_t> (start + j);
 
         pitch += (pitchTarget - pitch) * glideCoeff;
         const float fenv = filterEnv.next();
         const float aenv = ampEnv.next();
         lfoDelayGain = std::min (1.0f, lfoDelayGain + lfoDelayInc);
         const float lfo = sig.lfo[i] * lfoDelayGain;
-        const float white = noise.white();
+        float white, cvWhite[2];
+        noise.white3 (white, cvWhite[0], cvWhite[1]);
         pinkState += (white - pinkState) * 0.05f;
         const float pink = pinkState * 4.0f;
 
@@ -311,14 +411,21 @@ void SynthVoice::render (const ChunkSignals& sig, int start, int count, float* l
             droopPhase[o] += droopInc;
             if (droopPhase[o] >= 1.0)
                 droopPhase[o] -= 1.0;
-            cvNoise[o] += (noise.white() * cvNoiseGain - cvNoise[o]) * cvNoiseCoeff;
+            cvNoise[o] += (cvWhite[o] * cvNoiseGain - cvNoise[o]) * cvNoiseCoeff;
             cvExtra[o] = cvNoise[o] - droopDepth[o] * static_cast<float> (droopPhase[o]);
         }
 
         // Mod matrix
-        float dst[static_cast<size_t> (ModDest::count)] {};
-        if (numSlots > 0)
+        float dst[static_cast<size_t> (ModDest::count)];
+        if (numSlots == 0)
         {
+            for (auto& d : dst)
+                d = 0.0f;
+        }
+        else
+        {
+            for (auto& d : dst)
+                d = 0.0f;
             const float src[static_cast<size_t> (ModSource::count)] { fenv, aenv, lastOscB, lfo, sig.modWheel, velocity, pressure, pink };
             for (int s = 0; s < numSlots; ++s)
                 dst[slots[static_cast<size_t> (s)].dest] += src[slots[static_cast<size_t> (s)].source] * slots[static_cast<size_t> (s)].amount;
@@ -329,14 +436,22 @@ void SynthVoice::render (const ChunkSignals& sig, int start, int count, float* l
         // OSC B first: it is the sync master and the poly-mod source.
         const float pitchB = (kbdB ? notePitch : 60.0f) + cvOffset[1] + analogTune[1] + common + cvExtra[1]
                              + dst[static_cast<size_t> (ModDest::Osc2Freq)];
-        const float pwB = std::clamp (sig.osc2Pw[i] + dst[static_cast<size_t> (ModDest::Osc2Pw)], 0.0f, 1.0f);
-        const VcoOutputs b = rev3 ? cem[1].process (pitchB, pwB, -1.0f) : ssm[1].process (pitchB, pwB, -1.0f);
-        const float resetB = rev3 ? cem[1].lastResetD() : ssm[1].lastResetD();
+        float resetB = -1.0f;
+        float mB = 0.0f;
+        lastOscB = 0.0f;
+        if (needOscB)
+        {
+            const float pwB = std::clamp (sig.osc2Pw[i] + dst[static_cast<size_t> (ModDest::Osc2Pw)], 0.0f, 1.0f);
+            const VcoOutputs b = rev3 ? cem[1].process (pitchB, pwB, -1.0f) : ssm[1].process (pitchB, pwB, -1.0f);
+            resetB = rev3 ? cem[1].lastResetD() : ssm[1].lastResetD();
 
-        // OSC B through the mixer / poly-mod differential pairs (same waveform switches feed both).
-        const float mB = ota::mix (b.saw, b.tri, b.pulse, sig.saw2[i], sig.tri2[i], sig.pulse2[i]);
-        lastOscB = mB - dcB - dcTrimB;
-        dcTrimB += (lastOscB) * dcTrimCoeff;
+            // OSC B through the mixer / poly-mod differential pairs (same waveform switches feed both).
+            mB = ota::mix (b.saw, b.tri, b.pulse, sig.saw2[i], sig.tri2[i], sig.pulse2[i]);
+            lastOscB = mB - dcB - dcTrimB;
+            dcTrimB += lastOscB * dcTrimCoeff;
+            if (warmPhase == 1)
+                warmB += static_cast<double> (lastOscB) * hannWeight();
+        }
 
         // Poly-Mod: filter envelope and OSC B (with its DC, as on the hardware) -> FREQ A / PW A / filter.
         const float pm = pmOn ? fenv * sig.pmFilterEnv[i] + mB * sig.pmOsc2[i] : 0.0f;
@@ -348,6 +463,13 @@ void SynthVoice::render (const ChunkSignals& sig, int start, int count, float* l
         const VcoOutputs a = rev3 ? cem[0].process (pitchA, pwA, syncD) : ssm[0].process (pitchA, pwA, syncD);
         const float mA = ota::mix (a.saw, 0.0f, a.pulse, sig.saw1[i], 0.0f, sig.pulse1[i]) - dcA - dcTrimA;
         dcTrimA += mA * dcTrimCoeff;
+        if (warmPhase == 1)
+        {
+            const double w = hannWeight();
+            warmA += static_cast<double> (mA) * w;
+            warmW += w;
+            warmPos += warmInc;
+        }
 
         // Mixer bus (AC-coupled) + noise + OTA feed-through, then the DRIVE stage into the filter.
         const float bus = mA * sig.mix1[i] + lastOscB * sig.mix2[i] + white * sig.mixNoise[i] * 0.8f + (mA + lastOscB) * bleed;
@@ -361,6 +483,13 @@ void SynthVoice::render (const ChunkSignals& sig, int start, int count, float* l
         const float res = (sig.resonance[i] + dst[static_cast<size_t> (ModDest::Resonance)]) * resonanceTrim;
         // AC coupling into the VCA (C4165): removes the DC the filter's own saturation produces.
         const float yRaw = filter.process (x, fc, res);
+        if (warmPhase == 2)
+        {
+            const double w = hannWeight();
+            warmY += static_cast<double> (yRaw) * w;
+            warmW += w;
+            warmPos += warmInc;
+        }
         const float y = yRaw - filterDc;
         filterDc += y * dcTrimCoeff;
 
@@ -370,8 +499,8 @@ void SynthVoice::render (const ChunkSignals& sig, int start, int count, float* l
 
         // Pan interpolates across the whole chunk by absolute position, independent of sub-ranges.
         const float t = static_cast<float> (i + 1) * invChunk;
-        left[j] += out * (panL + (panLTarget - panL) * t);
-        right[j] += out * (panR + (panRTarget - panR) * t);
+        left += out * (panL + (panLTarget - panL) * t);
+        right += out * (panR + (panRTarget - panR) * t);
     }
 }
 

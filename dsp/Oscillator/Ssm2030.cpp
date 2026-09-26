@@ -31,6 +31,7 @@ void Ssm2030Vco::prepare (double newSampleRate, std::uint64_t seed) noexcept
     phase = rng.nextFloat(); // free-running
     dead = 0.0;
     jitter = 1.0;
+    incPrevious = -1.0;
     resetD = -1.0f;
 }
 
@@ -75,8 +76,12 @@ Ssm2030Vco::WaveState Ssm2030Vco::evaluate (double ph, bool inDead, double inc, 
 
 VcoOutputs Ssm2030Vco::process (float pitch, float pw, float syncD) noexcept
 {
+    // Phase increment linear across the sample (continuous exponential FM, see Cem3340Vco).
     const double f = std::max (0.0, static_cast<double> (unit.expo.fastFrequency (pitch)));
-    const double inc = std::min (0.45, f * invSampleRate * jitter);
+    const double i1 = std::min (0.45, f * invSampleRate * jitter);
+    const double i0 = incPrevious < 0.0 ? i1 : incPrevious;
+    incPrevious = i1;
+    const double di = i1 - i0;
     const double deadSamples = static_cast<double> (unit.deadTimeSeconds) * sampleRate;
 
     const float w = std::clamp (pw + unit.pwOffset, 0.01f, 0.99f);
@@ -84,11 +89,43 @@ VcoOutputs Ssm2030Vco::process (float pitch, float pw, float syncD) noexcept
     const double phiW = phiFromC (w);
     const double phiP = phiFromC (p);
     const double k = unit.curvature;
-    const double invInc = inc > 0.0 ? 1.0 / inc : 0.0;
 
     bool syncPending = syncD >= 0.0f;
-    const double syncT = syncPending ? 1.0 - static_cast<double> (syncD) : 2.0;
     resetD = -1.0f;
+
+    // Fast path: no event can happen inside this sample.
+    if (dead <= 0.0 && ! syncPending)
+    {
+        const double phaseEnd = phase + 0.5 * (i0 + i1);
+        double nextTarget = 1.0;
+        if (phase < phiW) nextTarget = std::min (nextTarget, phiW);
+        if (phase < phiP) nextTarget = std::min (nextTarget, phiP);
+        if (phaseEnd < nextTarget)
+        {
+            phase = phaseEnd;
+            const auto s = evaluate (phase, false, i1, w, p);
+            VcoOutputs out;
+            out.saw = 0.5f * (sawRing.push (s.saw) + 1.0f) * unit.sawLevel;
+            out.tri = 0.5f * (triRing.push (s.tri) + 1.0f) * unit.triLevel;
+            out.pulse = 0.5f * (pulseRing.push (s.pulse) + 1.0f) * unit.pulseLevel;
+            return out;
+        }
+    }
+
+    const auto incAt = [&] (double tt) { return i0 + di * tt; };
+    const auto integral = [&] (double ta, double tb) { return i0 * (tb - ta) + 0.5 * di * (tb * tb - ta * ta); };
+    const auto reachTime = [&] (double tt, double dist) {
+        if (dist <= 0.0)
+            return tt;
+        const double r = incAt (tt);
+        const double disc = r * r + 2.0 * di * dist;
+        if (disc < 0.0)
+            return 2.0;
+        const double den = r + std::sqrt (disc);
+        return den > 1.0e-300 ? tt + 2.0 * dist / den : 2.0;
+    };
+
+    const double syncT = syncPending ? 1.0 - static_cast<double> (syncD) : 2.0;
 
     const auto addAll = [&] (float d, const WaveState& before, const WaveState& after) {
         sawRing.add (*table, d, after.saw - before.saw, after.dsaw - before.dsaw);
@@ -105,25 +142,21 @@ VcoOutputs Ssm2030Vco::process (float pitch, float pw, float syncD) noexcept
         if (dead > 0.0)
         {
             const double tc = t + dead;
-            if (tc < tNext)
-            {
-                tNext = tc;
-                ev = Event::DeadEnd;
-            }
+            if (tc < tNext) { tNext = tc; ev = Event::DeadEnd; }
         }
-        else if (inc > 0.0)
+        else
         {
             if (phase < phiW)
             {
-                const double tc = t + (phiW - phase) * invInc;
+                const double tc = reachTime (t, phiW - phase);
                 if (tc < tNext) { tNext = tc; ev = Event::PwEdge; }
             }
             if (phase < phiP)
             {
-                const double tc = t + (phiP - phase) * invInc;
+                const double tc = reachTime (t, phiP - phase);
                 if (tc < tNext) { tNext = tc; ev = Event::TriPeak; }
             }
-            const double tw = phase >= 1.0 ? t : t + (1.0 - phase) * invInc;
+            const double tw = phase >= 1.0 ? t : reachTime (t, 1.0 - phase);
             if (tw < tNext) { tNext = tw; ev = Event::Wrap; }
         }
 
@@ -136,12 +169,13 @@ VcoOutputs Ssm2030Vco::process (float pitch, float pw, float syncD) noexcept
         if (dead > 0.0)
             dead = std::max (0.0, dead - (tNext - t));
         else
-            phase += (tNext - t) * inc;
+            phase += integral (t, tNext);
         t = tNext;
 
         if (ev == Event::None)
             break;
 
+        const double inc = incAt (t);
         const float d = static_cast<float> (std::clamp (1.0 - t, 0.0, 1.0));
         switch (ev)
         {
@@ -187,7 +221,7 @@ VcoOutputs Ssm2030Vco::process (float pitch, float pw, float syncD) noexcept
         }
     }
 
-    const auto s = evaluate (std::min (phase, 1.0), dead > 0.0, inc, w, p);
+    const auto s = evaluate (std::min (phase, 1.0), dead > 0.0, i1, w, p);
     VcoOutputs out;
     out.saw = 0.5f * (sawRing.push (s.saw) + 1.0f) * unit.sawLevel;
     out.tri = 0.5f * (triRing.push (s.tri) + 1.0f) * unit.triLevel;

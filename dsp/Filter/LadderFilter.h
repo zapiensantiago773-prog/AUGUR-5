@@ -21,6 +21,12 @@ public:
 
     void prepare (double sampleRate) noexcept;
     void reset() noexcept;
+    void copyStateFrom (const LadderFilter& other) noexcept
+    {
+        s = other.s;
+        v = other.v;
+        u = other.u;
+    }
     void setModel (Model m) noexcept { model = m; }
 
     // cutoffHz: stage corner frequency; resonance 0..1 (self-oscillates close to 1); resonanceScale

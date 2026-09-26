@@ -11,6 +11,7 @@
 #include "Oscillator/Ssm2030.h"
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 
 namespace augur
@@ -43,11 +44,28 @@ public:
     void noteOff() noexcept;
     void setPressure (float p) noexcept { polyPressure = p; }
 
+    // Charges the voice's coupling capacitors (mixer AC coupling, VCF->VCA C4165) by running it silently,
+    // as a powered-up instrument would have them. Non-realtime use (prepare, state/preset changes).
+    void warmUp (const ChunkSignals& sig, int chunks) noexcept;
+    // All voices see the same average signal: a voice that wakes up takes the charge of a running one.
+    void copyCouplingFrom (const SynthVoice& other) noexcept
+    {
+        dcTrimA = other.dcTrimA;
+        dcTrimB = other.dcTrimB;
+        filterDc = other.filterDc;
+        filter.copyStateFrom (other.filter); // the real filter never stops: it sits at the same operating point
+    }
+
     // Once per control chunk, for every voice (active or not) so drift keeps evolving identically.
     void updateControl (const ChunkSignals& sig) noexcept;
 
     // Adds this voice's stereo output for samples [start, start + count) of the chunk.
     void render (const ChunkSignals& sig, int start, int count, float* left, float* right) noexcept;
+
+    // Sample-by-sample form of render(), so the engine can interleave voices: their dependency chains
+    // are independent, which lets the CPU overlap them. Call beginRender() once per segment.
+    void beginRender (const ChunkSignals& sig) noexcept;
+    void tick (const ChunkSignals& sig, size_t i, float& left, float& right) noexcept;
 
     bool isActive() const noexcept { return ampEnv.isActive(); }
     bool isHeld() const noexcept { return held; }
@@ -69,6 +87,12 @@ private:
     };
 
     void configureUnits (int model, float age) noexcept;
+    double hannWeight() const noexcept
+    {
+        const double s = std::sin (3.14159265358979323846 * warmPos);
+        return s * s;
+    }
+    void computeConstants (const ChunkSignals& sig) noexcept;
     float dacOffset (int osc, float keyPitch, float knob) const noexcept;
     void updateCvOffsets() noexcept;
 
@@ -111,11 +135,26 @@ private:
     float cvNoiseCoeff = 0.1f, cvNoiseGain = 0.0f;
     double droopInc = 0.0;
 
+    // Control-rate bookkeeping: silent voices only advance their drift; their constants are computed when
+    // a note starts (from the same chunk's signals, so rendering stays block-size independent).
+    const ChunkSignals* lastSig = nullptr;
+    float tickVelGain = 1.0f, tickFilterVelOct = 0.0f, tickPressure = 0.0f, tickAtOct = 0.0f, tickCommon = 0.0f, tickInvChunk = 1.0f;
+    bool constantsDirty = true;
+    std::array<float, 3> driftNow {};
+    bool needOscB = true;
+    std::array<float, 9> envCache { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f };
+    std::array<float, 8> dcCache { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f };
+
     // Mixer DC (AC coupling): analytic mean per chunk + a slowly learned residual that persists across
     // notes (a unit's offset is static for given settings), so note starts carry no DC step.
     float dcA = 0.0f, dcB = 0.0f;
     float dcTrimA = 0.0f, dcTrimB = 0.0f, dcTrimCoeff = 0.0f;
     float filterDc = 0.0f; // C4165 2.2 uF between VCF and VCA: its charge persists (the real voice never stops)
+
+    // Warm-up measurement: Hann-weighted means over many cycles (a one-pole would follow the ripple).
+    int warmPhase = 0;           // 0 = off, 1 = measure mixer means, 2 = measure filter output mean
+    double warmPos = 0.0, warmInc = 0.0;
+    double warmW = 0.0, warmA = 0.0, warmB = 0.0, warmY = 0.0;
     float cutoffOffset = 0.0f;
     float resonanceTrim = 1.0f;
     float vcaTrim = 1.0f;

@@ -4,6 +4,7 @@ add_library(augur_dsp STATIC
     Util/FastMath.h
     Util/Denormals.h
     Util/Halfband.h
+    Util/Simd4.h
     Analog/Drift.h
     Analog/Fingerprint.h
     Analog/Autotune.h
@@ -37,3 +38,4 @@ add_library(augur_dsp STATIC
 target_include_directories(augur_dsp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(augur_dsp PUBLIC cxx_std_20)
 target_link_libraries(augur_dsp PRIVATE augur_warnings)
+

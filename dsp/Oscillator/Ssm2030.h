@@ -57,6 +57,7 @@ private:
     double phase = 0.0;
     double dead = 0.0;   // remaining dead time in samples
     double jitter = 1.0; // current cycle's period factor
+    double incPrevious = -1.0; // phase increment at the end of the previous sample
     float resetD = -1.0f;
 };
 

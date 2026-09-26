@@ -149,6 +149,8 @@ void PresetManager::loadFactory (int index)
     currentFactory = index;
     currentUserFile = juce::File();
     currentName = preset.name;
+    if (onPresetLoaded)
+        onPresetLoaded();
 }
 
 juce::File PresetManager::getUserFolder()
@@ -176,6 +178,8 @@ void PresetManager::loadUser (const juce::File& file)
 
     currentUserFile = file;
     currentName = file.getFileNameWithoutExtension();
+    if (onPresetLoaded)
+        onPresetLoaded();
 }
 
 bool PresetManager::saveUser (const juce::String& name)
