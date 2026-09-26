@@ -213,7 +213,9 @@ def pluck(rng, g, kind):
         p.mm(6, RANDOM, PW1, 0.3)
         p.update(osc1_saw=0, osc1_pulse=1)
     elif kind == "bp":
-        p.update(flt_model=3, flt_mode=1, flt_cutoff=u(rng, 700, 1100), flt_reso=u(rng, 0.4, 0.5), flt_env_amt=0.35)
+        # Band-pass pluck: a static band (little envelope), or the sweep through the band makes a needle-sharp attack.
+        p.update(flt_model=3, flt_mode=1, flt_cutoff=u(rng, 700, 1100), flt_reso=u(rng, 0.3, 0.36), flt_env_amt=0.1,
+                 flt_velocity=0.15, aenv_a=0.003)
     elif kind == "cascade":
         p.update(flt_model=2)
     return p
@@ -336,9 +338,9 @@ def drum(rng, g, kind):
         p.env("aenv", 0.002, u(rng, 0.05, 0.25), 0.0, 0.08)
         return p, -25.0
     if kind == "metal":
-        p.update(osc1_freq=24, osc2_freq=17, osc2_fine=30, mix_osc1=0.5, mix_osc2=0.5, mix_ring=1.0, mix_drive=0.6, flt_model=3,
+        p.update(osc1_freq=24, osc2_freq=17, osc2_fine=30, mix_osc1=0.5, mix_osc2=0.5, mix_ring=1.0, mix_drive=0.35, flt_model=3,
                  flt_mode=2, flt_slope=1, flt_cutoff=900)
-        p.env("aenv", 0.001, 0.2, 0.0, 0.15)
+        p.env("aenv", 0.001, 0.35, 0.0, 0.15)
         return p, -25.0
     # tom
     p.update(osc2_saw=0, osc2_tri=1, mix_osc2=0, osc1_saw=0, osc1_pulse=1, mix_osc1=0.8, flt_cutoff=2000)

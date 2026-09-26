@@ -339,3 +339,11 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
   - LEVEL (`amp_level`) sigue siendo parte de cada sonido: es su nivelación de volumen.
   - MASTER es global y no se guarda en presets: `PresetManager::isGlobalSetting` lo excluye (igual que QUALITY y OFFLINE QUALITY) al restablecer, cargar y guardar presets de usuario. Sí se guarda con la sesión del DAW.
 - **Corrección** (reporte del usuario: "las letras se cortan de la mitad para abajo"): al agrandar el texto (D-030), la etiqueta de cada perilla quedaba más alta que el área de su componente y se recortaba. La perilla ahora reserva size + 42 px de alto (antes + 34) y un área de etiqueta de 20 px.
+
+## D-033 · Packs de expansión, importar carpetas y corrección de volumen al cargar (2026-09-26)
+- **Browser**: los presets de usuario se leen de forma recursiva y se muestran como árbol de carpetas (Pack > Género > preset) bajo "USER / EXPANSIONS".
+  - "Install expansion pack (.zip)…": extrae solo `.augur5`, `.txt` y `.md`, y rechaza rutas con `..`, absolutas o fuera de la carpeta de presets.
+  - "Add presets folder…": pedido del usuario, que solo podía añadir preset por preset. Copia todos los `.augur5` de una carpeta y sus subcarpetas, conservando la estructura bajo el nombre de la carpeta.
+- **Corrección:** al cargar un sonido, el nivel (y todos los suavizadores) se deslizaba 20 ms desde los valores del sonido anterior, así que la primera nota tocada justo después de cargar salía con el volumen del preset previo. `warmUp()` ahora reinicia los suavizadores a los valores nuevos (test). Esto también afectaba a la medición de nivel de los plucks: la librería de fábrica se re-niveló.
+- **`augur_preset_audit --level-pack <carpeta>`**: carga cada preset en el procesador real y mide pico y volumen. Ajusta `amp_level` hasta el objetivo guardado en el archivo (hasta 4 pasadas, sin superar −3 dBFS de pico) y falla con parámetros desconocidos, salida no finita o silencio.
+- **Savanna Horn Lead** (Lead), pedido por el usuario: lead de bronce "trompeteante" con sierras desafinadas en unísono, un "scoop" de pitch al inicio de cada nota (MOD ENV → OSC 1/2 FREQ, −3 semitonos), filtro que se abre, legato con glide y vibrato retardado. No lleva nombres de artistas ni canciones.

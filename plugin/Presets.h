@@ -31,6 +31,9 @@ public:
     // Installs an expansion pack (.zip of .augur5 presets in folders) into the user folder.
     // Returns the number of presets installed, or -1 if the file is not a valid pack.
     static int installPack (const juce::File& zip);
+    // Copies every .augur5 preset found in a folder (and its sub-folders) into the user folder, keeping
+    // the folder structure under the folder's own name. Returns the number of presets added.
+    static int importFolder (const juce::File& folder);
     void loadUser (const juce::File& file);
     bool saveUser (const juce::String& name);
     static juce::File getUserFolder();

@@ -57,7 +57,7 @@ std::vector<FactoryPreset> buildBank()
             { "flt_cutoff", 3500.0f }, { "flt_reso", 0.2f }, { "flt_env_amt", 0.2f },
             { "fenv_a", 0.001f }, { "fenv_d", 0.9f }, { "fenv_s", 0.2f }, { "voice_count", 1.0f }, { "glide", 0.06f },
             { "legato", 1.0f }, { "mm4_src", 3.0f }, { "mm4_dst", 0.0f }, { "mm4_amt", 0.1f }, { "lfo_rate", 5.5f },
-            { "delay_on", 1.0f }, { "delay_mix", 0.2f }, { "amp_level", 0.6f } }, "Lead" },
+            { "delay_on", 1.0f }, { "delay_mix", 0.2f }, { "amp_level", 0.1f } }, "Lead" },
 
         { "Poly Strings", {
             { "osc1_pulse", 1.0f }, { "osc1_saw", 0.0f }, { "osc1_pw", 30.0f }, { "osc2_fine", 9.0f },
@@ -70,20 +70,20 @@ std::vector<FactoryPreset> buildBank()
             { "mix_osc2", 0.5f }, { "osc2_freq", 12.0f }, { "flt_cutoff", 300.0f }, { "flt_reso", 0.25f },
             { "flt_env_amt", 0.6f }, { "fenv_a", 0.001f }, { "fenv_d", 0.35f }, { "fenv_s", 0.0f }, { "fenv_r", 0.3f },
             { "aenv_a", 0.001f }, { "aenv_d", 1.1f }, { "aenv_s", 0.0f }, { "aenv_r", 0.4f }, { "flt_velocity", 0.5f },
-            { "delay_on", 1.0f }, { "delay_time", 0.33f }, { "delay_mix", 0.18f }, { "amp_level", 0.3f } }, "Pluck" },
+            { "delay_on", 1.0f }, { "delay_time", 0.33f }, { "delay_mix", 0.18f }, { "amp_level", -0.3f } }, "Pluck" },
 
         { "Fat Bass", {
             { "osc2_freq", -12.0f }, { "osc2_pulse", 1.0f }, { "osc2_saw", 0.0f }, { "mix_osc2", 0.9f }, { "mix_drive", 0.55f },
             { "flt_cutoff", 180.0f }, { "flt_reso", 0.3f }, { "flt_env_amt", 0.45f }, { "fenv_a", 0.001f },
             { "fenv_d", 0.25f }, { "fenv_s", 0.1f }, { "aenv_a", 0.001f }, { "aenv_d", 0.5f }, { "aenv_s", 0.7f },
-            { "aenv_r", 0.08f }, { "voice_count", 1.0f }, { "flt_model", 1.0f }, { "flt_keytrack", 1.0f }, { "amp_level", -7.3f } }, "Bass" },
+            { "aenv_r", 0.08f }, { "voice_count", 1.0f }, { "flt_model", 1.0f }, { "flt_keytrack", 1.0f }, { "amp_level", -7.7f } }, "Bass" },
 
         { "Poly-Mod Bell", {
             { "osc2_freq", 19.0f }, { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 50.0f },
             { "mix_osc2", 0.0f }, { "pm_on", 1.0f }, { "pm_osc2_amt", 0.35f }, { "pm_fenv_amt", 0.15f },
             { "pm_dst_freqa", 1.0f }, { "flt_cutoff", 5000.0f }, { "flt_env_amt", 0.2f },
             { "aenv_a", 0.001f }, { "aenv_d", 2.5f }, { "aenv_s", 0.0f }, { "aenv_r", 2.0f },
-            { "fenv_d", 1.5f }, { "fenv_s", 0.0f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.35f }, { "reverb_decay", 4.0f }, { "amp_level", -11.0f } }, "Keys" },
+            { "fenv_d", 1.5f }, { "fenv_s", 0.0f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.35f }, { "reverb_decay", 4.0f }, { "amp_level", -9.2f } }, "Keys" },
 
         { "Unison Monster", {
             { "unison", 1.0f }, { "voice_count", 6.0f }, { "voice_detune", 0.35f }, { "voice_spread", 0.9f },
@@ -105,7 +105,7 @@ std::vector<FactoryPreset> buildBank()
             { "osc2_pw", 45.0f }, { "osc2_freq", 12.0f }, { "mix_osc2", 0.4f }, { "flt_cutoff", 1600.0f },
             { "flt_env_amt", 0.3f }, { "fenv_d", 0.7f }, { "fenv_s", 0.15f }, { "aenv_a", 0.002f }, { "aenv_d", 1.6f },
             { "aenv_s", 0.35f }, { "aenv_r", 0.35f }, { "analog_age", 0.85f }, { "flt_model", 1.0f }, { "osc_model", 1.0f },
-            { "chorus_on", 1.0f }, { "chorus_mix", 0.35f }, { "amp_level", -13.4f } }, "Keys" },
+            { "chorus_on", 1.0f }, { "chorus_mix", 0.35f }, { "amp_level", -9.0f } }, "Keys" },
 
         { "Resonant Sweep", {
             { "mix_osc2", 0.7f }, { "osc2_fine", 11.0f }, { "flt_cutoff", 150.0f }, { "flt_reso", 0.72f },
@@ -126,7 +126,7 @@ std::vector<FactoryPreset> buildBank()
             { "flt_keytrack", 1.0f }, { "flt_velocity", 0.3f },
             { "fenv_a", 0.001f }, { "fenv_d", 0.28f }, { "fenv_s", 0.1f }, { "fenv_r", 0.15f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.4f }, { "aenv_s", 0.75f }, { "aenv_r", 0.12f },
-            { "voice_count", 1.0f }, { "legato", 1.0f }, { "glide", 0.03f }, { "amp_level", -5.3f },
+            { "voice_count", 1.0f }, { "legato", 1.0f }, { "glide", 0.03f }, { "amp_level", -5.7f },
             { "mm4_dst", 4.0f }, { "mm4_amt", 0.35f } }, "Bass" },
 
         { "Rolling Sub Pulse", {
@@ -135,7 +135,7 @@ std::vector<FactoryPreset> buildBank()
             { "flt_cutoff", 160.0f }, { "flt_reso", 0.2f }, { "flt_env_amt", 0.35f }, { "flt_keytrack", 1.0f },
             { "fenv_a", 0.001f }, { "fenv_d", 0.18f }, { "fenv_s", 0.0f }, { "fenv_r", 0.1f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.3f }, { "aenv_s", 0.6f }, { "aenv_r", 0.08f },
-            { "voice_count", 1.0f }, { "amp_level", -2.4f }, { "mm4_dst", 4.0f }, { "mm4_amt", 0.3f } }, "Bass" },
+            { "voice_count", 1.0f }, { "amp_level", -3.4f }, { "mm4_dst", 4.0f }, { "mm4_amt", 0.3f } }, "Bass" },
 
         { "Hypnotic Bassline", {
             { "osc2_freq", -12.0f }, { "osc2_pulse", 1.0f }, { "osc2_saw", 0.0f }, { "osc2_pw", 30.0f },
@@ -174,7 +174,7 @@ std::vector<FactoryPreset> buildBank()
             { "mm1_src", 3.0f }, { "mm1_dst", 0.0f }, { "mm1_amt", 0.1f }, { "lfo_rate", 5.5f }, { "lfo_delay", 0.4f },
             { "chorus_on", 1.0f }, { "chorus_mix", 0.3f },
             { "delay_on", 1.0f }, { "delay_time", 0.488f }, { "delay_fb", 0.4f }, { "delay_mix", 0.22f },
-            { "reverb_on", 1.0f }, { "reverb_decay", 5.0f }, { "reverb_mix", 0.3f }, { "amp_level", -2.8f } }, "Lead" },
+            { "reverb_on", 1.0f }, { "reverb_decay", 5.0f }, { "reverb_mix", 0.3f }, { "amp_level", -2.7f } }, "Lead" },
 
         { "Silk Portamento", {
             { "unison", 1.0f }, { "voice_count", 4.0f }, { "voice_detune", 0.2f }, { "voice_spread", 0.7f },
@@ -228,7 +228,7 @@ std::vector<FactoryPreset> buildBank()
             { "aenv_a", 0.001f }, { "aenv_d", 0.9f }, { "aenv_s", 0.0f }, { "aenv_r", 0.5f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.4f }, { "delay_mix", 0.28f },
             { "reverb_on", 1.0f }, { "reverb_decay", 3.5f }, { "reverb_mix", 0.3f },
-            { "mm4_dst", 4.0f }, { "mm4_amt", 0.35f }, { "amp_level", -6.5f } }, "Pluck" },
+            { "mm4_dst", 4.0f }, { "mm4_amt", 0.35f }, { "amp_level", -5.6f } }, "Pluck" },
 
         { "Crystal Keys", {
             { "osc2_freq", 19.0f }, { "mix_osc2", 0.25f }, { "pm_on", 1.0f }, { "pm_osc2_amt", 0.15f },
@@ -245,7 +245,7 @@ std::vector<FactoryPreset> buildBank()
             { "aenv_a", 0.001f }, { "aenv_d", 0.35f }, { "aenv_s", 0.1f }, { "aenv_r", 0.25f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.5f }, { "delay_mix", 0.3f },
             { "reverb_on", 1.0f }, { "reverb_decay", 3.0f }, { "reverb_mix", 0.25f },
-            { "mm4_dst", 4.0f }, { "mm4_amt", 0.35f }, { "amp_level", 2.3f } }, "Pluck" },
+            { "mm4_dst", 4.0f }, { "mm4_amt", 0.35f }, { "amp_level", 2.0f } }, "Pluck" },
 
         { "Pulse Echo", {
             { "osc2_freq", 12.0f }, { "mix_osc2", 0.6f }, { "osc1_sync", 1.0f }, { "osc1_freq", 5.0f },
@@ -253,7 +253,7 @@ std::vector<FactoryPreset> buildBank()
             { "fenv_a", 0.001f }, { "fenv_d", 0.25f }, { "fenv_s", 0.0f }, { "aenv_a", 0.001f }, { "aenv_d", 0.5f },
             { "aenv_s", 0.0f }, { "aenv_r", 0.3f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.55f }, { "delay_mix", 0.3f },
-            { "reverb_on", 1.0f }, { "reverb_decay", 4.0f }, { "reverb_mix", 0.3f }, { "amp_level", 0.1f } }, "Pluck" },
+            { "reverb_on", 1.0f }, { "reverb_decay", 4.0f }, { "reverb_mix", 0.3f }, { "amp_level", -0.5f } }, "Pluck" },
 
         // STAB
         { "Midnight Stab", {
@@ -262,14 +262,14 @@ std::vector<FactoryPreset> buildBank()
             { "fenv_a", 0.001f }, { "fenv_d", 0.35f }, { "fenv_s", 0.1f }, { "fenv_r", 0.4f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.6f }, { "aenv_s", 0.2f }, { "aenv_r", 0.4f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.35f }, { "delay_mix", 0.2f },
-            { "reverb_on", 1.0f }, { "reverb_decay", 4.5f }, { "reverb_mix", 0.35f }, { "amp_level", -0.3f } }, "Stab" },
+            { "reverb_on", 1.0f }, { "reverb_decay", 4.5f }, { "reverb_mix", 0.35f }, { "amp_level", -0.6f } }, "Stab" },
 
         { "Warehouse Chord", {
             { "osc1_pulse", 1.0f }, { "osc1_pw", 45.0f }, { "osc2_freq", 12.0f }, { "mix_osc2", 0.6f }, { "mix_drive", 0.4f },
             { "flt_cutoff", 1100.0f }, { "flt_reso", 0.3f }, { "flt_env_amt", 0.45f },
             { "fenv_a", 0.001f }, { "fenv_d", 0.5f }, { "fenv_s", 0.2f }, { "fenv_r", 0.5f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.8f }, { "aenv_s", 0.3f }, { "aenv_r", 0.6f },
-            { "chorus_on", 1.0f }, { "chorus_mix", 0.3f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.3f }, { "amp_level", -14.6f } }, "Stab" },
+            { "chorus_on", 1.0f }, { "chorus_mix", 0.3f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.3f }, { "amp_level", -11.3f } }, "Stab" },
 
         // ARP
         { "Sequence Rain", {
@@ -280,7 +280,7 @@ std::vector<FactoryPreset> buildBank()
             { "mm3_amt", 0.15f }, { "lfo_wave", 3.0f }, { "lfo_rate", 4.0f }, { "lfo_amount", 0.7f },
             { "voice_spread", 0.6f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.55f }, { "delay_mix", 0.3f },
-            { "reverb_on", 1.0f }, { "reverb_decay", 5.0f }, { "reverb_mix", 0.35f }, { "amp_level", 2.3f } }, "Arp" },
+            { "reverb_on", 1.0f }, { "reverb_decay", 5.0f }, { "reverb_mix", 0.35f }, { "amp_level", 2.0f } }, "Arp" },
 
         { "Resonant Cascade", {
             { "mix_osc2", 0.4f }, { "osc2_fine", 8.0f }, { "flt_cutoff", 250.0f }, { "flt_reso", 0.78f },
@@ -289,7 +289,7 @@ std::vector<FactoryPreset> buildBank()
             { "aenv_a", 0.001f }, { "aenv_d", 0.6f }, { "aenv_s", 0.0f }, { "aenv_r", 0.35f },
             { "delay_on", 1.0f }, { "delay_time", 0.244f }, { "delay_fb", 0.45f }, { "delay_mix", 0.25f },
             { "reverb_on", 1.0f }, { "reverb_decay", 3.5f }, { "reverb_mix", 0.3f },
-            { "mm4_dst", 4.0f }, { "mm4_amt", 0.35f }, { "amp_level", 5.4f } }, "Arp" },
+            { "mm4_dst", 4.0f }, { "mm4_amt", 0.35f }, { "amp_level", 4.7f } }, "Arp" },
 
         // ATMOS
         { "Deep Space Drone", {
@@ -312,7 +312,7 @@ std::vector<FactoryPreset> buildBank()
             { "pm_dst_freqa", 1.0f }, { "pm_dst_filter", 1.0f }, { "flt_cutoff", 1400.0f }, { "flt_reso", 0.3f },
             { "flt_env_amt", 0.3f }, { "fenv_a", 1.5f }, { "fenv_d", 2.5f }, { "fenv_s", 0.3f },
             { "aenv_a", 1.0f }, { "aenv_s", 0.8f }, { "aenv_r", 3.0f },
-            { "reverb_on", 1.0f }, { "reverb_size", 0.85f }, { "reverb_decay", 7.0f }, { "reverb_mix", 0.45f }, { "amp_level", 0.2f } }, "Atmos & FX" },
+            { "reverb_on", 1.0f }, { "reverb_size", 0.85f }, { "reverb_decay", 7.0f }, { "reverb_mix", 0.45f }, { "amp_level", 0.4f } }, "Atmos & FX" },
 
         // ---- more BASS ----
         { "Offbeat Pluck Bass", {
@@ -320,7 +320,7 @@ std::vector<FactoryPreset> buildBank()
             { "flt_env_amt", 0.55f }, { "flt_velocity", 0.3f }, { "flt_keytrack", 1.0f },
             { "fenv_a", 0.001f }, { "fenv_d", 0.14f }, { "fenv_s", 0.0f }, { "fenv_r", 0.1f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.25f }, { "aenv_s", 0.0f }, { "aenv_r", 0.08f },
-            { "voice_count", 1.0f }, { "amp_level", 6.0f }, { "mm4_dst", 4.0f }, { "mm4_amt", 0.35f }, { "mix_osc1", 1.0f }, { "mix_drive", 0.3f } }, "Bass" },
+            { "voice_count", 1.0f }, { "amp_level", 4.4f }, { "mm4_dst", 4.0f }, { "mm4_amt", 0.35f }, { "mix_osc1", 1.0f }, { "mix_drive", 0.3f } }, "Bass" },
 
         { "Deep Reese Tide", {
             { "unison", 1.0f }, { "voice_count", 3.0f }, { "voice_detune", 0.3f }, { "voice_spread", 0.4f },
@@ -347,7 +347,7 @@ std::vector<FactoryPreset> buildBank()
             { "voice_count", 1.0f }, { "glide", 0.07f }, { "legato", 1.0f },
             { "mm1_src", 3.0f }, { "mm1_dst", 0.0f }, { "mm1_amt", 0.1f }, { "lfo_rate", 5.0f }, { "lfo_delay", 0.5f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.4f }, { "delay_mix", 0.25f },
-            { "reverb_on", 1.0f }, { "reverb_decay", 4.5f }, { "reverb_mix", 0.3f }, { "amp_level", -6.1f } }, "Lead" },
+            { "reverb_on", 1.0f }, { "reverb_decay", 4.5f }, { "reverb_mix", 0.3f }, { "amp_level", -6.2f } }, "Lead" },
 
         { "Hollow Pulse Lead", {
             { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 15.0f }, { "mix_osc2", 0.0f },
@@ -356,7 +356,7 @@ std::vector<FactoryPreset> buildBank()
             { "mm1_src", 3.0f }, { "mm1_dst", 2.0f }, { "mm1_amt", 0.25f }, { "lfo_rate", 0.6f },
             { "voice_count", 1.0f }, { "glide", 0.05f }, { "legato", 1.0f },
             { "delay_on", 1.0f }, { "delay_time", 0.488f }, { "delay_fb", 0.35f }, { "delay_mix", 0.2f },
-            { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -1.4f } }, "Lead" },
+            { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -1.5f } }, "Lead" },
 
         { "Crying Resonance", {
             { "mix_osc2", 0.4f }, { "osc2_freq", 12.0f }, { "flt_cutoff", 900.0f }, { "flt_reso", 0.7f },
@@ -365,7 +365,7 @@ std::vector<FactoryPreset> buildBank()
             { "voice_count", 1.0f }, { "glide", 0.1f }, { "legato", 1.0f },
             { "mm1_src", 3.0f }, { "mm1_dst", 0.0f }, { "mm1_amt", 0.12f }, { "lfo_rate", 5.8f }, { "lfo_delay", 0.6f },
             { "reverb_on", 1.0f }, { "reverb_decay", 6.0f }, { "reverb_mix", 0.35f },
-            { "mm4_dst", 4.0f }, { "mm4_amt", 0.4f }, { "amp_level", 3.8f } }, "Lead" },
+            { "mm4_dst", 4.0f }, { "mm4_amt", 0.4f }, { "amp_level", 3.7f } }, "Lead" },
 
         // ---- more PAD ----
         { "Ember Pad", {
@@ -385,7 +385,7 @@ std::vector<FactoryPreset> buildBank()
             { "fenv_a", 0.001f }, { "fenv_d", 0.12f }, { "fenv_s", 0.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.45f }, { "aenv_s", 0.0f }, { "aenv_r", 0.35f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.3f }, { "delay_mix", 0.2f },
-            { "reverb_on", 1.0f }, { "reverb_mix", 0.3f }, { "amp_level", -4.2f } }, "Pluck" },
+            { "reverb_on", 1.0f }, { "reverb_mix", 0.3f }, { "amp_level", -4.9f } }, "Pluck" },
 
         { "Tidal Pluck", {
             { "osc2_fine", 10.0f }, { "mix_osc2", 0.7f }, { "flt_cutoff", 450.0f }, { "flt_reso", 0.55f },
@@ -394,7 +394,7 @@ std::vector<FactoryPreset> buildBank()
             { "aenv_a", 0.001f }, { "aenv_d", 1.4f }, { "aenv_s", 0.0f }, { "aenv_r", 0.8f },
             { "voice_spread", 0.7f }, { "chorus_on", 1.0f }, { "chorus_mix", 0.3f },
             { "delay_on", 1.0f }, { "delay_time", 0.488f }, { "delay_fb", 0.45f }, { "delay_mix", 0.3f },
-            { "reverb_on", 1.0f }, { "reverb_size", 0.8f }, { "reverb_decay", 6.0f }, { "reverb_mix", 0.35f }, { "amp_level", 3.5f } }, "Pluck" },
+            { "reverb_on", 1.0f }, { "reverb_size", 0.8f }, { "reverb_decay", 6.0f }, { "reverb_mix", 0.35f }, { "amp_level", 1.2f } }, "Pluck" },
 
 
         // ---- signature PLUCKS: fast RC filter snap, velocity brightness, a poly-mod pitch blip on the attack ----
@@ -408,7 +408,7 @@ std::vector<FactoryPreset> buildBank()
             { "chorus_on", 1.0f }, { "chorus_mix", 0.2f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.38f }, { "delay_mix", 0.22f },
             { "reverb_on", 1.0f }, { "reverb_size", 0.7f }, { "reverb_decay", 4.0f }, { "reverb_mix", 0.28f },
-            { "mm4_dst", 4.0f }, { "mm4_amt", 0.35f }, { "amp_level", -0.1f } }, "Pluck" },
+            { "mm4_dst", 4.0f }, { "mm4_amt", 0.35f }, { "amp_level", -0.2f } }, "Pluck" },
 
         { "Silver Thread Pluck", {
             { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 18.0f }, { "osc2_saw", 0.0f }, { "osc2_tri", 1.0f },
@@ -420,7 +420,7 @@ std::vector<FactoryPreset> buildBank()
             { "amp_velocity", 0.55f }, { "voice_spread", 0.6f },
             { "delay_on", 1.0f }, { "delay_time", 0.244f }, { "delay_fb", 0.3f }, { "delay_mix", 0.2f },
             { "reverb_on", 1.0f }, { "reverb_size", 0.6f }, { "reverb_decay", 3.0f }, { "reverb_mix", 0.3f },
-            { "mm4_dst", 4.0f }, { "mm4_amt", 0.3f }, { "amp_level", -2.1f } }, "Pluck" },
+            { "mm4_dst", 4.0f }, { "mm4_amt", 0.3f }, { "amp_level", -1.9f } }, "Pluck" },
 
         { "Deep Water Pluck", {
             { "osc2_saw", 0.0f }, { "osc2_pulse", 1.0f }, { "osc2_pw", 40.0f }, { "osc2_freq", -12.0f }, { "mix_osc2", 0.6f },
@@ -439,14 +439,14 @@ std::vector<FactoryPreset> buildBank()
             { "osc2_freq", 12.0f }, { "mix_osc2", 0.5f }, { "flt_cutoff", 1400.0f }, { "flt_env_amt", 0.3f },
             { "flt_velocity", 0.4f }, { "fenv_a", 0.001f }, { "fenv_d", 0.6f }, { "fenv_s", 0.15f },
             { "aenv_a", 0.002f }, { "aenv_d", 2.0f }, { "aenv_s", 0.25f }, { "aenv_r", 0.5f },
-            { "chorus_on", 1.0f }, { "chorus_mix", 0.4f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -8.1f } }, "Keys" },
+            { "chorus_on", 1.0f }, { "chorus_mix", 0.4f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -6.8f } }, "Keys" },
 
         { "Soft Tine", {
             { "osc2_freq", 24.0f }, { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 50.0f }, { "mix_osc2", 0.0f },
             { "pm_on", 1.0f }, { "pm_osc2_amt", 0.08f }, { "pm_fenv_amt", 0.05f }, { "pm_dst_freqa", 1.0f },
             { "flt_cutoff", 1800.0f }, { "flt_env_amt", 0.25f }, { "fenv_a", 0.001f }, { "fenv_d", 0.5f }, { "fenv_s", 0.1f },
             { "aenv_a", 0.001f }, { "aenv_d", 2.2f }, { "aenv_s", 0.15f }, { "aenv_r", 0.6f },
-            { "chorus_on", 1.0f }, { "chorus_mix", 0.35f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -9.2f } }, "Keys" },
+            { "chorus_on", 1.0f }, { "chorus_mix", 0.35f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -8.8f } }, "Keys" },
 
         { "Organ of Light", {
             { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 50.0f }, { "osc2_saw", 0.0f }, { "osc2_pulse", 1.0f },
@@ -454,14 +454,14 @@ std::vector<FactoryPreset> buildBank()
             { "flt_env_amt", 0.0f }, { "aenv_a", 0.003f }, { "aenv_s", 1.0f }, { "aenv_r", 0.12f },
             { "mm1_src", 3.0f }, { "mm1_dst", 0.0f }, { "mm1_amt", 0.06f }, { "lfo_rate", 6.2f },
             { "chorus_on", 1.0f }, { "chorus_mix", 0.55f }, { "chorus_rate", 1.2f },
-            { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -13.0f } }, "Keys" },
+            { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -10.8f } }, "Keys" },
 
         { "Velvet Clav", {
             { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 12.0f }, { "mix_osc2", 0.0f },
             { "flt_cutoff", 900.0f }, { "flt_reso", 0.3f }, { "flt_env_amt", 0.5f }, { "flt_velocity", 0.5f },
             { "fenv_a", 0.001f }, { "fenv_d", 0.22f }, { "fenv_s", 0.1f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.7f }, { "aenv_s", 0.2f }, { "aenv_r", 0.15f },
-            { "delay_on", 1.0f }, { "delay_time", 0.244f }, { "delay_fb", 0.25f }, { "delay_mix", 0.15f }, { "amp_level", -4.3f } }, "Keys" },
+            { "delay_on", 1.0f }, { "delay_time", 0.244f }, { "delay_fb", 0.25f }, { "delay_mix", 0.15f }, { "amp_level", -1.6f } }, "Keys" },
 
         // ---- more STAB ----
         { "Dub Chord", {
@@ -469,21 +469,21 @@ std::vector<FactoryPreset> buildBank()
             { "flt_env_amt", 0.35f }, { "fenv_a", 0.001f }, { "fenv_d", 0.25f }, { "fenv_s", 0.05f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.3f }, { "aenv_s", 0.0f }, { "aenv_r", 0.2f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.65f }, { "delay_mix", 0.35f },
-            { "reverb_on", 1.0f }, { "reverb_size", 0.7f }, { "reverb_decay", 5.0f }, { "reverb_mix", 0.3f }, { "amp_level", -1.1f } }, "Stab" },
+            { "reverb_on", 1.0f }, { "reverb_size", 0.7f }, { "reverb_decay", 5.0f }, { "reverb_mix", 0.3f }, { "amp_level", -2.2f } }, "Stab" },
 
         { "Rave Organ Stab", {
             { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 50.0f }, { "osc2_saw", 0.0f }, { "osc2_pulse", 1.0f },
             { "osc2_freq", 12.0f }, { "mix_osc2", 0.7f }, { "mix_drive", 0.35f }, { "flt_cutoff", 2400.0f },
             { "flt_env_amt", 0.2f }, { "fenv_d", 0.3f }, { "fenv_s", 0.3f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.4f }, { "aenv_s", 0.3f }, { "aenv_r", 0.25f },
-            { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -13.8f } }, "Stab" },
+            { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -11.3f } }, "Stab" },
 
         { "Filtered House Stab", {
             { "mix_osc2", 0.6f }, { "osc2_freq", 12.0f }, { "flt_cutoff", 500.0f }, { "flt_reso", 0.5f },
             { "flt_env_amt", 0.4f }, { "fenv_a", 0.001f }, { "fenv_d", 0.3f }, { "fenv_s", 0.15f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.5f }, { "aenv_s", 0.2f }, { "aenv_r", 0.3f },
             { "mm4_dst", 4.0f }, { "mm4_amt", 0.5f },
-            { "chorus_on", 1.0f }, { "chorus_mix", 0.3f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -0.9f } }, "Stab" },
+            { "chorus_on", 1.0f }, { "chorus_mix", 0.3f }, { "reverb_on", 1.0f }, { "reverb_mix", 0.25f }, { "amp_level", -0.8f } }, "Stab" },
 
         // ---- more ARP ----
         { "Pulse Runner", {
@@ -492,7 +492,7 @@ std::vector<FactoryPreset> buildBank()
             { "fenv_a", 0.001f }, { "fenv_d", 0.12f }, { "fenv_s", 0.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.2f }, { "aenv_s", 0.0f }, { "aenv_r", 0.12f },
             { "delay_on", 1.0f }, { "delay_time", 0.244f }, { "delay_fb", 0.35f }, { "delay_mix", 0.2f },
-            { "mm4_dst", 4.0f }, { "mm4_amt", 0.4f }, { "amp_level", 3.2f } }, "Arp" },
+            { "mm4_dst", 4.0f }, { "mm4_amt", 0.4f }, { "amp_level", 2.0f } }, "Arp" },
 
         { "Starlight Arp", {
             { "osc2_freq", 19.0f }, { "mix_osc2", 0.3f }, { "flt_cutoff", 2200.0f }, { "flt_env_amt", 0.3f },
@@ -500,7 +500,7 @@ std::vector<FactoryPreset> buildBank()
             { "aenv_a", 0.001f }, { "aenv_d", 0.3f }, { "aenv_s", 0.0f }, { "aenv_r", 0.3f },
             { "voice_spread", 0.8f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.55f }, { "delay_mix", 0.35f },
-            { "reverb_on", 1.0f }, { "reverb_size", 0.85f }, { "reverb_decay", 6.0f }, { "reverb_mix", 0.4f }, { "amp_level", 2.8f } }, "Arp" },
+            { "reverb_on", 1.0f }, { "reverb_size", 0.85f }, { "reverb_decay", 6.0f }, { "reverb_mix", 0.4f }, { "amp_level", 0.8f } }, "Arp" },
 
         { "Hypno Sequence", {
             { "mix_osc2", 0.5f }, { "osc2_fine", 7.0f }, { "mix_drive", 0.3f }, { "flt_cutoff", 400.0f }, { "flt_reso", 0.6f },
@@ -508,7 +508,7 @@ std::vector<FactoryPreset> buildBank()
             { "aenv_a", 0.001f }, { "aenv_d", 0.25f }, { "aenv_s", 0.1f }, { "aenv_r", 0.15f },
             { "mm3_amt", 0.2f }, { "lfo_rate", 0.1f }, { "lfo_amount", 1.0f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.4f }, { "delay_mix", 0.22f },
-            { "mm4_dst", 4.0f }, { "mm4_amt", 0.4f }, { "amp_level", 4.3f } }, "Arp" },
+            { "mm4_dst", 4.0f }, { "mm4_amt", 0.4f }, { "amp_level", 2.8f } }, "Arp" },
 
         { "Echo Grid", {
             { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 45.0f }, { "mix_osc2", 0.0f },
@@ -516,7 +516,7 @@ std::vector<FactoryPreset> buildBank()
             { "fenv_a", 0.001f }, { "fenv_d", 0.1f }, { "fenv_s", 0.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.15f }, { "aenv_s", 0.0f }, { "aenv_r", 0.1f },
             { "delay_on", 1.0f }, { "delay_time", 0.366f }, { "delay_fb", 0.7f }, { "delay_mix", 0.4f },
-            { "reverb_on", 1.0f }, { "reverb_mix", 0.2f }, { "amp_level", 2.7f } }, "Arp" },
+            { "reverb_on", 1.0f }, { "reverb_mix", 0.2f }, { "amp_level", 0.3f } }, "Arp" },
 
         // ---- DRUMS (pitch sweeps: filter envelope -> oscillator pitch through matrix slot 1) ----
         { "Analog Kick", {
@@ -525,7 +525,7 @@ std::vector<FactoryPreset> buildBank()
             { "mm1_src", 0.0f }, { "mm1_dst", 1.0f }, { "mm1_amt", 0.8f },
             { "fenv_a", 0.001f }, { "fenv_d", 0.09f }, { "fenv_s", 0.0f }, { "fenv_r", 0.09f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.45f }, { "aenv_s", 0.0f }, { "aenv_r", 0.25f },
-            { "amp_velocity", 0.3f }, { "voice_count", 1.0f }, { "analog_age", 0.1f }, { "amp_level", 1.6f } }, "Drums" },
+            { "amp_velocity", 0.3f }, { "voice_count", 1.0f }, { "analog_age", 0.1f }, { "amp_level", -0.6f } }, "Drums" },
 
         { "Sub Kick", {
             { "osc2_saw", 0.0f }, { "osc2_tri", 1.0f }, { "osc2_freq", -24.0f }, { "mix_osc1", 0.0f }, { "mix_osc2", 1.0f },
@@ -533,7 +533,7 @@ std::vector<FactoryPreset> buildBank()
             { "mm1_src", 0.0f }, { "mm1_dst", 1.0f }, { "mm1_amt", 0.65f },
             { "fenv_a", 0.001f }, { "fenv_d", 0.14f }, { "fenv_s", 0.0f }, { "fenv_r", 0.14f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.9f }, { "aenv_s", 0.0f }, { "aenv_r", 0.5f },
-            { "voice_count", 1.0f }, { "analog_age", 0.1f }, { "amp_level", 2.9f } }, "Drums" },
+            { "voice_count", 1.0f }, { "analog_age", 0.1f }, { "amp_level", 0.9f } }, "Drums" },
 
         { "Tight Snare", {
             { "osc2_saw", 0.0f }, { "osc2_tri", 1.0f }, { "mix_osc1", 0.0f }, { "mix_osc2", 0.45f }, { "mix_noise", 0.85f },
@@ -541,23 +541,23 @@ std::vector<FactoryPreset> buildBank()
             { "mm1_src", 0.0f }, { "mm1_dst", 1.0f }, { "mm1_amt", 0.5f },
             { "fenv_a", 0.001f }, { "fenv_d", 0.1f }, { "fenv_s", 0.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.18f }, { "aenv_s", 0.0f }, { "aenv_r", 0.15f },
-            { "voice_count", 1.0f }, { "reverb_on", 1.0f }, { "reverb_size", 0.3f }, { "reverb_decay", 1.2f }, { "reverb_mix", 0.15f }, { "amp_level", 6.0f }, { "mix_drive", 0.55f } }, "Drums" },
+            { "voice_count", 1.0f }, { "reverb_on", 1.0f }, { "reverb_size", 0.3f }, { "reverb_decay", 1.2f }, { "reverb_mix", 0.15f }, { "amp_level", 2.5f }, { "mix_drive", 0.55f } }, "Drums" },
 
         { "Noise Clap", {
             { "mix_osc1", 0.0f }, { "mix_osc2", 0.0f }, { "mix_noise", 1.0f }, { "flt_cutoff", 1600.0f }, { "flt_reso", 0.5f },
             { "flt_env_amt", 0.3f }, { "flt_keytrack", 0.0f }, { "fenv_a", 0.001f }, { "fenv_d", 0.08f }, { "fenv_s", 0.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.16f }, { "aenv_s", 0.0f }, { "aenv_r", 0.18f },
-            { "voice_count", 1.0f }, { "reverb_on", 1.0f }, { "reverb_size", 0.35f }, { "reverb_decay", 1.5f }, { "reverb_mix", 0.25f }, { "amp_level", 5.5f }, { "mix_drive", 0.6f } }, "Drums" },
+            { "voice_count", 1.0f }, { "reverb_on", 1.0f }, { "reverb_size", 0.35f }, { "reverb_decay", 1.5f }, { "reverb_mix", 0.25f }, { "amp_level", 1.0f }, { "mix_drive", 0.6f } }, "Drums" },
 
         { "Closed Hat", {
             { "mix_osc1", 0.0f }, { "mix_osc2", 0.0f }, { "mix_noise", 1.0f }, { "flt_cutoff", 12000.0f }, { "flt_reso", 0.35f },
             { "flt_keytrack", 0.0f }, { "aenv_a", 0.001f }, { "aenv_d", 0.06f }, { "aenv_s", 0.0f }, { "aenv_r", 0.05f },
-            { "amp_velocity", 0.6f }, { "voice_count", 1.0f }, { "amp_level", 6.0f }, { "mix_drive", 0.7f } }, "Drums" },
+            { "amp_velocity", 0.6f }, { "voice_count", 1.0f }, { "amp_level", -1.2f }, { "mix_drive", 0.7f } }, "Drums" },
 
         { "Open Hat", {
             { "mix_osc1", 0.0f }, { "mix_osc2", 0.0f }, { "mix_noise", 1.0f }, { "flt_cutoff", 10000.0f }, { "flt_reso", 0.4f },
             { "flt_keytrack", 0.0f }, { "aenv_a", 0.001f }, { "aenv_d", 0.35f }, { "aenv_s", 0.0f }, { "aenv_r", 0.3f },
-            { "amp_velocity", 0.5f }, { "voice_count", 1.0f }, { "amp_level", -5.7f }, { "mix_drive", 0.5f } }, "Drums" },
+            { "amp_velocity", 0.5f }, { "voice_count", 1.0f }, { "amp_level", -6.9f }, { "mix_drive", 0.5f } }, "Drums" },
 
         { "Analog Tom", {
             { "osc2_saw", 0.0f }, { "osc2_tri", 1.0f }, { "osc2_freq", -12.0f }, { "mix_osc1", 0.0f }, { "mix_osc2", 1.0f },
@@ -565,20 +565,20 @@ std::vector<FactoryPreset> buildBank()
             { "mm1_src", 0.0f }, { "mm1_dst", 1.0f }, { "mm1_amt", 0.55f },
             { "fenv_a", 0.001f }, { "fenv_d", 0.15f }, { "fenv_s", 0.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.4f }, { "aenv_s", 0.0f }, { "aenv_r", 0.3f },
-            { "reverb_on", 1.0f }, { "reverb_size", 0.4f }, { "reverb_mix", 0.15f }, { "amp_level", 5.8f } }, "Drums" },
+            { "reverb_on", 1.0f }, { "reverb_size", 0.4f }, { "reverb_mix", 0.15f }, { "amp_level", 3.8f } }, "Drums" },
 
         { "Rim Click", {
             { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 20.0f }, { "osc1_freq", 12.0f }, { "mix_osc2", 0.0f },
             { "mix_osc1", 1.0f }, { "mix_drive", 0.75f }, { "mix_noise", 0.35f }, { "flt_cutoff", 3000.0f }, { "flt_reso", 0.6f }, { "flt_keytrack", 0.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.06f }, { "aenv_s", 0.0f }, { "aenv_r", 0.04f },
-            { "voice_count", 1.0f }, { "amp_level", 6.0f } }, "Drums" },
+            { "voice_count", 1.0f }, { "amp_level", 1.0f } }, "Drums" },
 
         { "Metal Cowbell", {
             { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 50.0f }, { "osc1_freq", 12.0f },
             { "osc2_saw", 0.0f }, { "osc2_pulse", 1.0f }, { "osc2_pw", 50.0f }, { "osc2_freq", 19.0f }, { "osc2_fine", -20.0f },
             { "mix_osc2", 0.9f }, { "flt_cutoff", 2600.0f }, { "flt_reso", 0.3f }, { "flt_keytrack", 0.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.25f }, { "aenv_s", 0.0f }, { "aenv_r", 0.2f },
-            { "voice_count", 1.0f }, { "amp_level", -6.3f } }, "Drums" },
+            { "voice_count", 1.0f }, { "amp_level", -5.7f } }, "Drums" },
 
         // ---- more ATMOS & FX ----
         { "Sweep Down FX", {
@@ -593,7 +593,7 @@ std::vector<FactoryPreset> buildBank()
             { "flt_reso", 0.4f }, { "mm1_src", 0.0f }, { "mm1_dst", 1.0f }, { "mm1_amt", 1.0f },
             { "fenv_a", 0.001f }, { "fenv_d", 0.25f }, { "fenv_s", 0.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.35f }, { "aenv_s", 0.0f }, { "aenv_r", 0.3f },
-            { "delay_on", 1.0f }, { "delay_time", 0.244f }, { "delay_fb", 0.5f }, { "delay_mix", 0.3f }, { "amp_level", 4.6f } }, "Atmos & FX" },
+            { "delay_on", 1.0f }, { "delay_time", 0.244f }, { "delay_fb", 0.5f }, { "delay_mix", 0.3f }, { "amp_level", 3.5f } }, "Atmos & FX" },
 
         { "Wind Tunnel", {
             { "mix_osc1", 0.0f }, { "mix_osc2", 0.0f }, { "mix_noise", 1.0f }, { "flt_cutoff", 900.0f }, { "flt_reso", 0.75f },
@@ -711,6 +711,26 @@ juce::Array<juce::File> PresetManager::getUserPresets() const
     auto files = getUserFolder().findChildFiles (juce::File::findFiles, true, juce::String ("*") + presetExtension);
     files.sort();
     return files;
+}
+
+int PresetManager::importFolder (const juce::File& folder)
+{
+    if (! folder.isDirectory())
+        return 0;
+    const auto target = getUserFolder().getChildFile (folder.getFileName());
+    if (folder == getUserFolder() || folder.isAChildOf (getUserFolder()))
+        return 0; // already in the library
+    int added = 0;
+    for (const auto& f : folder.findChildFiles (juce::File::findFiles, true, juce::String ("*") + presetExtension))
+    {
+        const auto dest = target.getChildFile (f.getRelativePathFrom (folder));
+        dest.getParentDirectory().createDirectory();
+        if (f.copyFileTo (dest))
+            ++added;
+    }
+    for (const auto& f : folder.findChildFiles (juce::File::findFiles, false, "*.txt"))
+        f.copyFileTo (target.getChildFile (f.getFileName()));
+    return added;
 }
 
 int PresetManager::installPack (const juce::File& zipFile)

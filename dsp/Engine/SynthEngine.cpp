@@ -344,6 +344,9 @@ double SynthEngine::lfo2PhaseNow() const noexcept
 
 void SynthEngine::warmUp() noexcept
 {
+    // A new sound (preset, session, prepare) starts at its own settings: no 20 ms glide of level, cutoff,
+    // mixer... from the previous sound's values into the first notes.
+    paramsInitialised = false;
     controlUpdate(); // current parameters into the chunk signals
     constexpr double seconds = 0.06; // per measurement phase (see SynthVoice::warmUp)
     const int chunks = static_cast<int> (seconds * hostRate / controlInterval) + 1;

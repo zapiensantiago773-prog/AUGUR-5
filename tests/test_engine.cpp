@@ -535,3 +535,28 @@ TEST_CASE ("Oscillator octave switches move the pitch by whole octaves", "[engin
         CHECK_THAT (std::log2 (pitchOf (q) / base), Catch::Matchers::WithinAbs (static_cast<double> (oct), 0.003));
     }
 }
+
+TEST_CASE ("After warm-up a new sound plays at its own level from the first sample", "[engine][presets]")
+{
+    // Load "sound A" (loud), warm up, then "sound B" (quiet) + warm up: the first note of B must not
+    // glide down from A's level.
+    SynthParams loud, quiet;
+    loud.levelDb = 0.0f;
+    quiet.levelDb = -20.0f;
+    const auto firstPeak = [] (const SynthParams& before, const SynthParams& after) {
+        auto e = std::make_unique<SynthEngine>();
+        e->prepare (48000.0);
+        e->setParams (before);
+        e->warmUp();
+        e->setParams (after);
+        e->warmUp();
+        e->noteOn (60, 1.0f);
+        std::vector<float> l (4800), r (4800);
+        e->process (l.data(), r.data(), 4800);
+        float peak = 0.0f;
+        for (int i = 0; i < 960; ++i) // first 20 ms
+            peak = std::max (peak, std::abs (l[static_cast<size_t> (i)]));
+        return peak;
+    };
+    CHECK_THAT (firstPeak (loud, quiet), Catch::Matchers::WithinRel (firstPeak (quiet, quiet), 0.02f));
+}

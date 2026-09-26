@@ -770,7 +770,8 @@ void Augur5Editor::showBrowserMenu()
 
     menu.addSeparator();
     menu.addItem ("Save preset...", [this] { showSaveDialog(); });
-    menu.addItem ("Install expansion pack...", [this] { showInstallPackDialog(); });
+    menu.addItem ("Install expansion pack (.zip)...", [this] { showInstallPackDialog(); });
+    menu.addItem ("Add presets folder...", [this] { showAddFolderDialog(); });
     menu.addItem ("Open presets folder", [] {
         auto folder = augur5::PresetManager::getUserFolder();
         folder.createDirectory();
@@ -838,6 +839,23 @@ void Augur5Editor::showInstallPackDialog()
         juce::AlertWindow::showMessageBoxAsync (juce::MessageBoxIconType::NoIcon, "Expansion pack",
                                                 count > 0 ? juce::String (count) + " presets installed. Open BROWSER > USER / EXPANSIONS."
                                                           : juce::String ("This file is not an AUGUR-5 expansion pack."),
+                                                "OK", this);
+    });
+}
+
+void Augur5Editor::showAddFolderDialog()
+{
+    packChooser = std::make_unique<juce::FileChooser> ("Add a folder of AUGUR-5 presets",
+                                                        juce::File::getSpecialLocation (juce::File::userDesktopDirectory));
+    packChooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectDirectories, [this] (const juce::FileChooser& fc) {
+        const auto folder = fc.getResult();
+        if (! folder.isDirectory())
+            return;
+        const int count = augur5::PresetManager::importFolder (folder);
+        juce::AlertWindow::showMessageBoxAsync (juce::MessageBoxIconType::NoIcon, "Presets folder",
+                                                count > 0 ? juce::String (count) + " presets added from \"" + folder.getFileName()
+                                                                + "\". Open BROWSER > USER / EXPANSIONS."
+                                                          : juce::String ("No AUGUR-5 presets (.augur5) were found in that folder."),
                                                 "OK", this);
     });
 }

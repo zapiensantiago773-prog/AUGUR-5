@@ -35,6 +35,7 @@ private:
     void showSettingsMenu();
     void showSaveDialog();
     void showInstallPackDialog();
+    void showAddFolderDialog();
 
     Augur5Processor& processor;
     augur5::ui::AugurLookAndFeel lookAndFeel;
