@@ -133,7 +133,10 @@ int main (int argc, char** argv)
 
     std::unique_ptr<juce::AudioProcessor> first (createPluginFilter());
     const int numPresets = dynamic_cast<Augur5Processor*> (first.get())->getPresets().getNumFactoryPresets();
+    const auto unknown = dynamic_cast<Augur5Processor*> (first.get())->getPresets().findUnknownFactoryIds();
     first.reset();
+    for (const auto& u : unknown)
+        std::printf ("UNKNOWN PARAMETER  %s\n", u.toRawUTF8());
 
     int failures = 0;
     std::printf ("%-24s %-12s %9s %9s\n", "preset", "category", "peak dB", "loud dB");
@@ -193,5 +196,5 @@ int main (int argc, char** argv)
                      peakDb, loudDb, ok ? "" : (st.finite ? "  <-- level out of range" : "  <-- NON-FINITE"));
     }
     std::printf ("\n%d preset(s) out of range\n", failures);
-    return failures == 0 ? 0 : 1;
+    return failures == 0 && unknown.isEmpty() ? 0 : 1;
 }

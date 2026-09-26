@@ -18,6 +18,8 @@ public:
     explicit PresetManager (juce::AudioProcessorValueTreeState& state);
 
     int getNumFactoryPresets() const noexcept;
+    // "Preset: id" for every factory setting that names no parameter (typo guard for the audit).
+    juce::StringArray findUnknownFactoryIds() const;
     juce::String getFactoryName (int index) const;
     juce::String getFactoryCategory (int index) const;
     int findFactory (const juce::String& name) const;

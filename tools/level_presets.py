@@ -10,14 +10,14 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-PRESETS = ROOT / "plugin" / "Presets.cpp"
+PRESET_FILES = [ROOT / "plugin" / "Presets.cpp", ROOT / "plugin" / "PresetsExpansion.inc"]
 
 TARGET_DB = -18.0            # melodic sounds
 TARGET_DRUM_BODY_DB = -16.0  # kicks, toms
 TARGET_SNARE_DB = -20.0
 TARGET_DRUM_TOP_DB = -25.0   # hats, clap, rim, cowbell: 30-60 ms hits sit lower in a mix
 PEAK_CEILING_DB = -3.0
-DRUM_TOPS = {"Closed Hat", "Open Hat", "Noise Clap", "Rim Click", "Metal Cowbell"}
+DRUM_TOPS = {"Closed Hat", "Open Hat", "Noise Clap", "Rim Click", "Metal Cowbell", "Ring Metal Perc", "Noise Shaker"}
 
 
 def target_for(name: str, category: str) -> float:
@@ -35,14 +35,20 @@ def main(report_path: str) -> None:
         if m:
             rows.append((m.group(1).strip(), m.group(2).strip(), float(m.group(3)), float(m.group(4))))
 
-    source = PRESETS.read_text(encoding="utf-8")
+    sources = {f: f.read_text(encoding="utf-8") for f in PRESET_FILES}
     worst = 0.0
     for name, category, peak, loud in rows:
         if name == "Init":
             continue
+        key = '{ "' + name + '", {'
+        f = next((f for f, src in sources.items() if key in src), None)
+        if f is None:
+            print("not found:", name)
+            continue
+        source = sources[f]
         delta = target_for(name, category) - loud
         delta = min(delta, PEAK_CEILING_DB - peak)  # never push the peak over the ceiling
-        start = source.index('{ "' + name + '", {')
+        start = source.index(key)
         end = source.index('}, "', start)
         body = source[start:end]
         m = re.search(r'\{ "amp_level", (-?[0-9.]+)f \}', body)
@@ -50,9 +56,10 @@ def main(report_path: str) -> None:
         new = round(max(-40.0, min(6.0, current + delta)), 1)
         setting = '{ "amp_level", %.1ff }' % new
         body = body.replace(m.group(0), setting) if m else body[: body.rindex("}") + 1] + ", " + setting + body[body.rindex("}") + 1 :]
-        source = source[:start] + body + source[end:]
+        sources[f] = source[:start] + body + source[end:]
         worst = max(worst, abs(delta))
-    PRESETS.write_text(source, encoding="utf-8")
+    for f, src in sources.items():
+        f.write_text(src, encoding="utf-8")
     print(f"{len(rows)} presets checked, largest correction {worst:.1f} dB")
 
 

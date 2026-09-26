@@ -272,3 +272,25 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
 - Escala por defecto 65 % (998×910 px); tamaños de 50 % a 125 % en SETTINGS, donde también está "Render offline in DIVINE quality".
 - `augur_preset_audit --snapshot panel.png 2` renderiza el editor a PNG, para revisar el diseño sin abrir un DAW.
 - pluginval estricto 10: SUCCESS.
+
+## D-028 · Librería ampliada: 162 sonidos (2026-09-26)
+- **94 sonidos nuevos** (`plugin/PresetsExpansion.inc`), construidos sobre el motor ampliado. Total: 162 + Init.
+
+| Categoría | Nuevos | Qué usan |
+|---|---|---|
+| Signature | 12 | El FUZZ como protagonista melancólico, con phaser, plate y DUO |
+| Bass | 12 | Sub, CASCADE, BITE ácido, FM knock, reese DUO, LFO 2 sincronizado, 12 dB |
+| Lead | 10 | BITE, FM, ring, DUO, flauta con MOD ENV → ruido |
+| Pad | 12 | Multimodo BP/HP, plate, DUO, phaser, S&H suave, HPF |
+| Pluck | 12 | FM con MOD ENV, NOTE RANDOM, ping-pong, BP |
+| Keys | 7 | Tine FM con velocidad → FM, clav BITE, vibráfono con trémolo por LFO 2 |
+| Stab | 7 | Delays con sync 1/8D y ping-pong |
+| Arp | 10 | Arpegiador interno: modos, octavas, swing, latch, tresillos |
+| Drums | 4 | Ring metálico, tom FM, shaker, sub boom |
+| Atmos & FX | 8 | Drones con fuzz, S&H de computadora, riser de 8 compases por MOD ENV |
+
+- Delays y LFO 2 sincronizados a tempo, así que los sonidos encajan en cualquier BPM del proyecto.
+- **La auditoría ahora falla si un preset nombra un parámetro inexistente** (antes se ignoraba en silencio).
+- Nivelación: `level_presets.py` recorre los dos archivos. Tres pasadas dejan todo en su objetivo, salvo dos sonidos percusivos que quedan 2–3 dB por debajo porque los limita el techo de pico.
+- Soak de 30 s en los Signature: sin acumulación.
+- CPU con 12 voces y todos los efectos: 24 % de un núcleo en promedio.

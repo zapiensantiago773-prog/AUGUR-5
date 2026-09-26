@@ -557,7 +557,7 @@ std::vector<FactoryPreset> buildBank()
         { "Open Hat", {
             { "mix_osc1", 0.0f }, { "mix_osc2", 0.0f }, { "mix_noise", 1.0f }, { "flt_cutoff", 10000.0f }, { "flt_reso", 0.4f },
             { "flt_keytrack", 0.0f }, { "aenv_a", 0.001f }, { "aenv_d", 0.35f }, { "aenv_s", 0.0f }, { "aenv_r", 0.3f },
-            { "amp_velocity", 0.5f }, { "voice_count", 1.0f }, { "amp_level", -4.0f }, { "mix_drive", 0.5f } }, "Drums" },
+            { "amp_velocity", 0.5f }, { "voice_count", 1.0f }, { "amp_level", -5.7f }, { "mix_drive", 0.5f } }, "Drums" },
 
         { "Analog Tom", {
             { "osc2_saw", 0.0f }, { "osc2_tri", 1.0f }, { "osc2_freq", -12.0f }, { "mix_osc1", 0.0f }, { "mix_osc2", 1.0f },
@@ -578,7 +578,7 @@ std::vector<FactoryPreset> buildBank()
             { "osc2_saw", 0.0f }, { "osc2_pulse", 1.0f }, { "osc2_pw", 50.0f }, { "osc2_freq", 19.0f }, { "osc2_fine", -20.0f },
             { "mix_osc2", 0.9f }, { "flt_cutoff", 2600.0f }, { "flt_reso", 0.3f }, { "flt_keytrack", 0.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.25f }, { "aenv_s", 0.0f }, { "aenv_r", 0.2f },
-            { "voice_count", 1.0f }, { "amp_level", -5.8f } }, "Drums" },
+            { "voice_count", 1.0f }, { "amp_level", -6.3f } }, "Drums" },
 
         // ---- more ATMOS & FX ----
         { "Sweep Down FX", {
@@ -600,10 +600,14 @@ std::vector<FactoryPreset> buildBank()
             { "mm3_amt", 0.4f }, { "lfo_rate", 0.15f }, { "lfo_amount", 1.0f },
             { "aenv_a", 2.0f }, { "aenv_s", 1.0f }, { "aenv_r", 4.0f }, { "voice_spread", 0.9f },
             { "reverb_on", 1.0f }, { "reverb_size", 1.0f }, { "reverb_decay", 12.0f }, { "reverb_mix", 0.5f }, { "amp_level", 6.0f } }, "Atmos & FX" },
+
+        // Expansion library: sounds built on the extended engine (arp, LFO 2, mod env, FM/ring/sub,
+        // new filter models, fuzz, phaser, plate, DUO).
+#include "PresetsExpansion.inc"
     };
 
     // Order: Init, then the categories as the browser lists them.
-    static constexpr const char* order[] { "Init", "Bass", "Lead", "Pad", "Pluck", "Keys", "Stab", "Arp", "Drums", "Atmos & FX" };
+    static constexpr const char* order[] { "Init", "Signature", "Bass", "Lead", "Pad", "Pluck", "Keys", "Stab", "Arp", "Drums", "Atmos & FX" };
     const auto rank = [] (const char* c) {
         for (int i = 0; i < static_cast<int> (std::size (order)); ++i)
             if (std::string_view (order[i]) == c)
@@ -620,6 +624,16 @@ constexpr const char* presetExtension = ".augur5";
 PresetManager::PresetManager (juce::AudioProcessorValueTreeState& s) : state (s) {}
 
 int PresetManager::getNumFactoryPresets() const noexcept { return static_cast<int> (factoryBank().size()); }
+
+juce::StringArray PresetManager::findUnknownFactoryIds() const
+{
+    juce::StringArray unknown;
+    for (const auto& preset : factoryBank())
+        for (const auto& s : preset.settings)
+            if (state.getParameter (s.id) == nullptr)
+                unknown.add (juce::String (preset.name) + ": " + s.id);
+    return unknown;
+}
 
 int PresetManager::findFactory (const juce::String& name) const
 {
