@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Dubplate Cathedral" category="Pad" target="-18.0"
+               genre="UK Garage" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.6313"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="3.077"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.3739"/>
+    <P id="chorus_mix" value="0.5"/>
+    <P id="chorus_mode" value="3"/>
+    <P id="chorus_on" value="1"/>
+    <P id="fenv_a" value="1.0094"/>
+    <P id="fenv_d" value="3.1688"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.4198"/>
+    <P id="flt_cutoff" value="1343.4935"/>
+    <P id="flt_env_amt" value="0.1464"/>
+    <P id="flt_reso" value="0.213"/>
+    <P id="flt_slope" value="1"/>
+    <P id="hpf_cutoff" value="169.2146"/>
+    <P id="lfo_rate" value="5"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm3_amt" value="0.04"/>
+    <P id="mm3_dst" value="0"/>
+    <P id="mm3_src" value="3"/>
+    <P id="mm4_amt" value="0.4609"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="7.5906"/>
+    <P id="voice_spread" value="0.7384"/>
+    <P id="amp_level" value="-7.0"/>
+  </PARAMS>
+</AUGUR5_PRESET>

@@ -341,7 +341,7 @@ def drum(rng, g, kind):
         p.update(osc1_freq=24, osc2_freq=17, osc2_fine=30, mix_osc1=0.5, mix_osc2=0.5, mix_ring=1.0, mix_drive=0.35, flt_model=3,
                  flt_mode=2, flt_slope=1, flt_cutoff=900)
         p.env("aenv", 0.001, 0.35, 0.0, 0.15)
-        return p, -25.0
+        return p, -29.0  # a metallic tick: very high crest factor, sits lower in a mix
     # tom
     p.update(osc2_saw=0, osc2_tri=1, mix_osc2=0, osc1_saw=0, osc1_pulse=1, mix_osc1=0.8, flt_cutoff=2000)
     p.env("menv", 0.001, 0.12, 0.0, 0.1)

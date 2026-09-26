@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Miami Tom" category="Drums" target="-16.0"
+               genre="Synthwave" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="0.35"/>
+    <P id="aenv_r" value="0.3"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.403"/>
+    <P id="flt_cutoff" value="2000"/>
+    <P id="flt_keytrack" value="0"/>
+    <P id="menv_a" value="0.001"/>
+    <P id="menv_d" value="0.12"/>
+    <P id="menv_r" value="0.1"/>
+    <P id="menv_s" value="0"/>
+    <P id="mix_osc1" value="0.8"/>
+    <P id="mix_osc2" value="0"/>
+    <P id="mm5_amt" value="0.6"/>
+    <P id="mm5_dst" value="0"/>
+    <P id="mm5_src" value="8"/>
+    <P id="mm6_amt" value="0.3"/>
+    <P id="mm6_dst" value="8"/>
+    <P id="mm6_src" value="8"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_saw" value="0"/>
+    <P id="osc2_tri" value="1"/>
+    <P id="reverb_on" value="0"/>
+    <P id="amp_level" value="1.6"/>
+  </PARAMS>
+</AUGUR5_PRESET>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Warm Horn" category="Lead" target="-18.0"
+               genre="Downtempo &amp; Lo-Fi" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.0156"/>
+    <P id="aenv_d" value="0.5"/>
+    <P id="aenv_r" value="0.6481"/>
+    <P id="aenv_s" value="0.9"/>
+    <P id="analog_age" value="0.9743"/>
+    <P id="echo_intensity" value="0.4073"/>
+    <P id="echo_mode" value="7"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.5616"/>
+    <P id="echo_reverb" value="0.446"/>
+    <P id="echo_volume" value="0.4795"/>
+    <P id="echo_wow" value="0.4216"/>
+    <P id="flt_cutoff" value="1587.604"/>
+    <P id="glide" value="0.0851"/>
+    <P id="legato" value="1"/>
+    <P id="lfo2_rate" value="0.7597"/>
+    <P id="lfo2_retrig" value="0"/>
+    <P id="lfo_delay" value="0.7234"/>
+    <P id="lfo_rate" value="5.2662"/>
+    <P id="mix_osc2" value="0.7"/>
+    <P id="mm4_amt" value="0.0652"/>
+    <P id="mm4_dst" value="0"/>
+    <P id="mm4_src" value="3"/>
+    <P id="mm5_amt" value="0.2834"/>
+    <P id="mm5_dst" value="2"/>
+    <P id="mm5_src" value="9"/>
+    <P id="mm6_amt" value="-0.3287"/>
+    <P id="mm6_dst" value="3"/>
+    <P id="mm6_src" value="9"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_pw" value="38.37"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="5.9905"/>
+    <P id="osc2_pulse" value="1"/>
+    <P id="osc2_saw" value="0"/>
+    <P id="voice_count" value="1"/>
+    <P id="amp_level" value="-6.9"/>
+  </PARAMS>
+</AUGUR5_PRESET>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Funk Glow" category="Pad" target="-18.0"
+               genre="Tech House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.2228"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="2.6204"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.4579"/>
+    <P id="echo_intensity" value="0.4645"/>
+    <P id="echo_mode" value="7"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.3563"/>
+    <P id="echo_reverb" value="0.4488"/>
+    <P id="echo_volume" value="0.4383"/>
+    <P id="echo_wow" value="0.4425"/>
+    <P id="fenv_a" value="1.8085"/>
+    <P id="fenv_d" value="3.5177"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.5517"/>
+    <P id="flt_cutoff" value="1555.4585"/>
+    <P id="flt_env_amt" value="0.1129"/>
+    <P id="flt_reso" value="0.1572"/>
+    <P id="lfo2_rate" value="0.0817"/>
+    <P id="lfo2_retrig" value="0"/>
+    <P id="lfo2_wave" value="6"/>
+    <P id="menv_a" value="3.6106"/>
+    <P id="menv_d" value="4"/>
+    <P id="menv_r" value="4"/>
+    <P id="menv_s" value="0.6"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.3805"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.3179"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="9"/>
+    <P id="mm6_amt" value="0.3"/>
+    <P id="mm6_dst" value="2"/>
+    <P id="mm6_src" value="8"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_pw" value="35"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="10.9853"/>
+    <P id="reverb_decay" value="6.0379"/>
+    <P id="reverb_mix" value="0.2129"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.5616"/>
+    <P id="reverb_type" value="1"/>
+    <P id="voice_spread" value="0.7583"/>
+    <P id="amp_level" value="-11.3"/>
+  </PARAMS>
+</AUGUR5_PRESET>

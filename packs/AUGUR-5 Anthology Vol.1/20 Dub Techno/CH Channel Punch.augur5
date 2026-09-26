@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Channel Punch" category="Stab" target="-18.0"
+               genre="Dub Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="0.3856"/>
+    <P id="aenv_r" value="0.169"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.5837"/>
+    <P id="echo_bass" value="-0.3"/>
+    <P id="echo_intensity" value="0.5851"/>
+    <P id="echo_mode" value="9"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.353"/>
+    <P id="echo_reverb" value="0.45"/>
+    <P id="echo_volume" value="0.6"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.2207"/>
+    <P id="fenv_r" value="0.2"/>
+    <P id="fenv_s" value="0"/>
+    <P id="flt_cutoff" value="582.9429"/>
+    <P id="flt_env_amt" value="0.3654"/>
+    <P id="flt_mode" value="1"/>
+    <P id="flt_model" value="3"/>
+    <P id="flt_reso" value="0.5779"/>
+    <P id="mix_osc2" value="0.7743"/>
+    <P id="mm4_amt" value="0.3464"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="9.0339"/>
+    <P id="osc2_freq" value="7"/>
+    <P id="amp_level" value="-12.4"/>
+  </PARAMS>
+</AUGUR5_PRESET>

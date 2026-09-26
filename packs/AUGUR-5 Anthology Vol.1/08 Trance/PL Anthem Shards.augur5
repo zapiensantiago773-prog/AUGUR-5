@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Anthem Shards" category="Pluck" target="-18.0"
+               genre="Trance" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="1.1887"/>
+    <P id="aenv_r" value="0.402"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.3444"/>
+    <P id="chorus_mix" value="0.4648"/>
+    <P id="chorus_mode" value="2"/>
+    <P id="chorus_on" value="1"/>
+    <P id="delay_div" value="6"/>
+    <P id="delay_fb" value="0.3014"/>
+    <P id="delay_mix" value="0.1937"/>
+    <P id="delay_pingpong" value="0"/>
+    <P id="delay_sync" value="1"/>
+    <P id="echo_intensity" value="0.6031"/>
+    <P id="echo_mode" value="10"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.2534"/>
+    <P id="echo_reverb" value="0.4146"/>
+    <P id="echo_volume" value="0.4134"/>
+    <P id="echo_wow" value="0.6203"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.3492"/>
+    <P id="fenv_r" value="0.3"/>
+    <P id="fenv_s" value="0"/>
+    <P id="flt_cutoff" value="418.3585"/>
+    <P id="flt_env_amt" value="0.5493"/>
+    <P id="flt_reso" value="0.2625"/>
+    <P id="flt_velocity" value="0.3545"/>
+    <P id="mix_osc2" value="0.5476"/>
+    <P id="mm4_amt" value="0.4698"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="9.2899"/>
+    <P id="voice_spread" value="0.7"/>
+    <P id="amp_level" value="-0.1"/>
+  </PARAMS>
+</AUGUR5_PRESET>

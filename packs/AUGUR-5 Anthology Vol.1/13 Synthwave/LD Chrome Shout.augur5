@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Chrome Shout" category="Lead" target="-18.0"
+               genre="Synthwave" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.022"/>
+    <P id="aenv_d" value="0.5"/>
+    <P id="aenv_r" value="0.3507"/>
+    <P id="aenv_s" value="0.9"/>
+    <P id="analog_age" value="0.5244"/>
+    <P id="chorus_mix" value="0.35"/>
+    <P id="chorus_mode" value="1"/>
+    <P id="chorus_on" value="1"/>
+    <P id="delay_div" value="8"/>
+    <P id="delay_fb" value="0.3387"/>
+    <P id="delay_mix" value="0.1829"/>
+    <P id="delay_on" value="1"/>
+    <P id="delay_pingpong" value="0"/>
+    <P id="delay_sync" value="1"/>
+    <P id="fenv_a" value="0.01"/>
+    <P id="fenv_d" value="0.6"/>
+    <P id="fenv_r" value="0.4"/>
+    <P id="fenv_s" value="0.6"/>
+    <P id="flt_cutoff" value="3627.6125"/>
+    <P id="flt_env_amt" value="0.2"/>
+    <P id="glide" value="0.0306"/>
+    <P id="legato" value="0"/>
+    <P id="lfo_delay" value="0.7917"/>
+    <P id="lfo_rate" value="5.5289"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.095"/>
+    <P id="mm4_dst" value="0"/>
+    <P id="mm4_src" value="3"/>
+    <P id="osc2_fine" value="7.4361"/>
+    <P id="osc2_freq" value="12"/>
+    <P id="reverb_decay" value="3.1152"/>
+    <P id="reverb_mix" value="0.22"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.8832"/>
+    <P id="reverb_type" value="0"/>
+    <P id="voice_count" value="4"/>
+    <P id="voice_detune" value="0.6601"/>
+    <P id="voice_mode" value="1"/>
+    <P id="amp_level" value="-5.1"/>
+  </PARAMS>
+</AUGUR5_PRESET>

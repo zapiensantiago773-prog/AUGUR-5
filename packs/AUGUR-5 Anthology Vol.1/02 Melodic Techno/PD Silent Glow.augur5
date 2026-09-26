@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Silent Glow" category="Pad" target="-18.0"
+               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.7753"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="3.6624"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.3558"/>
+    <P id="fenv_a" value="1.3545"/>
+    <P id="fenv_d" value="3.5954"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.5308"/>
+    <P id="flt_cutoff" value="2065.533"/>
+    <P id="flt_env_amt" value="0.1193"/>
+    <P id="flt_reso" value="0.2489"/>
+    <P id="fuzz_mix" value="0.4137"/>
+    <P id="fuzz_on" value="1"/>
+    <P id="fuzz_sustain" value="0.836"/>
+    <P id="fuzz_tone" value="0.4317"/>
+    <P id="fuzz_volume" value="0.55"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.3845"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="10.8555"/>
+    <P id="phaser_mix" value="0.35"/>
+    <P id="phaser_on" value="1"/>
+    <P id="phaser_rate" value="0.0816"/>
+    <P id="reverb_decay" value="7.3582"/>
+    <P id="reverb_mix" value="0.3433"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.5566"/>
+    <P id="reverb_type" value="1"/>
+    <P id="voice_count" value="10"/>
+    <P id="voice_detune" value="0.7787"/>
+    <P id="voice_mode" value="1"/>
+    <P id="voice_spread" value="0.9377"/>
+    <P id="amp_level" value="-2.9"/>
+  </PARAMS>
+</AUGUR5_PRESET>

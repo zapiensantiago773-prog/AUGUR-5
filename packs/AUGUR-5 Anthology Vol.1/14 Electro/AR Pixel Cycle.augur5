@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Pixel Cycle" category="Arp" target="-18.0"
+               genre="Electro" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="0.3135"/>
+    <P id="aenv_r" value="0.2"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.3594"/>
+    <P id="arp_gate" value="0.6591"/>
+    <P id="arp_latch" value="1"/>
+    <P id="arp_mode" value="4"/>
+    <P id="arp_oct" value="2"/>
+    <P id="arp_on" value="1"/>
+    <P id="arp_rate" value="5"/>
+    <P id="arp_swing" value="0"/>
+    <P id="chorus_mix" value="0.418"/>
+    <P id="chorus_mode" value="3"/>
+    <P id="chorus_on" value="1"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.3542"/>
+    <P id="fenv_r" value="0.3"/>
+    <P id="fenv_s" value="0"/>
+    <P id="flt_cutoff" value="352.6518"/>
+    <P id="flt_env_amt" value="0.635"/>
+    <P id="flt_model" value="2"/>
+    <P id="flt_reso" value="0.3922"/>
+    <P id="flt_velocity" value="0.4019"/>
+    <P id="mix_osc2" value="0.5091"/>
+    <P id="mm4_amt" value="0.4654"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="9.6998"/>
+    <P id="voice_spread" value="0.7"/>
+    <P id="amp_level" value="3.1"/>
+  </PARAMS>
+</AUGUR5_PRESET>

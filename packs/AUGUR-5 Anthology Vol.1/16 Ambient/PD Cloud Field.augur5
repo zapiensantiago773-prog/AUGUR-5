@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Cloud Field" category="Pad" target="-18.0"
+               genre="Ambient" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.6812"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="4.9504"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.5422"/>
+    <P id="fenv_a" value="1.4717"/>
+    <P id="fenv_d" value="2.1979"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.4353"/>
+    <P id="flt_cutoff" value="1939.8657"/>
+    <P id="flt_env_amt" value="0.3354"/>
+    <P id="flt_reso" value="0.1861"/>
+    <P id="fuzz_mix" value="0.5165"/>
+    <P id="fuzz_on" value="1"/>
+    <P id="fuzz_sustain" value="0.6029"/>
+    <P id="fuzz_tone" value="0.5342"/>
+    <P id="fuzz_volume" value="0.6"/>
+    <P id="lfo2_rate" value="0.1279"/>
+    <P id="lfo2_retrig" value="0"/>
+    <P id="lfo2_wave" value="0"/>
+    <P id="menv_a" value="4.3987"/>
+    <P id="menv_d" value="4"/>
+    <P id="menv_r" value="4"/>
+    <P id="menv_s" value="0.6"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.4759"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.1826"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="9"/>
+    <P id="mm6_amt" value="0.3"/>
+    <P id="mm6_dst" value="2"/>
+    <P id="mm6_src" value="8"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_pw" value="35"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="6.632"/>
+    <P id="voice_spread" value="0.9055"/>
+    <P id="amp_level" value="-3.5"/>
+  </PARAMS>
+</AUGUR5_PRESET>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Stomp Shards" category="Pluck" target="-18.0"
+               genre="Tech House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="0.6171"/>
+    <P id="aenv_r" value="0.6384"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.4211"/>
+    <P id="chorus_mix" value="0.4752"/>
+    <P id="chorus_mode" value="1"/>
+    <P id="chorus_on" value="1"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.2482"/>
+    <P id="fenv_r" value="0.3"/>
+    <P id="fenv_s" value="0"/>
+    <P id="flt_cutoff" value="338.4362"/>
+    <P id="flt_env_amt" value="0.5846"/>
+    <P id="flt_model" value="4"/>
+    <P id="flt_reso" value="0.5231"/>
+    <P id="flt_velocity" value="0.3587"/>
+    <P id="mix_osc2" value="0.5236"/>
+    <P id="mm4_amt" value="0.3614"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="8.2031"/>
+    <P id="reverb_decay" value="5.0924"/>
+    <P id="reverb_mix" value="0.3101"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.5744"/>
+    <P id="reverb_type" value="0"/>
+    <P id="voice_spread" value="0.7"/>
+    <P id="amp_level" value="-4.5"/>
+  </PARAMS>
+</AUGUR5_PRESET>

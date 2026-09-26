@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Warm Horizon" category="Pad" target="-18.0"
+               genre="Downtempo &amp; Lo-Fi" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.6906"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="4.4895"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.8218"/>
+    <P id="chorus_mix" value="0.3282"/>
+    <P id="chorus_mode" value="3"/>
+    <P id="chorus_on" value="1"/>
+    <P id="echo_intensity" value="0.5946"/>
+    <P id="echo_mode" value="10"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.1796"/>
+    <P id="echo_reverb" value="0.5"/>
+    <P id="echo_treble" value="-0.4"/>
+    <P id="echo_volume" value="0.45"/>
+    <P id="echo_wow" value="0.7501"/>
+    <P id="fenv_a" value="1.8819"/>
+    <P id="fenv_d" value="2.7797"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.4217"/>
+    <P id="flt_cutoff" value="1385.602"/>
+    <P id="flt_env_amt" value="0.2338"/>
+    <P id="flt_reso" value="0.1824"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.3357"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="7.0117"/>
+    <P id="voice_spread" value="0.8584"/>
+    <P id="amp_level" value="-7.4"/>
+  </PARAMS>
+</AUGUR5_PRESET>

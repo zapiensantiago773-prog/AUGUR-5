@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Faded Solo" category="Lead" target="-18.0"
+               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.0286"/>
+    <P id="aenv_d" value="0.5"/>
+    <P id="aenv_r" value="0.3467"/>
+    <P id="aenv_s" value="0.9"/>
+    <P id="analog_age" value="0.4396"/>
+    <P id="chorus_mix" value="0.3"/>
+    <P id="chorus_mode" value="1"/>
+    <P id="chorus_on" value="1"/>
+    <P id="echo_intensity" value="0.4877"/>
+    <P id="echo_mode" value="10"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.2742"/>
+    <P id="echo_reverb" value="0.3015"/>
+    <P id="echo_volume" value="0.4625"/>
+    <P id="echo_wow" value="0.5989"/>
+    <P id="fenv_a" value="0.0752"/>
+    <P id="fenv_d" value="0.5564"/>
+    <P id="fenv_r" value="0.4"/>
+    <P id="fenv_s" value="0.45"/>
+    <P id="flt_cutoff" value="797.4954"/>
+    <P id="flt_env_amt" value="0.4127"/>
+    <P id="flt_keytrack" value="1"/>
+    <P id="flt_reso" value="0.2622"/>
+    <P id="fuzz_mix" value="0.4946"/>
+    <P id="fuzz_on" value="1"/>
+    <P id="fuzz_sustain" value="0.4103"/>
+    <P id="fuzz_tone" value="0.3713"/>
+    <P id="fuzz_volume" value="0.6"/>
+    <P id="glide" value="0.072"/>
+    <P id="legato" value="1"/>
+    <P id="lfo_delay" value="0.5448"/>
+    <P id="lfo_rate" value="4.8948"/>
+    <P id="menv_a" value="0.001"/>
+    <P id="menv_d" value="0.1482"/>
+    <P id="menv_r" value="0.1"/>
+    <P id="menv_s" value="0"/>
+    <P id="mix_drive" value="0.5415"/>
+    <P id="mix_osc1" value="0.9"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.0827"/>
+    <P id="mm4_dst" value="0"/>
+    <P id="mm4_src" value="3"/>
+    <P id="mm5_amt" value="-0.3041"/>
+    <P id="mm5_dst" value="0"/>
+    <P id="mm5_src" value="8"/>
+    <P id="mm6_amt" value="-0.3735"/>
+    <P id="mm6_dst" value="1"/>
+    <P id="mm6_src" value="8"/>
+    <P id="osc2_fine" value="-8.2589"/>
+    <P id="reverb_decay" value="6.1921"/>
+    <P id="reverb_mix" value="0.3341"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.5909"/>
+    <P id="reverb_type" value="0"/>
+    <P id="unison" value="1"/>
+    <P id="voice_count" value="4"/>
+    <P id="voice_detune" value="0.3194"/>
+    <P id="amp_level" value="-8.699999999999999"/>
+  </PARAMS>
+</AUGUR5_PRESET>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Glacial Ocean" category="Pad" target="-18.0"
+               genre="Ambient" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.8147"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="4.8992"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.4225"/>
+    <P id="fenv_a" value="1.2663"/>
+    <P id="fenv_d" value="2.304"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.5776"/>
+    <P id="flt_cutoff" value="1259.4887"/>
+    <P id="flt_env_amt" value="0.2688"/>
+    <P id="flt_mode" value="1"/>
+    <P id="flt_model" value="3"/>
+    <P id="flt_reso" value="0.482"/>
+    <P id="mix_noise" value="0.1"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.3449"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="8.0123"/>
+    <P id="reverb_decay" value="6.7445"/>
+    <P id="reverb_mix" value="0.3254"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.9436"/>
+    <P id="reverb_type" value="1"/>
+    <P id="voice_spread" value="0.9465"/>
+    <P id="amp_level" value="-11.7"/>
+  </PARAMS>
+</AUGUR5_PRESET>

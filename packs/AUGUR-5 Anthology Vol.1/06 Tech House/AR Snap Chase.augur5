@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Snap Chase" category="Arp" target="-18.0"
+               genre="Tech House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="0.2062"/>
+    <P id="aenv_r" value="0.2"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.3315"/>
+    <P id="arp_gate" value="0.4158"/>
+    <P id="arp_latch" value="1"/>
+    <P id="arp_mode" value="4"/>
+    <P id="arp_oct" value="2"/>
+    <P id="arp_on" value="1"/>
+    <P id="arp_rate" value="5"/>
+    <P id="arp_swing" value="0.1563"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.2466"/>
+    <P id="fenv_r" value="0.3"/>
+    <P id="fenv_s" value="0"/>
+    <P id="flt_cutoff" value="265.4567"/>
+    <P id="flt_env_amt" value="0.6387"/>
+    <P id="flt_model" value="2"/>
+    <P id="flt_reso" value="0.4185"/>
+    <P id="flt_velocity" value="0.4778"/>
+    <P id="mix_osc2" value="0.721"/>
+    <P id="mm4_amt" value="0.4273"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="6.1837"/>
+    <P id="reverb_decay" value="5.7748"/>
+    <P id="reverb_mix" value="0.3078"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.6228"/>
+    <P id="reverb_type" value="0"/>
+    <P id="voice_spread" value="0.7"/>
+    <P id="amp_level" value="2.3"/>
+  </PARAMS>
+</AUGUR5_PRESET>

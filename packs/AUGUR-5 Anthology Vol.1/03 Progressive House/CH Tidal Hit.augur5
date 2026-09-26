@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Tidal Hit" category="Stab" target="-18.0"
+               genre="Progressive House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.01"/>
+    <P id="aenv_d" value="0.4"/>
+    <P id="aenv_r" value="0.2"/>
+    <P id="aenv_s" value="0.5"/>
+    <P id="analog_age" value="0.3678"/>
+    <P id="fenv_a" value="0.03"/>
+    <P id="fenv_d" value="0.3"/>
+    <P id="fenv_r" value="0.2"/>
+    <P id="fenv_s" value="0.3"/>
+    <P id="flt_cutoff" value="570.5734"/>
+    <P id="flt_env_amt" value="0.55"/>
+    <P id="flt_reso" value="0.2576"/>
+    <P id="mix_osc2" value="0.7665"/>
+    <P id="mm4_amt" value="0.4946"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="8.6994"/>
+    <P id="reverb_decay" value="5.5886"/>
+    <P id="reverb_mix" value="0.354"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.6272"/>
+    <P id="reverb_type" value="0"/>
+    <P id="voice_count" value="10"/>
+    <P id="voice_detune" value="0.35"/>
+    <P id="voice_mode" value="1"/>
+    <P id="amp_level" value="-7.0"/>
+  </PARAMS>
+</AUGUR5_PRESET>

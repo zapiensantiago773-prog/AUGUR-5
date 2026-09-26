@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Radiant Machine" category="Atmos &amp; FX"
+               target="-18.0" genre="Progressive House" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="3.4066"/>
+    <P id="aenv_d" value="2"/>
+    <P id="aenv_r" value="4.462"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.3476"/>
+    <P id="delay_div" value="9"/>
+    <P id="delay_fb" value="0.4463"/>
+    <P id="delay_mix" value="0.2224"/>
+    <P id="delay_on" value="1"/>
+    <P id="delay_pingpong" value="0"/>
+    <P id="delay_sync" value="1"/>
+    <P id="flt_cutoff" value="859.559"/>
+    <P id="flt_reso" value="0.3"/>
+    <P id="fuzz_mix" value="0.6"/>
+    <P id="fuzz_on" value="1"/>
+    <P id="fuzz_sustain" value="0.8441"/>
+    <P id="fuzz_tone" value="0.4"/>
+    <P id="fuzz_volume" value="0.55"/>
+    <P id="lfo2_rate" value="0.06"/>
+    <P id="lfo2_retrig" value="0"/>
+    <P id="lfo2_wave" value="6"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mix_sub" value="0.4"/>
+    <P id="mm4_amt" value="0.4365"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.35"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="9"/>
+    <P id="osc2_fine" value="8.2637"/>
+    <P id="osc2_freq" value="7"/>
+    <P id="reverb_decay" value="11.5126"/>
+    <P id="reverb_mix" value="0.5"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="1"/>
+    <P id="voice_spread" value="0.9"/>
+    <P id="amp_level" value="2.9"/>
+  </PARAMS>
+</AUGUR5_PRESET>

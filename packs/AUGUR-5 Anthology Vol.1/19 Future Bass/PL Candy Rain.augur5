@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Candy Rain" category="Pluck" target="-18.0"
+               genre="Future Bass" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="0.873"/>
+    <P id="aenv_r" value="0.7868"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.4465"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.3772"/>
+    <P id="fenv_r" value="0.3"/>
+    <P id="fenv_s" value="0"/>
+    <P id="flt_cutoff" value="3332.1113"/>
+    <P id="flt_env_amt" value="0.6333"/>
+    <P id="flt_reso" value="0.3615"/>
+    <P id="flt_velocity" value="0.3935"/>
+    <P id="menv_a" value="0.001"/>
+    <P id="menv_d" value="0.2563"/>
+    <P id="menv_r" value="0.2"/>
+    <P id="menv_s" value="0"/>
+    <P id="mix_osc2" value="0"/>
+    <P id="mm4_amt" value="0.3365"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.3166"/>
+    <P id="mm5_dst" value="8"/>
+    <P id="mm5_src" value="8"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="7.0163"/>
+    <P id="osc2_freq" value="24"/>
+    <P id="osc2_saw" value="0"/>
+    <P id="osc2_tri" value="1"/>
+    <P id="reverb_decay" value="4.7783"/>
+    <P id="reverb_mix" value="0.2728"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.8951"/>
+    <P id="reverb_type" value="0"/>
+    <P id="voice_spread" value="0.7"/>
+    <P id="amp_level" value="-1.4"/>
+  </PARAMS>
+</AUGUR5_PRESET>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Nomad Groundwork" category="Bass" target="-18.0"
+               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.002"/>
+    <P id="aenv_d" value="0.6"/>
+    <P id="aenv_r" value="0.1182"/>
+    <P id="aenv_s" value="0.85"/>
+    <P id="amp_velocity" value="0.35"/>
+    <P id="analog_age" value="0.4112"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.2954"/>
+    <P id="fenv_r" value="0.1"/>
+    <P id="fenv_s" value="0.0897"/>
+    <P id="flt_cutoff" value="304.675"/>
+    <P id="flt_env_amt" value="0.5483"/>
+    <P id="flt_keytrack" value="1"/>
+    <P id="flt_reso" value="0.4236"/>
+    <P id="flt_velocity" value="0.2707"/>
+    <P id="legato" value="1"/>
+    <P id="mix_osc1" value="0.9"/>
+    <P id="mix_osc2" value="0.6"/>
+    <P id="mm4_amt" value="0.4853"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="5.4131"/>
+    <P id="osc2_freq" value="-12"/>
+    <P id="voice_count" value="1"/>
+    <P id="amp_level" value="2.7"/>
+  </PARAMS>
+</AUGUR5_PRESET>

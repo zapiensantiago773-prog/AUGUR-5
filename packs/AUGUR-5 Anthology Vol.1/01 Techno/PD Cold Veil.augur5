@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Cold Veil" category="Pad" target="-18.0"
+               genre="Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.7083"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="4.993"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.3194"/>
+    <P id="fenv_a" value="1.0121"/>
+    <P id="fenv_d" value="2.1069"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.5688"/>
+    <P id="flt_cutoff" value="857.2657"/>
+    <P id="flt_env_amt" value="0.2373"/>
+    <P id="flt_reso" value="0.2652"/>
+    <P id="lfo2_rate" value="0.1063"/>
+    <P id="lfo2_retrig" value="0"/>
+    <P id="lfo2_wave" value="6"/>
+    <P id="menv_a" value="3.3992"/>
+    <P id="menv_d" value="4"/>
+    <P id="menv_r" value="4"/>
+    <P id="menv_s" value="0.6"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.4903"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.293"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="9"/>
+    <P id="mm6_amt" value="0.3"/>
+    <P id="mm6_dst" value="2"/>
+    <P id="mm6_src" value="8"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_pw" value="35"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="11.1668"/>
+    <P id="phaser_depth" value="0.734"/>
+    <P id="phaser_fb" value="0.5164"/>
+    <P id="phaser_mix" value="0.4"/>
+    <P id="phaser_on" value="1"/>
+    <P id="phaser_rate" value="0.1121"/>
+    <P id="voice_spread" value="0.7421"/>
+    <P id="amp_level" value="-6.4"/>
+  </PARAMS>
+</AUGUR5_PRESET>

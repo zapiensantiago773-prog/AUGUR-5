@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Gritty Field" category="Pad" target="-18.0"
+               genre="Dubstep" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.9007"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="3.4906"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.3063"/>
+    <P id="fenv_a" value="1.0715"/>
+    <P id="fenv_d" value="3.5954"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.6891"/>
+    <P id="flt_cutoff" value="1110.0793"/>
+    <P id="flt_env_amt" value="0.1721"/>
+    <P id="flt_mode" value="1"/>
+    <P id="flt_model" value="3"/>
+    <P id="flt_reso" value="0.5208"/>
+    <P id="fuzz_mix" value="0.4816"/>
+    <P id="fuzz_on" value="1"/>
+    <P id="fuzz_sustain" value="0.5838"/>
+    <P id="fuzz_tone" value="0.5382"/>
+    <P id="fuzz_volume" value="0.6"/>
+    <P id="mix_noise" value="0.1"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.4332"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="6.296"/>
+    <P id="reverb_decay" value="6.0492"/>
+    <P id="reverb_mix" value="0.2934"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.6556"/>
+    <P id="reverb_type" value="1"/>
+    <P id="voice_spread" value="0.9397"/>
+    <P id="amp_level" value="-8.199999999999999"/>
+  </PARAMS>
+</AUGUR5_PRESET>

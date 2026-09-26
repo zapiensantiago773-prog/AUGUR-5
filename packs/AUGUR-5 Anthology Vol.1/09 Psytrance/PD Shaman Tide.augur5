@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Shaman Tide" category="Pad" target="-18.0"
+               genre="Psytrance" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.9524"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="4.8188"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.4197"/>
+    <P id="fenv_a" value="2.0059"/>
+    <P id="fenv_d" value="3.874"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.6303"/>
+    <P id="flt_cutoff" value="2030.7336"/>
+    <P id="flt_env_amt" value="0.2227"/>
+    <P id="flt_reso" value="0.2072"/>
+    <P id="lfo2_rate" value="0.0598"/>
+    <P id="lfo2_retrig" value="0"/>
+    <P id="lfo2_wave" value="0"/>
+    <P id="menv_a" value="3.3364"/>
+    <P id="menv_d" value="4"/>
+    <P id="menv_r" value="4"/>
+    <P id="menv_s" value="0.6"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.3414"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.3246"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="9"/>
+    <P id="mm6_amt" value="0.3"/>
+    <P id="mm6_dst" value="2"/>
+    <P id="mm6_src" value="8"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_pw" value="35"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="9.0532"/>
+    <P id="voice_spread" value="0.8522"/>
+    <P id="amp_level" value="-9.4"/>
+  </PARAMS>
+</AUGUR5_PRESET>

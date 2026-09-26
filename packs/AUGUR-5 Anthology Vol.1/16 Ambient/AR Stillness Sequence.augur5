@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Stillness Sequence" category="Arp" target="-18.0"
+               genre="Ambient" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="0.2335"/>
+    <P id="aenv_r" value="0.2"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.4583"/>
+    <P id="arp_gate" value="0.5815"/>
+    <P id="arp_mode" value="4"/>
+    <P id="arp_oct" value="2"/>
+    <P id="arp_on" value="1"/>
+    <P id="arp_rate" value="5"/>
+    <P id="arp_swing" value="0"/>
+    <P id="echo_intensity" value="0.4089"/>
+    <P id="echo_mode" value="3"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.4009"/>
+    <P id="echo_reverb" value="0.28"/>
+    <P id="echo_volume" value="0.4937"/>
+    <P id="echo_wow" value="0.3946"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.3666"/>
+    <P id="fenv_r" value="0.3"/>
+    <P id="fenv_s" value="0"/>
+    <P id="flt_cutoff" value="4100.8329"/>
+    <P id="flt_env_amt" value="0.5373"/>
+    <P id="flt_reso" value="0.3986"/>
+    <P id="flt_velocity" value="0.3259"/>
+    <P id="menv_a" value="0.001"/>
+    <P id="menv_d" value="0.2868"/>
+    <P id="menv_r" value="0.2"/>
+    <P id="menv_s" value="0"/>
+    <P id="mix_osc2" value="0"/>
+    <P id="mm4_amt" value="0.4153"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.3304"/>
+    <P id="mm5_dst" value="8"/>
+    <P id="mm5_src" value="8"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="4.0215"/>
+    <P id="osc2_freq" value="24"/>
+    <P id="osc2_saw" value="0"/>
+    <P id="osc2_tri" value="1"/>
+    <P id="phaser_depth" value="0.9609"/>
+    <P id="phaser_fb" value="0.5613"/>
+    <P id="phaser_mix" value="0.4"/>
+    <P id="phaser_on" value="1"/>
+    <P id="phaser_rate" value="0.2535"/>
+    <P id="reverb_decay" value="7.944"/>
+    <P id="reverb_mix" value="0.3878"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.6202"/>
+    <P id="reverb_type" value="0"/>
+    <P id="voice_spread" value="0.7"/>
+    <P id="amp_level" value="4.6"/>
+  </PARAMS>
+</AUGUR5_PRESET>

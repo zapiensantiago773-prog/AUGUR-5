@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Breathing Tide" category="Pad" target="-18.0"
+               genre="Ambient" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.4923"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="4.9118"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.9319"/>
+    <P id="echo_intensity" value="0.4935"/>
+    <P id="echo_mode" value="8"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.2479"/>
+    <P id="echo_reverb" value="0.5"/>
+    <P id="echo_treble" value="-0.4"/>
+    <P id="echo_volume" value="0.45"/>
+    <P id="echo_wow" value="0.7749"/>
+    <P id="fenv_a" value="1.799"/>
+    <P id="fenv_d" value="2.2435"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.4588"/>
+    <P id="flt_cutoff" value="2272.9296"/>
+    <P id="flt_env_amt" value="0.1427"/>
+    <P id="flt_reso" value="0.194"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.4329"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="9.832"/>
+    <P id="voice_spread" value="0.8148"/>
+    <P id="amp_level" value="-8.9"/>
+  </PARAMS>
+</AUGUR5_PRESET>

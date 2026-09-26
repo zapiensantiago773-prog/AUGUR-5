@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Ember Quest" category="Lead" target="-18.0"
+               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.0108"/>
+    <P id="aenv_d" value="0.5"/>
+    <P id="aenv_r" value="0.5233"/>
+    <P id="aenv_s" value="0.9"/>
+    <P id="analog_age" value="0.3509"/>
+    <P id="echo_intensity" value="0.5853"/>
+    <P id="echo_mode" value="3"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.5718"/>
+    <P id="echo_reverb" value="0.3928"/>
+    <P id="echo_volume" value="0.401"/>
+    <P id="echo_wow" value="0.6978"/>
+    <P id="flt_cutoff" value="2463.5095"/>
+    <P id="fuzz_mix" value="0.9423"/>
+    <P id="fuzz_on" value="1"/>
+    <P id="fuzz_sustain" value="0.8126"/>
+    <P id="fuzz_tone" value="0.555"/>
+    <P id="fuzz_volume" value="0.6"/>
+    <P id="glide" value="0.0303"/>
+    <P id="legato" value="1"/>
+    <P id="lfo_delay" value="0.6735"/>
+    <P id="lfo_rate" value="4.8294"/>
+    <P id="mix_osc2" value="0.7"/>
+    <P id="mm4_amt" value="0.0702"/>
+    <P id="mm4_dst" value="0"/>
+    <P id="mm4_src" value="3"/>
+    <P id="osc2_fine" value="6.346"/>
+    <P id="reverb_decay" value="3.6592"/>
+    <P id="reverb_mix" value="0.2818"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.5137"/>
+    <P id="reverb_type" value="0"/>
+    <P id="voice_count" value="1"/>
+    <P id="amp_level" value="-0.1"/>
+  </PARAMS>
+</AUGUR5_PRESET>

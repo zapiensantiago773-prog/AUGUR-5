@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Jack Ocean" category="Pad" target="-18.0"
+               genre="House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.7526"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="4.0974"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.3186"/>
+    <P id="fenv_a" value="1.4176"/>
+    <P id="fenv_d" value="3.6581"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.4587"/>
+    <P id="flt_cutoff" value="1669.5353"/>
+    <P id="flt_env_amt" value="0.1408"/>
+    <P id="flt_reso" value="0.2867"/>
+    <P id="fuzz_mix" value="0.4662"/>
+    <P id="fuzz_on" value="1"/>
+    <P id="fuzz_sustain" value="0.6799"/>
+    <P id="fuzz_tone" value="0.5158"/>
+    <P id="fuzz_volume" value="0.6"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.3265"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="10.5544"/>
+    <P id="voice_spread" value="0.8708"/>
+    <P id="amp_level" value="-1.9"/>
+  </PARAMS>
+</AUGUR5_PRESET>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Breakdance Veil" category="Pad" target="-18.0"
+               genre="Electro" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.9305"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="3.0613"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.3856"/>
+    <P id="chorus_mix" value="0.48"/>
+    <P id="chorus_mode" value="1"/>
+    <P id="chorus_on" value="1"/>
+    <P id="fenv_a" value="1.2504"/>
+    <P id="fenv_d" value="2.9958"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.5865"/>
+    <P id="flt_cutoff" value="1724.1248"/>
+    <P id="flt_env_amt" value="0.2646"/>
+    <P id="flt_reso" value="0.1545"/>
+    <P id="lfo2_rate" value="0.1499"/>
+    <P id="lfo2_retrig" value="0"/>
+    <P id="lfo2_wave" value="0"/>
+    <P id="menv_a" value="4.1476"/>
+    <P id="menv_d" value="4"/>
+    <P id="menv_r" value="4"/>
+    <P id="menv_s" value="0.6"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.4578"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.1647"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="9"/>
+    <P id="mm6_amt" value="0.3"/>
+    <P id="mm6_dst" value="2"/>
+    <P id="mm6_src" value="8"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_pw" value="35"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="7.8494"/>
+    <P id="voice_spread" value="0.9882"/>
+    <P id="amp_level" value="-8.699999999999999"/>
+  </PARAMS>
+</AUGUR5_PRESET>

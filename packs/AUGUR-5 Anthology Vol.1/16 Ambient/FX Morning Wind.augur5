@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Morning Wind" category="Atmos &amp; FX"
+               target="-18.0" genre="Ambient" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="3.2752"/>
+    <P id="aenv_d" value="2"/>
+    <P id="aenv_r" value="5.6229"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.5701"/>
+    <P id="flt_cutoff" value="572.747"/>
+    <P id="flt_reso" value="0.3"/>
+    <P id="lfo2_rate" value="0.06"/>
+    <P id="lfo2_retrig" value="0"/>
+    <P id="lfo2_wave" value="6"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mix_sub" value="0.4"/>
+    <P id="mm4_amt" value="0.4976"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.35"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="9"/>
+    <P id="osc2_fine" value="11.5031"/>
+    <P id="osc2_freq" value="7"/>
+    <P id="reverb_decay" value="9.414"/>
+    <P id="reverb_mix" value="0.5"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="1"/>
+    <P id="voice_spread" value="0.9"/>
+    <P id="amp_level" value="-0.1"/>
+  </PARAMS>
+</AUGUR5_PRESET>

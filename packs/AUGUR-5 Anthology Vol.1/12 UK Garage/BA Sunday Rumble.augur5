@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Sunday Rumble" category="Bass" target="-18.0"
+               genre="UK Garage" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.002"/>
+    <P id="aenv_d" value="0.6"/>
+    <P id="aenv_r" value="0.108"/>
+    <P id="aenv_s" value="0.85"/>
+    <P id="amp_velocity" value="0.35"/>
+    <P id="analog_age" value="0.4482"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.2614"/>
+    <P id="fenv_r" value="0.1"/>
+    <P id="fenv_s" value="0.1"/>
+    <P id="flt_cutoff" value="272.6493"/>
+    <P id="flt_env_amt" value="0.133"/>
+    <P id="flt_keytrack" value="1"/>
+    <P id="legato" value="1"/>
+    <P id="mix_osc1" value="0.3719"/>
+    <P id="mix_osc2" value="0"/>
+    <P id="mix_sub" value="0.807"/>
+    <P id="mm4_amt" value="0.3211"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="voice_count" value="1"/>
+    <P id="amp_level" value="-4.4"/>
+  </PARAMS>
+</AUGUR5_PRESET>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Solitude Dream" category="Pad" target="-18.0"
+               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.7054"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="4.7257"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.7593"/>
+    <P id="echo_intensity" value="0.5033"/>
+    <P id="echo_mode" value="8"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.2053"/>
+    <P id="echo_reverb" value="0.5"/>
+    <P id="echo_treble" value="-0.4"/>
+    <P id="echo_volume" value="0.45"/>
+    <P id="echo_wow" value="0.7909"/>
+    <P id="fenv_a" value="1.5483"/>
+    <P id="fenv_d" value="2.0006"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.6033"/>
+    <P id="flt_cutoff" value="1076.5628"/>
+    <P id="flt_env_amt" value="0.249"/>
+    <P id="flt_reso" value="0.1721"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.32"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="9.2085"/>
+    <P id="voice_spread" value="0.8537"/>
+    <P id="amp_level" value="-9.1"/>
+  </PARAMS>
+</AUGUR5_PRESET>

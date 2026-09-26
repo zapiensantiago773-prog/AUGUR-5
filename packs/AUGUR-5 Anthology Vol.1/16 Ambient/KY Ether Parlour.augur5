@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AUGUR5_PRESET formatVersion="1" name="Ether Parlour" category="Keys" target="-18.0" genre="Ambient" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="2.1427"/>
+    <P id="aenv_r" value="0.6382"/>
+    <P id="aenv_s" value="0.2845"/>
+    <P id="analog_age" value="0.446"/>
+    <P id="delay_div" value="6"/>
+    <P id="delay_fb" value="0.4431"/>
+    <P id="delay_mix" value="0.2524"/>
+    <P id="delay_on" value="1"/>
+    <P id="delay_pingpong" value="1"/>
+    <P id="delay_sync" value="1"/>
+    <P id="flt_cutoff" value="1948.2546"/>
+    <P id="flt_env_amt" value="0.3"/>
+    <P id="flt_velocity" value="0.4"/>
+    <P id="mix_osc2" value="0.5"/>
+    <P id="mm4_amt" value="0.4781"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_freq" value="12"/>
+    <P id="osc2_saw" value="0"/>
+    <P id="osc2_tri" value="1"/>
+    <P id="osc_xmod" value="0.08"/>
+    <P id="reverb_decay" value="2.5838"/>
+    <P id="reverb_mix" value="0.4"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.5"/>
+    <P id="reverb_type" value="2"/>
+  </PARAMS>
+</AUGUR5_PRESET>

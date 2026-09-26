@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AUGUR5_PRESET formatVersion="1" name="Party Horizon" category="Pad" target="-18.0" genre="House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.7481"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="3.8832"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.4001"/>
+    <P id="chorus_mix" value="0.5"/>
+    <P id="chorus_mode" value="3"/>
+    <P id="chorus_on" value="1"/>
+    <P id="fenv_a" value="1.0692"/>
+    <P id="fenv_d" value="2.4514"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.434"/>
+    <P id="flt_cutoff" value="1840.0982"/>
+    <P id="flt_env_amt" value="0.1798"/>
+    <P id="flt_reso" value="0.2055"/>
+    <P id="flt_slope" value="1"/>
+    <P id="hpf_cutoff" value="247.933"/>
+    <P id="lfo_rate" value="5"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm3_amt" value="0.04"/>
+    <P id="mm3_dst" value="0"/>
+    <P id="mm3_src" value="3"/>
+    <P id="mm4_amt" value="0.3892"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="6.2382"/>
+    <P id="voice_spread" value="0.8539"/>
+  </PARAMS>
+</AUGUR5_PRESET>

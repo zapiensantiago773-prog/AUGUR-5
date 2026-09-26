@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Crusher Snare" category="Drums" target="-20.0"
+               genre="Dubstep" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="0.1662"/>
+    <P id="aenv_r" value="0.15"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.4345"/>
+    <P id="flt_cutoff" value="2469.1521"/>
+    <P id="flt_keytrack" value="0"/>
+    <P id="flt_mode" value="1"/>
+    <P id="flt_model" value="3"/>
+    <P id="flt_reso" value="0.2"/>
+    <P id="mix_noise" value="1"/>
+    <P id="mix_osc1" value="0.4"/>
+    <P id="mix_osc2" value="0"/>
+    <P id="osc1_freq" value="12"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="reverb_on" value="0"/>
+    <P id="amp_level" value="-8.6"/>
+  </PARAMS>
+</AUGUR5_PRESET>

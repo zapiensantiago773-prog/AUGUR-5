@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Bright Transmission" category="Atmos &amp; FX"
+               target="-18.0" genre="Future Bass" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="2.3297"/>
+    <P id="aenv_d" value="2"/>
+    <P id="aenv_r" value="4.7873"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.342"/>
+    <P id="chorus_mix" value="0.362"/>
+    <P id="chorus_mode" value="3"/>
+    <P id="chorus_on" value="1"/>
+    <P id="flt_cutoff" value="170.478"/>
+    <P id="flt_reso" value="0.4"/>
+    <P id="menv_a" value="6.8884"/>
+    <P id="menv_d" value="1"/>
+    <P id="menv_r" value="0.5"/>
+    <P id="menv_s" value="1"/>
+    <P id="mix_noise" value="0.4"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.3167"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="1"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="8"/>
+    <P id="mm6_amt" value="0.3"/>
+    <P id="mm6_dst" value="0"/>
+    <P id="mm6_src" value="8"/>
+    <P id="osc2_fine" value="9.3835"/>
+    <P id="reverb_decay" value="14.273"/>
+    <P id="reverb_mix" value="0.5"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="1"/>
+    <P id="voice_spread" value="0.9"/>
+    <P id="amp_level" value="0.7"/>
+  </PARAMS>
+</AUGUR5_PRESET>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Cozy Dream" category="Pad" target="-18.0"
+               genre="Downtempo &amp; Lo-Fi" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.822"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="4.5569"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.9122"/>
+    <P id="chorus_mix" value="0.5"/>
+    <P id="chorus_mode" value="3"/>
+    <P id="chorus_on" value="1"/>
+    <P id="echo_intensity" value="0.5065"/>
+    <P id="echo_mode" value="10"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.4548"/>
+    <P id="echo_reverb" value="0.3865"/>
+    <P id="echo_volume" value="0.4872"/>
+    <P id="echo_wow" value="0.5697"/>
+    <P id="fenv_a" value="1.1064"/>
+    <P id="fenv_d" value="3.7022"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.6577"/>
+    <P id="flt_cutoff" value="2088.4582"/>
+    <P id="flt_env_amt" value="0.1849"/>
+    <P id="flt_reso" value="0.1259"/>
+    <P id="flt_slope" value="1"/>
+    <P id="hpf_cutoff" value="167.2644"/>
+    <P id="lfo_rate" value="5"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm3_amt" value="0.04"/>
+    <P id="mm3_dst" value="0"/>
+    <P id="mm3_src" value="3"/>
+    <P id="mm4_amt" value="0.3563"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="7.8488"/>
+    <P id="voice_spread" value="0.8892"/>
+    <P id="amp_level" value="-6.5"/>
+  </PARAMS>
+</AUGUR5_PRESET>

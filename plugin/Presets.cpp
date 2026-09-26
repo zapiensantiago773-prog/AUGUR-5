@@ -749,10 +749,16 @@ int PresetManager::installPack (const juce::File& zipFile)
         const bool wanted = name.endsWithIgnoreCase (presetExtension) || name.endsWithIgnoreCase (".txt") || name.endsWithIgnoreCase (".md");
         if (! wanted || name.contains ("..") || name.startsWithChar ('/') || name.containsChar (':'))
             continue;
-        const auto dest = target.getChildFile (name);
+        const auto dest = target.getChildFile (name); // normalised separators: works on macOS with any zip tool
         if (! dest.isAChildOf (target))
             continue;
-        if (zip.uncompressEntry (i, target, true).wasOk() && name.endsWithIgnoreCase (presetExtension))
+        std::unique_ptr<juce::InputStream> in (zip.createStreamForEntry (i));
+        if (in == nullptr)
+            continue;
+        dest.getParentDirectory().createDirectory();
+        dest.deleteFile();
+        juce::FileOutputStream out (dest);
+        if (out.openedOk() && out.writeFromInputStream (*in, -1) >= 0 && name.endsWithIgnoreCase (presetExtension))
             ++installed;
     }
     return installed;

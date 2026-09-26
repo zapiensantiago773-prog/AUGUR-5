@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Late Blanket" category="Pad" target="-18.0"
+               genre="UK Garage" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.1418"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="3.8872"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.3867"/>
+    <P id="fenv_a" value="2.0178"/>
+    <P id="fenv_d" value="3.0832"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.615"/>
+    <P id="flt_cutoff" value="2131.4117"/>
+    <P id="flt_env_amt" value="0.1849"/>
+    <P id="flt_reso" value="0.2096"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.4201"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="10.9487"/>
+    <P id="voice_spread" value="0.7524"/>
+    <P id="amp_level" value="-7.6"/>
+  </PARAMS>
+</AUGUR5_PRESET>

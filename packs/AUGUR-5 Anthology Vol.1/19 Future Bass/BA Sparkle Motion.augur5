@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Sparkle Motion" category="Bass" target="-18.0"
+               genre="Future Bass" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.002"/>
+    <P id="aenv_d" value="0.6"/>
+    <P id="aenv_r" value="0.1318"/>
+    <P id="aenv_s" value="0.85"/>
+    <P id="amp_velocity" value="0.35"/>
+    <P id="analog_age" value="0.3543"/>
+    <P id="flt_cutoff" value="592.3254"/>
+    <P id="flt_keytrack" value="1"/>
+    <P id="flt_reso" value="0.2962"/>
+    <P id="legato" value="1"/>
+    <P id="lfo2_rate" value="0.1743"/>
+    <P id="mix_drive" value="0.527"/>
+    <P id="mix_osc1" value="0.9"/>
+    <P id="mix_osc2" value="0.6"/>
+    <P id="mm4_amt" value="0.4647"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.1463"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="9"/>
+    <P id="osc2_fine" value="14.5792"/>
+    <P id="voice_count" value="2"/>
+    <P id="voice_detune" value="0.8684"/>
+    <P id="voice_mode" value="1"/>
+    <P id="amp_level" value="-7.0"/>
+  </PARAMS>
+</AUGUR5_PRESET>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Bedroom Minor" category="Stab" target="-18.0"
+               genre="Downtempo &amp; Lo-Fi" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="0.4207"/>
+    <P id="aenv_r" value="0.2574"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.9656"/>
+    <P id="echo_bass" value="-0.3"/>
+    <P id="echo_intensity" value="0.6394"/>
+    <P id="echo_mode" value="8"/>
+    <P id="echo_on" value="1"/>
+    <P id="echo_rate" value="0.4225"/>
+    <P id="echo_reverb" value="0.45"/>
+    <P id="echo_volume" value="0.6"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.2727"/>
+    <P id="fenv_r" value="0.2"/>
+    <P id="fenv_s" value="0"/>
+    <P id="flt_cutoff" value="686.5986"/>
+    <P id="flt_env_amt" value="0.3598"/>
+    <P id="flt_mode" value="1"/>
+    <P id="flt_model" value="3"/>
+    <P id="flt_reso" value="0.5043"/>
+    <P id="mix_osc2" value="0.6337"/>
+    <P id="mm4_amt" value="0.3756"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="7.5014"/>
+    <P id="osc2_freq" value="7"/>
+    <P id="amp_level" value="-9.9"/>
+  </PARAMS>
+</AUGUR5_PRESET>

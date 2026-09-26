@@ -250,6 +250,18 @@ int levelPack (const juce::File& folder)
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI juceInit;
+    if (argc >= 3 && (std::strcmp (argv[1], "--install-pack") == 0 || std::strcmp (argv[1], "--import-folder") == 0))
+    {
+        // Same code paths as the browser's "Install expansion pack" / "Add presets folder".
+        const auto source = juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2]));
+        const int count = std::strcmp (argv[1], "--install-pack") == 0 ? augur5::PresetManager::installPack (source)
+                                                                        : augur5::PresetManager::importFolder (source);
+        std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+        const auto visible = dynamic_cast<Augur5Processor*> (base.get())->getPresets().getUserPresets().size();
+        std::printf ("installed %d presets; the browser now lists %d user presets in %s\n", count, visible,
+                     augur5::PresetManager::getUserFolder().getFullPathName().toRawUTF8());
+        return count > 0 ? 0 : 1;
+    }
     if (argc >= 3 && std::strcmp (argv[1], "--level-pack") == 0)
         return levelPack (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])));
     if (argc >= 3 && std::strcmp (argv[1], "--snapshot") == 0)

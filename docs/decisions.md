@@ -347,3 +347,23 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
 - **Corrección:** al cargar un sonido, el nivel (y todos los suavizadores) se deslizaba 20 ms desde los valores del sonido anterior, así que la primera nota tocada justo después de cargar salía con el volumen del preset previo. `warmUp()` ahora reinicia los suavizadores a los valores nuevos (test). Esto también afectaba a la medición de nivel de los plucks: la librería de fábrica se re-niveló.
 - **`augur_preset_audit --level-pack <carpeta>`**: carga cada preset en el procesador real y mide pico y volumen. Ajusta `amp_level` hasta el objetivo guardado en el archivo (hasta 4 pasadas, sin superar −3 dBFS de pico) y falla con parámetros desconocidos, salida no finita o silencio.
 - **Savanna Horn Lead** (Lead), pedido por el usuario: lead de bronce "trompeteante" con sierras desafinadas en unísono, un "scoop" de pitch al inicio de cada nota (MOD ENV → OSC 1/2 FREQ, −3 semitonos), filtro que se abre, legato con glide y vibrato retardado. No lleva nombres de artistas ni canciones.
+
+## D-034 · AUGUR-5 Anthology Vol.1: 500 presets de pago (TONAL LAB) (2026-09-26)
+- Producto aparte: **500 presets en 20 estilos** (25 por estilo).
+  - Estilos: Techno, Melodic Techno, Progressive House, Deep House, House, Tech House, Minimal, Trance, Psytrance, Drum & Bass, Dubstep, UK Garage, Synthwave, Electro, Acid, Ambient, Downtempo & Lo-Fi, IDM, Future Bass y Dub Techno.
+  - Prefijos por rol: BA, LD, PD, PL, CH, KY, AR, FX, DR.
+- **Generación** (`tools/pack/make_anthology.py`): diseño por reglas y reproducible (semilla por estilo).
+  - Arquetipos por rol: 9 de bajo (sub, rolling, reese, acid, FM, wobble, 808, pluck…), 9 de lead (incluido "horn", el lead trompeteante), 9 de pad, 7 de pluck, 6 de stab, 6 de keys, 6 de atmósfera, 5 de percusión y arps con el arpegiador interno.
+  - Perfil por estilo: oscuridad, edad analógica, espacio, divisiones de delay, tipo de reverb y probabilidad de fuzz, tape echo, phaser y chorus; swing y modos/velocidades del arp.
+  - Mod wheel → cutoff en casi todos.
+  - Nombres propios de TONAL LAB, sin artistas ni marcas.
+- **Control de calidad** (`augur_preset_audit --level-pack`): cada preset pasa por el procesador real y se nivela a su objetivo (−18 dB melódicos; percusión −16/−20/−25/−29 según tipo; pico ≤ −3 dBFS).
+  - Resultado final: **500/500 dentro de rango**.
+  - Correcciones hechas por lo que reveló la medición:
+    - el arquetipo "pluck band-pass" tenía un transitorio de aguja (ahora es una banda estática);
+    - la percusión metálica tiene objetivo −29 dB, por su factor de cresta;
+    - el deslizamiento de nivel al cargar (D-033).
+- **Distribución**: `tools/pack/build_zip.py` genera `packs/dist/TONAL LAB - AUGUR-5 Anthology Vol.1 (500 presets).zip` (328 KB, rutas portables `/` para macOS).
+  - Instalación en el plugin: BROWSER > Install expansion pack (.zip), o descomprimir y usar "Add presets folder".
+  - Verificado con `--install-pack` y `--import-folder`: 500 instalados y 500 visibles en el browser.
+  - El zip no va al repositorio (`packs/dist/` en `.gitignore`); los presets fuente sí.

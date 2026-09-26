@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Afterglow Tide" category="Pad" target="-18.0"
+               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="1.543"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="4.6655"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.316"/>
+    <P id="chorus_mix" value="0.3841"/>
+    <P id="chorus_mode" value="3"/>
+    <P id="chorus_on" value="1"/>
+    <P id="fenv_a" value="1.5309"/>
+    <P id="fenv_d" value="2.5277"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.5427"/>
+    <P id="flt_cutoff" value="1165.0164"/>
+    <P id="flt_env_amt" value="0.325"/>
+    <P id="flt_reso" value="0.1624"/>
+    <P id="fuzz_mix" value="0.4599"/>
+    <P id="fuzz_on" value="1"/>
+    <P id="fuzz_sustain" value="0.5697"/>
+    <P id="fuzz_tone" value="0.4007"/>
+    <P id="fuzz_volume" value="0.6"/>
+    <P id="lfo2_rate" value="0.1401"/>
+    <P id="lfo2_retrig" value="0"/>
+    <P id="lfo2_wave" value="6"/>
+    <P id="menv_a" value="4.3712"/>
+    <P id="menv_d" value="4"/>
+    <P id="menv_r" value="4"/>
+    <P id="menv_s" value="0.6"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.3457"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.2811"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="9"/>
+    <P id="mm6_amt" value="0.3"/>
+    <P id="mm6_dst" value="2"/>
+    <P id="mm6_src" value="8"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_pw" value="35"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="10.0202"/>
+    <P id="voice_spread" value="0.7279"/>
+    <P id="amp_level" value="-6.6"/>
+  </PARAMS>
+</AUGUR5_PRESET>

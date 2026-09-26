@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Vocoder Taps" category="Pluck" target="-18.0"
+               genre="Electro" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="1.2847"/>
+    <P id="aenv_r" value="0.6756"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.4289"/>
+    <P id="delay_div" value="5"/>
+    <P id="delay_fb" value="0.5028"/>
+    <P id="delay_mix" value="0.27"/>
+    <P id="delay_on" value="1"/>
+    <P id="delay_pingpong" value="0"/>
+    <P id="delay_sync" value="1"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.2735"/>
+    <P id="fenv_r" value="0.3"/>
+    <P id="fenv_s" value="0"/>
+    <P id="flt_cutoff" value="388.2325"/>
+    <P id="flt_env_amt" value="0.5303"/>
+    <P id="flt_reso" value="0.3791"/>
+    <P id="flt_velocity" value="0.3947"/>
+    <P id="mix_osc2" value="0.6277"/>
+    <P id="mm4_amt" value="0.4733"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.3951"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="11"/>
+    <P id="mm6_amt" value="0.3"/>
+    <P id="mm6_dst" value="2"/>
+    <P id="mm6_src" value="11"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="5.1284"/>
+    <P id="voice_spread" value="0.7"/>
+    <P id="amp_level" value="-2.9"/>
+  </PARAMS>
+</AUGUR5_PRESET>

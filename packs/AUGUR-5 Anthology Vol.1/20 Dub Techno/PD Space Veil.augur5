@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Space Veil" category="Pad" target="-18.0"
+               genre="Dub Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.7473"/>
+    <P id="aenv_d" value="1.5"/>
+    <P id="aenv_r" value="4.54"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.6097"/>
+    <P id="fenv_a" value="0.8816"/>
+    <P id="fenv_d" value="3.4051"/>
+    <P id="fenv_r" value="3"/>
+    <P id="fenv_s" value="0.6378"/>
+    <P id="flt_cutoff" value="1602.4533"/>
+    <P id="flt_env_amt" value="0.194"/>
+    <P id="flt_reso" value="0.2876"/>
+    <P id="lfo2_rate" value="0.1328"/>
+    <P id="lfo2_retrig" value="0"/>
+    <P id="lfo2_wave" value="0"/>
+    <P id="menv_a" value="3.5429"/>
+    <P id="menv_d" value="4"/>
+    <P id="menv_r" value="4"/>
+    <P id="menv_s" value="0.6"/>
+    <P id="mix_osc2" value="0.8"/>
+    <P id="mm4_amt" value="0.4764"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.1778"/>
+    <P id="mm5_dst" value="4"/>
+    <P id="mm5_src" value="9"/>
+    <P id="mm6_amt" value="0.3"/>
+    <P id="mm6_dst" value="2"/>
+    <P id="mm6_src" value="8"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_pw" value="35"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="8.5548"/>
+    <P id="reverb_decay" value="3.4263"/>
+    <P id="reverb_mix" value="0.2532"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.9227"/>
+    <P id="reverb_type" value="1"/>
+    <P id="voice_spread" value="0.8828"/>
+    <P id="amp_level" value="-10.3"/>
+  </PARAMS>
+</AUGUR5_PRESET>

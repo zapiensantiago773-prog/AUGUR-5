@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Kraft Transmission" category="Atmos &amp; FX"
+               target="-18.0" genre="Electro" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.01"/>
+    <P id="aenv_d" value="1"/>
+    <P id="aenv_r" value="0.5"/>
+    <P id="aenv_s" value="1"/>
+    <P id="analog_age" value="0.4028"/>
+    <P id="delay_div" value="6"/>
+    <P id="delay_mix" value="0.35"/>
+    <P id="delay_on" value="1"/>
+    <P id="delay_pingpong" value="1"/>
+    <P id="delay_sync" value="1"/>
+    <P id="flt_cutoff" value="2368.5049"/>
+    <P id="flt_reso" value="0.5"/>
+    <P id="lfo2_rate" value="2.2695"/>
+    <P id="lfo2_retrig" value="0"/>
+    <P id="lfo2_sync" value="1"/>
+    <P id="lfo2_wave" value="5"/>
+    <P id="mix_osc2" value="0"/>
+    <P id="mm4_amt" value="0.3102"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="mm5_amt" value="0.45"/>
+    <P id="mm5_dst" value="0"/>
+    <P id="mm5_src" value="9"/>
+    <P id="mm6_amt" value="0.3"/>
+    <P id="mm6_dst" value="4"/>
+    <P id="mm6_src" value="9"/>
+    <P id="osc1_pulse" value="1"/>
+    <P id="osc1_saw" value="0"/>
+    <P id="osc2_fine" value="11.4018"/>
+    <P id="reverb_decay" value="10.8717"/>
+    <P id="reverb_mix" value="0.5"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="1"/>
+    <P id="voice_spread" value="0.9"/>
+    <P id="amp_level" value="-3.6"/>
+  </PARAMS>
+</AUGUR5_PRESET>

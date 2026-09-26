@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Journey Cycle" category="Arp" target="-18.0"
+               genre="Progressive House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="0.2836"/>
+    <P id="aenv_r" value="0.2"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.3662"/>
+    <P id="arp_gate" value="0.4643"/>
+    <P id="arp_latch" value="1"/>
+    <P id="arp_mode" value="4"/>
+    <P id="arp_oct" value="1"/>
+    <P id="arp_on" value="1"/>
+    <P id="arp_rate" value="5"/>
+    <P id="arp_swing" value="0"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.2409"/>
+    <P id="fenv_r" value="0.3"/>
+    <P id="fenv_s" value="0"/>
+    <P id="flt_cutoff" value="449.2826"/>
+    <P id="flt_env_amt" value="0.6101"/>
+    <P id="flt_reso" value="0.4267"/>
+    <P id="flt_velocity" value="0.4246"/>
+    <P id="mix_osc2" value="0.5502"/>
+    <P id="mm4_amt" value="0.4707"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="6.8184"/>
+    <P id="reverb_decay" value="4.3109"/>
+    <P id="reverb_mix" value="0.2834"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.7975"/>
+    <P id="reverb_type" value="1"/>
+    <P id="voice_spread" value="0.7"/>
+    <P id="amp_level" value="5.4"/>
+  </PARAMS>
+</AUGUR5_PRESET>

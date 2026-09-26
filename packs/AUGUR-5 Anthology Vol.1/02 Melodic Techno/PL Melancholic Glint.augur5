@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AUGUR5_PRESET formatVersion="1" name="Melancholic Glint" category="Pluck" target="-18.0"
+               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+  <PARAMS>
+    <P id="aenv_a" value="0.001"/>
+    <P id="aenv_d" value="0.7905"/>
+    <P id="aenv_r" value="0.7381"/>
+    <P id="aenv_s" value="0"/>
+    <P id="analog_age" value="0.4555"/>
+    <P id="fenv_a" value="0.001"/>
+    <P id="fenv_d" value="0.266"/>
+    <P id="fenv_r" value="0.3"/>
+    <P id="fenv_s" value="0"/>
+    <P id="flt_cutoff" value="484.6365"/>
+    <P id="flt_env_amt" value="0.5229"/>
+    <P id="flt_reso" value="0.274"/>
+    <P id="flt_velocity" value="0.3892"/>
+    <P id="mix_osc2" value="0.5102"/>
+    <P id="mm4_amt" value="0.4601"/>
+    <P id="mm4_dst" value="4"/>
+    <P id="mm4_src" value="4"/>
+    <P id="osc2_fine" value="9.914"/>
+    <P id="phaser_depth" value="0.9401"/>
+    <P id="phaser_fb" value="0.4494"/>
+    <P id="phaser_mix" value="0.4"/>
+    <P id="phaser_on" value="1"/>
+    <P id="phaser_rate" value="0.0545"/>
+    <P id="reverb_decay" value="6.403"/>
+    <P id="reverb_mix" value="0.3441"/>
+    <P id="reverb_on" value="1"/>
+    <P id="reverb_size" value="0.5667"/>
+    <P id="reverb_type" value="1"/>
+    <P id="voice_spread" value="0.7"/>
+    <P id="amp_level" value="1.1"/>
+  </PARAMS>
+</AUGUR5_PRESET>
