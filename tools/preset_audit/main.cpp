@@ -100,9 +100,31 @@ int soak (const juce::String& presetName, double seconds)
 }
 } // namespace
 
+// --snapshot out.png [scale]: renders the plugin editor (design canvas) to a PNG, for layout review.
+int snapshot (const juce::String& path, float scale)
+{
+    std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+    base->setPlayConfigDetails (0, 2, 48000.0, 256);
+    base->prepareToPlay (48000.0, 256);
+    auto* editor = base->createEditorIfNeeded();
+    editor->setScaleFactor (1.0f);
+    const auto image = editor->createComponentSnapshot (editor->getLocalBounds(), true, scale);
+    juce::File file (juce::File::getCurrentWorkingDirectory().getChildFile (path));
+    file.deleteFile();
+    juce::FileOutputStream out (file);
+    juce::PNGImageFormat png;
+    const bool ok = out.openedOk() && png.writeImageToStream (image, out);
+    std::printf ("%s %dx%d -> %s\n", ok ? "wrote" : "FAILED", image.getWidth(), image.getHeight(), file.getFullPathName().toRawUTF8());
+    base->editorBeingDeleted (editor);
+    delete editor;
+    return ok ? 0 : 1;
+}
+
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI juceInit;
+    if (argc >= 3 && std::strcmp (argv[1], "--snapshot") == 0)
+        return snapshot (juce::String::fromUTF8 (argv[2]), argc >= 4 ? static_cast<float> (std::atof (argv[3])) : 1.0f);
     if (argc >= 4 && std::strcmp (argv[1], "--soak") == 0)
         return soak (juce::String::fromUTF8 (argv[2]), std::atof (argv[3]));
     constexpr double sr = 48000.0;

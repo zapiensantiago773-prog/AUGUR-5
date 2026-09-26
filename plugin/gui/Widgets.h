@@ -107,6 +107,20 @@ private:
 };
 
 //==============================================================================
+// Drop-down bound to a choice (or small integer) parameter: for selectors with more options than
+// fit as LED buttons (filter model, arp rate, LFO 2 wave, quality...).
+class ParamChoiceBox final : public juce::Component
+{
+public:
+    ParamChoiceBox (APVTS& state, const juce::String& paramId);
+    void resized() override { box.setBounds (getLocalBounds()); }
+
+private:
+    juce::ComboBox box;
+    std::unique_ptr<APVTS::ComboBoxAttachment> attachment;
+};
+
+//==============================================================================
 // Small square LED switch in the effect headers.
 class FxLed final : public juce::Button
 {

@@ -11,13 +11,14 @@ namespace augur5::ui
 class Canvas;
 }
 
-// The whole panel is laid out on a fixed 1536 x 1024 canvas (the design artboard) and scaled as one
-// piece, so every size, gap and font matches the mockup at any window size.
+// The whole panel is laid out on a fixed 1536 x 1400 canvas (the 1536 x 1024 design artboard plus two
+// rows for the expansion modules) and scaled as one piece, so every size, gap and font stays exact at
+// any window size.
 class Augur5Editor final : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
     static constexpr int designWidth = 1536;
-    static constexpr int designHeight = 1024;
+    static constexpr int designHeight = 1400;
 
     explicit Augur5Editor (Augur5Processor&);
     ~Augur5Editor() override;

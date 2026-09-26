@@ -260,3 +260,15 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
 - Tests:
   - DUO: 2 voces por nota, 4 con dos notas, y todas se liberan al soltar;
   - trim de afinación medido: +50 cents ±2 en su voz y 0 ±1 en las demás.
+
+## D-027 · Panel ampliado (2026-09-26)
+- El lienzo pasa de 1536×1024 a **1536×1400**: el diseño original intacto más dos filas nuevas, todo en una sola vista (decisión del usuario: "Ampliar el panel").
+  - Fila 4: ARPEGGIATOR · LFO 2 · MOD ENV (con curva) · OSC + (SUB, RING, FM B›A, octava del sub) · HPF / VOICE (HPF, POLY/DUO, QUALITY).
+  - Fila 5: FUZZ · PHASER · FX OPTIONS (modo de chorus, sync/división/ping-pong del delay, HALL/PLATE) · VOICE TRIMS (8 × afinación y corte).
+- Cambios en paneles existentes:
+  - FILTER: MODEL pasa a menú desplegable (5 modelos) y se añaden SLOPE y MODE.
+  - MATRIX: páginas 1-4 / 5-8.
+- Widget nuevo `ParamChoiceBox`: desplegable ligado a un parámetro choice/int.
+- Escala por defecto 65 % (998×910 px); tamaños de 50 % a 125 % en SETTINGS, donde también está "Render offline in DIVINE quality".
+- `augur_preset_audit --snapshot panel.png 2` renderiza el editor a PNG, para revisar el diseño sin abrir un DAW.
+- pluginval estricto 10: SUCCESS.

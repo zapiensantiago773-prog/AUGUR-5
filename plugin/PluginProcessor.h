@@ -72,7 +72,7 @@ private:
 
     std::unique_ptr<augur::SynthEngine> engine;
     augur::SynthParams snapshot;
-    float uiScale = 0.75f;
+    float uiScale = 0.65f;
     bool prepared = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Augur5Processor)

@@ -111,8 +111,10 @@ public:
         knob (P::flt_cutoff, "CUTOFF", 64, 842, 162);
         knob (P::flt_reso, "RESONANCE", 44, 942, 182);
         knob (P::flt_env_amt, "ENV AMT", 44, 1022, 182);
-        choice (P::flt_model, { "REV 3 \xc2\xb7 CEM", "REV 1 \xc2\xb7 SSM" }, { 120, 120 }, 842, 309);
-        choice (P::flt_keytrack, { "OFF", "HALF", "FULL" }, { 76, 76, 76 }, 842, 364);
+        dropdown (P::flt_model, 842, 309, 120);
+        choice (P::flt_slope, { "24 dB", "12 dB" }, { 56, 56 }, 970, 309);
+        choice (P::flt_keytrack, { "OFF", "HALF", "FULL" }, { 44, 48, 48 }, 842, 364);
+        dropdown (P::flt_mode, 1010, 364, 80);
 
         // Amplifier
         knob (P::amp_velocity, "VEL \xe2\x80\xba AMP", 44, 1134, 162);
@@ -122,8 +124,17 @@ public:
         add (std::make_unique<LevelFader> (state), { 1418, 162, 50, 230 });
 
         // Mod matrix
-        for (int slot = 1; slot <= 4; ++slot)
-            add (std::make_unique<MatrixRow> (state, slot), { 68, juce::roundToInt (487.0f + 62.33f * static_cast<float> (slot - 1)), 438, 30 });
+        for (int slot = 1; slot <= P::kNumMatrixSlots; ++slot)
+            matrixRows[static_cast<size_t> (slot - 1)] = add (std::make_unique<MatrixRow> (state, slot),
+                                                               { 68, juce::roundToInt (487.0f + 62.33f * static_cast<float> ((slot - 1) % 4)), 438, 30 });
+        for (int page = 0; page < 2; ++page)
+        {
+            auto* b = add (std::make_unique<LedToggle> (page == 0 ? "1-4" : "5-8"), { 390 + 66 * page, 428, 60, 26 });
+            b->setClickingTogglesState (false);
+            b->onClick = [this, page] { showMatrixPage (page); };
+            matrixPages[static_cast<size_t> (page)] = b;
+        }
+        showMatrixPage (0);
 
         // LFO
         {
@@ -183,6 +194,66 @@ public:
         toggle (P::unison, "UNISON", 1388, 803, 80);
         toggle (P::legato, "LEGATO", 1388, 839, 80);
 
+        // ---- Row 4: arpeggiator, LFO 2, mod envelope, oscillator extras, HPF / voice / quality ----
+        toggle (P::arp_on, "ARP", 68, 966, 70);
+        toggle (P::arp_latch, "LATCH", 146, 966, 80);
+        dropdown (P::arp_mode, 68, 1024, 110);
+        dropdown (P::arp_rate, 186, 1024, 80);
+        dropdown (P::arp_oct, 274, 1024, 60);
+        knob (P::arp_gate, "GATE", 32, 368, 956);
+        knob (P::arp_swing, "SWING", 32, 368, 1036);
+
+        dropdown (P::lfo2_wave, 480, 980, 110);
+        toggle (P::lfo2_sync, "SYNC", 480, 1022, 110);
+        toggle (P::lfo2_retrig, "RETRIG", 480, 1058, 110);
+        knob (P::lfo2_rate, "RATE", 44, 616, 972);
+
+        envelopes[2] = add (std::make_unique<EnvelopeDisplay> (state, P::menv_a, P::menv_d, P::menv_s, P::menv_r), { 742, 960, 268, 54 });
+        {
+            const char* ids[4] = { P::menv_a, P::menv_d, P::menv_s, P::menv_r };
+            const char* labels[4] = { "ATTACK", "DECAY", "SUSTAIN", "RELEASE" };
+            for (int k = 0; k < 4; ++k)
+                knob (ids[k], labels[k], 32, 746 + 66 * k, 1030);
+        }
+
+        knob (P::mix_sub, "SUB", 36, 1054, 962);
+        knob (P::mix_ring, "RING", 36, 1128, 962);
+        knob (P::osc_xmod, "FM B\xe2\x80\xba" "A", 36, 1202, 962);
+        choice (P::sub_oct, { "-1 OCT", "-2 OCT" }, { 70, 70 }, 1054, 1062);
+
+        knob (P::hpf_cutoff, "HPF", 44, 1298, 962);
+        dropdown (P::voice_mode, 1376, 980, 92);
+        dropdown (P::quality, 1376, 1062, 92);
+
+        // ---- Row 5: fuzz, phaser, effect options, voice trims ----
+        add (std::make_unique<FxLed> (state, P::fuzz_on), { 52 + 330 - 44, 1136, 22, 14 });
+        {
+            const char* ids[4] = { P::fuzz_sustain, P::fuzz_tone, P::fuzz_volume, P::fuzz_mix };
+            const char* labels[4] = { "SUSTAIN", "TONE", "VOLUME", "MIX" };
+            for (int k = 0; k < 4; ++k)
+                knob (ids[k], labels[k], 36, 72 + 76 * k, 1196);
+        }
+        add (std::make_unique<FxLed> (state, P::phaser_on), { 394 + 330 - 44, 1136, 22, 14 });
+        {
+            const char* ids[4] = { P::phaser_rate, P::phaser_depth, P::phaser_fb, P::phaser_mix };
+            const char* labels[4] = { "RATE", "DEPTH", "FEEDBACK", "MIX" };
+            for (int k = 0; k < 4; ++k)
+                knob (ids[k], labels[k], 36, 414 + 76 * k, 1196);
+        }
+
+        choice (P::chorus_mode, { "FREE", "I", "II", "I+II" }, { 60, 40, 44, 60 }, 752, 1180);
+        toggle (P::delay_sync, "SYNC", 752, 1230, 72);
+        dropdown (P::delay_div, 832, 1230, 76);
+        toggle (P::delay_pingpong, "PING-PONG", 916, 1230, 116);
+        choice (P::reverb_type, { "HALL", "PLATE" }, { 64, 64 }, 752, 1280);
+
+        for (int v = 1; v <= P::kNumTrims; ++v)
+        {
+            const int x = 1098 + 48 * (v - 1);
+            knob (P::trimTune (v), ("T" + juce::String (v)).toRawUTF8(), 20, x, 1162);
+            knob (P::trimCut (v), ("C" + juce::String (v)).toRawUTF8(), 20, x, 1240);
+        }
+
         // Header
         prevPreset = add (std::make_unique<ArrowButton> (false), { 624, 27, 30, 30 });
         nextPreset = add (std::make_unique<ArrowButton> (true), { 882, 27, 30, 30 });
@@ -194,7 +265,7 @@ public:
         browser = add (std::make_unique<HeaderButton> ("BROWSER", std::vector<juce::Path> { rectPath(), svgPath ("M6 7 H12 M6 10 H12 M6 13 H10") }), { 1282, 29, 60, 42 });
         settings = add (std::make_unique<HeaderButton> ("SETTINGS", std::vector<juce::Path> { circlePath(), svgPath ("M9 2 V4 M9 14 V16 M2 9 H4 M14 9 H16 M4 4 L5.5 5.5 M12.5 12.5 L14 14 M4 14 L5.5 12.5 M12.5 5.5 L14 4") }), { 1364, 29, 64, 42 });
 
-        setSize (1536, 1024);
+        setSize (1536, 1400);
     }
 
     std::function<juce::String()> presetName;
@@ -228,13 +299,13 @@ public:
         g.fillAll (colours::background);
 
         // Walnut cheeks and the main panel
-        drawWalnut (g, { 0.0f, 0.0f, 24.0f, 1024.0f }, false);
-        drawWalnut (g, { 1512.0f, 0.0f, 24.0f, 1024.0f }, true);
+        drawWalnut (g, { 0.0f, 0.0f, 24.0f, 1400.0f }, false);
+        drawWalnut (g, { 1512.0f, 0.0f, 24.0f, 1400.0f }, true);
         {
-            juce::ColourGradient bg (juce::Colour (0xff1c1c1f), 768.0f, 0.0f, juce::Colour (0xff0f0f11), 768.0f, 1100.0f, true);
+            juce::ColourGradient bg (juce::Colour (0xff1c1c1f), 768.0f, 0.0f, juce::Colour (0xff0f0f11), 768.0f, 1500.0f, true);
             bg.addColour (0.6, juce::Colour (0xff121214));
             g.setGradientFill (bg);
-            g.fillRect (24.0f, 0.0f, 1488.0f, 1024.0f);
+            g.fillRect (24.0f, 0.0f, 1488.0f, 1400.0f);
             g.setColour (juce::Colour (0xff2a2a2e));
             g.fillRect (24.0f, 0.0f, 1488.0f, 1.0f);
         }
@@ -248,7 +319,9 @@ public:
         drawPanel (g, { 624, 118, 190, 290 }, "MIXER");
         drawPanel (g, { 826, 118, 280, 290 }, "FILTER");
         drawCaption (g, "MODEL", 842, 292);
+        drawCaption (g, "SLOPE", 970, 292);
         drawCaption (g, "KEY TRACK", 842, 347);
+        drawCaption (g, "MODE", 1010, 347);
         drawPanel (g, { 1118, 118, 366, 290 }, "AMPLIFIER");
 
         // Row 2
@@ -274,15 +347,40 @@ public:
             drawSubPanel (g, { fxBoxX (f), 776.0f, 211.33f, 118.0f }, fxNames[f], 11.0f);
         drawPanel (g, { 1238, 732, 246, 178 }, "GLOBAL");
 
+        // Row 4
+        drawPanel (g, { 52, 922, 400, 190 }, "ARPEGGIATOR");
+        drawCaption (g, "MODE", 68, 1008);
+        drawCaption (g, "RATE", 186, 1008);
+        drawCaption (g, "OCTAVES", 274, 1008);
+        drawPanel (g, { 464, 922, 250, 190 }, "LFO 2");
+        drawCaption (g, "WAVE", 480, 964);
+        drawPanel (g, { 726, 922, 300, 190 }, "MOD ENV");
+        drawPanel (g, { 1038, 922, 232, 190 }, "OSC +");
+        drawCaption (g, "SUB OCTAVE", 1054, 1046);
+        drawPanel (g, { 1282, 922, 202, 190 }, "HPF  /  VOICE");
+        drawCaption (g, "VOICE MODE", 1376, 964);
+        drawCaption (g, "QUALITY", 1376, 1046);
+
+        // Row 5
+        drawPanel (g, { 52, 1124, 330, 190 }, "FUZZ");
+        drawPanel (g, { 394, 1124, 330, 190 }, "PHASER");
+        drawPanel (g, { 736, 1124, 332, 190 }, "FX OPTIONS");
+        drawCaption (g, "CHORUS MODE", 752, 1164);
+        drawCaption (g, "DELAY", 752, 1214);
+        drawCaption (g, "REVERB", 752, 1264);
+        drawPanel (g, { 1080, 1124, 404, 190 }, "VOICE TRIMS");
+        drawTracked (g, "TUNE  /  CUTOFF", { 1250, 1138, 220, 16 }, Fonts::jost (9.0f, false, 0.2f), colours::caption,
+                     juce::Justification::centredRight);
+
         // Footer
         g.setColour (juce::Colour (0xff1f1f23));
-        g.fillRect (52.0f, 970.0f, 1432.0f, 1.0f);
-        drawLogo (g, 52.0f, 984.0f, 30.0f / 34.0f, colours::headerButton);
-        drawTracked (g, juce::String (juce::CharPointer_UTF8 ("AUGUR-5 \xe2\x80\x9c" "3340\xe2\x80\x9d")), { 96, 984, 400, 18 },
+        g.fillRect (52.0f, 1340.0f, 1432.0f, 1.0f);
+        drawLogo (g, 52.0f, 1354.0f, 30.0f / 34.0f, colours::headerButton);
+        drawTracked (g, juce::String (juce::CharPointer_UTF8 ("AUGUR-5 \xe2\x80\x9c" "3340\xe2\x80\x9d")), { 96, 1354, 400, 18 },
                      Fonts::michroma (11.0f, 0.24f), colours::headerButton, juce::Justification::centredLeft);
-        drawTracked (g, "A  TONAL LAB  INSTRUMENT", { 568, 984, 400, 18 }, Fonts::michroma (10.0f, 0.3f),
+        drawTracked (g, "A  TONAL LAB  INSTRUMENT", { 568, 1354, 400, 18 }, Fonts::michroma (10.0f, 0.3f),
                      colours::accent.withAlpha (0.85f), juce::Justification::centred);
-        drawTracked (g, "ANALOG SOUL  /  DIGITAL PRECISION", { 1084, 984, 400, 18 }, Fonts::jost (10.0f, false, 0.26f),
+        drawTracked (g, "ANALOG SOUL  /  DIGITAL PRECISION", { 1084, 1354, 400, 18 }, Fonts::jost (10.0f, false, 0.26f),
                      colours::caption, juce::Justification::centredRight);
     }
 
@@ -347,6 +445,21 @@ private:
         add (std::make_unique<ParamToggle> (state, id, juce::String::fromUTF8 (label)), { x, y, w, 28 });
     }
 
+    void dropdown (const juce::String& id, int x, int y, int w)
+    {
+        add (std::make_unique<ParamChoiceBox> (state, id), { x, y, w, 28 });
+    }
+
+    void showMatrixPage (int page)
+    {
+        for (size_t i = 0; i < matrixRows.size(); ++i)
+            if (matrixRows[i] != nullptr)
+                matrixRows[i]->setVisible (static_cast<int> (i) / 4 == page);
+        for (size_t p = 0; p < matrixPages.size(); ++p)
+            if (matrixPages[p] != nullptr)
+                matrixPages[p]->setToggleState (static_cast<int> (p) == page, juce::dontSendNotification);
+    }
+
     void wave (const juce::String& id, WaveIcon icon, int x, int y)
     {
         add (std::make_unique<ParamWaveButton> (state, id, icon), { x, y, 34, 26 });
@@ -371,7 +484,9 @@ private:
 
     APVTS& state;
     std::vector<std::unique_ptr<juce::Component>> owned;
-    std::array<EnvelopeDisplay*, 2> envelopes {};
+    std::array<EnvelopeDisplay*, 3> envelopes {};
+    std::array<MatrixRow*, P::kNumMatrixSlots> matrixRows {};
+    std::array<juce::Button*, 2> matrixPages {};
     VoiceActivity* voices = nullptr;
     juce::String shownPreset;
 };
@@ -485,7 +600,7 @@ void Augur5Editor::showSettingsMenu()
 {
     auto& state = processor.getParameters();
     juce::PopupMenu size;
-    for (const auto s : { 0.6f, 0.75f, 1.0f, 1.25f, 1.5f })
+    for (const auto s : { 0.5f, 0.6f, 0.65f, 0.75f, 0.9f, 1.0f, 1.25f })
         size.addItem (juce::String (juce::roundToInt (s * 100.0f)) + " %", true, std::abs (processor.getUiScale() - s) < 0.01f,
                       [this, s] { setScale (s); });
 
@@ -509,6 +624,7 @@ void Augur5Editor::showSettingsMenu()
         bend.addItem (juce::String (r) + " st", true, range == r, [setParam, r] { setParam (augur5::params::pb_range, static_cast<float> (r)); });
 
     const bool vintage = state.getRawParameterValue (augur5::params::vintage_cv)->load() > 0.5f;
+    const bool offlineDivine = state.getRawParameterValue (augur5::params::offline_quality)->load() > 0.5f;
 
     juce::PopupMenu menu;
     menu.addSubMenu ("Window size", size);
@@ -516,6 +632,8 @@ void Augur5Editor::showSettingsMenu()
     menu.addSubMenu ("Pitch bend range", bend);
     menu.addItem ("Vintage 7-bit knobs (Rev 3)", true, vintage,
                   [setParam, vintage] { setParam (augur5::params::vintage_cv, vintage ? 0.0f : 1.0f); });
+    menu.addItem ("Render offline in DIVINE quality", true, offlineDivine,
+                  [setParam, offlineDivine] { setParam (augur5::params::offline_quality, offlineDivine ? 0.0f : 1.0f); });
     menu.addSeparator();
     menu.addItem (juce::String ("AUGUR-5 v") + JucePlugin_VersionString + "  -  TONAL LAB", false, false, [] {});
 

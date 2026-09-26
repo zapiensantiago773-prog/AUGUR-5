@@ -182,6 +182,25 @@ void ChoiceGroup::update (float value)
 }
 
 //==============================================================================
+// Choice drop-down
+
+ParamChoiceBox::ParamChoiceBox (APVTS& state, const juce::String& paramId)
+{
+    auto* p = state.getParameter (paramId);
+    if (auto* choice = dynamic_cast<juce::AudioParameterChoice*> (p))
+        box.addItemList (choice->choices, 1);
+    else if (auto* integer = dynamic_cast<juce::AudioParameterInt*> (p))
+        for (int v = integer->getRange().getStart(); v <= integer->getRange().getEnd(); ++v)
+            box.addItem (juce::String (v), v - integer->getRange().getStart() + 1);
+    addAndMakeVisible (box);
+    if (p != nullptr)
+    {
+        attachment = std::make_unique<APVTS::ComboBoxAttachment> (state, paramId, box);
+        box.setTooltip (p->getName (64));
+    }
+}
+
+//==============================================================================
 // FX LED
 
 FxLed::FxLed (APVTS& state, const juce::String& paramId) : juce::Button ("fx")
