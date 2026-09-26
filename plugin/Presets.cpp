@@ -708,9 +708,34 @@ juce::File PresetManager::getUserFolder()
 
 juce::Array<juce::File> PresetManager::getUserPresets() const
 {
-    auto files = getUserFolder().findChildFiles (juce::File::findFiles, false, juce::String ("*") + presetExtension);
+    auto files = getUserFolder().findChildFiles (juce::File::findFiles, true, juce::String ("*") + presetExtension);
     files.sort();
     return files;
+}
+
+int PresetManager::installPack (const juce::File& zipFile)
+{
+    juce::ZipFile zip (zipFile);
+    if (zip.getNumEntries() == 0)
+        return -1;
+    const auto target = getUserFolder();
+    target.createDirectory();
+    int installed = 0;
+    for (int i = 0; i < zip.getNumEntries(); ++i)
+    {
+        const auto* entry = zip.getEntry (i);
+        const auto name = entry->filename.replaceCharacter ('\\', '/');
+        // Only presets and the pack's text files; never paths that could leave the presets folder.
+        const bool wanted = name.endsWithIgnoreCase (presetExtension) || name.endsWithIgnoreCase (".txt") || name.endsWithIgnoreCase (".md");
+        if (! wanted || name.contains ("..") || name.startsWithChar ('/') || name.containsChar (':'))
+            continue;
+        const auto dest = target.getChildFile (name);
+        if (! dest.isAChildOf (target))
+            continue;
+        if (zip.uncompressEntry (i, target, true).wasOk() && name.endsWithIgnoreCase (presetExtension))
+            ++installed;
+    }
+    return installed;
 }
 
 void PresetManager::loadUser (const juce::File& file)

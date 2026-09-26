@@ -732,16 +732,45 @@ void Augur5Editor::showBrowserMenu()
         menu.addSubMenu (category, sub);
     }
 
+    // User presets and installed expansion packs: one sub-menu per folder level (Pack > Genre > preset).
     const auto users = presets.getUserPresets();
     if (! users.isEmpty())
     {
-        menu.addSectionHeader ("USER");
+        struct Node
+        {
+            std::map<juce::String, Node> folders;
+            juce::Array<juce::File> files;
+        };
+        Node root;
+        const auto base = augur5::PresetManager::getUserFolder();
         for (const auto& f : users)
-            menu.addItem (f.getFileNameWithoutExtension(), [this, f] { processor.getPresets().loadUser (f); });
+        {
+            auto parts = juce::StringArray::fromTokens (f.getParentDirectory().getRelativePathFrom (base).replaceCharacter ('\\', '/'), "/", "");
+            parts.removeEmptyStrings();
+            parts.removeString (".");
+            Node* node = &root;
+            for (const auto& part : parts)
+                node = &node->folders[part];
+            node->files.add (f);
+        }
+        std::function<juce::PopupMenu (const Node&)> build = [&] (const Node& node) {
+            juce::PopupMenu m;
+            for (const auto& [name, child] : node.folders)
+                m.addSubMenu (name, build (child));
+            for (const auto& f : node.files)
+                m.addItem (f.getFileNameWithoutExtension(), true, processor.getPresets().getCurrentName() == f.getFileNameWithoutExtension(),
+                           [this, f] { processor.getPresets().loadUser (f); });
+            return m;
+        };
+        menu.addSectionHeader ("USER  /  EXPANSIONS");
+        const auto tree = build (root);
+        for (juce::PopupMenu::MenuItemIterator it (tree); it.next();)
+            menu.addItem (it.getItem());
     }
 
     menu.addSeparator();
     menu.addItem ("Save preset...", [this] { showSaveDialog(); });
+    menu.addItem ("Install expansion pack...", [this] { showInstallPackDialog(); });
     menu.addItem ("Open presets folder", [] {
         auto folder = augur5::PresetManager::getUserFolder();
         folder.createDirectory();
@@ -795,6 +824,22 @@ void Augur5Editor::showSettingsMenu()
 
     menu.setLookAndFeel (&lookAndFeel);
     menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (canvas->settings).withParentComponent (this));
+}
+
+void Augur5Editor::showInstallPackDialog()
+{
+    packChooser = std::make_unique<juce::FileChooser> ("Install an AUGUR-5 expansion pack",
+                                                        juce::File::getSpecialLocation (juce::File::userDesktopDirectory), "*.zip");
+    packChooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [this] (const juce::FileChooser& fc) {
+        const auto file = fc.getResult();
+        if (! file.existsAsFile())
+            return;
+        const int count = augur5::PresetManager::installPack (file);
+        juce::AlertWindow::showMessageBoxAsync (juce::MessageBoxIconType::NoIcon, "Expansion pack",
+                                                count > 0 ? juce::String (count) + " presets installed. Open BROWSER > USER / EXPANSIONS."
+                                                          : juce::String ("This file is not an AUGUR-5 expansion pack."),
+                                                "OK", this);
+    });
 }
 
 void Augur5Editor::showSaveDialog()

@@ -120,9 +120,138 @@ int snapshot (const juce::String& path, float scale)
     return ok ? 0 : 1;
 }
 
+namespace
+{
+struct Measured
+{
+    double peakDb = -240.0, loudDb = -240.0;
+    bool finite = true;
+};
+
+// Plays a loaded sound like the factory audit does (notes by category) and measures its peak and its
+// short-term loudness (loudest 50 ms RMS).
+Measured measure (juce::AudioProcessor& proc, const juce::String& category)
+{
+    constexpr double sr = 48000.0;
+    constexpr int block = 256, window = 2400;
+    const auto notes = notesFor (category);
+    const double holdSeconds = category == "Drums" ? 0.2 : 1.5;
+    juce::AudioBuffer<float> buffer (2, block);
+    Measured m;
+    float peak = 0.0f;
+    double windowSum = 0.0, loudest = 0.0;
+    int inWindow = 0;
+    const int totalBlocks = static_cast<int> (4.0 * sr / block), offBlock = static_cast<int> (holdSeconds * sr / block);
+    for (int b = 0; b < totalBlocks; ++b)
+    {
+        juce::MidiBuffer midi;
+        if (b == 0)
+            for (int n : notes)
+                midi.addEvent (juce::MidiMessage::noteOn (1, n, static_cast<juce::uint8> (100)), 0);
+        if (b == offBlock)
+            for (int n : notes)
+                midi.addEvent (juce::MidiMessage::noteOff (1, n), 0);
+        buffer.clear();
+        proc.processBlock (buffer, midi);
+        for (int s = 0; s < block; ++s)
+        {
+            const float l = buffer.getSample (0, s), r = buffer.getSample (1, s);
+            m.finite = m.finite && std::isfinite (l) && std::isfinite (r);
+            peak = std::max ({ peak, std::abs (l), std::abs (r) });
+            windowSum += 0.5 * (static_cast<double> (l) * l + static_cast<double> (r) * r);
+            if (++inWindow == window)
+            {
+                loudest = std::max (loudest, windowSum / window);
+                windowSum = 0.0;
+                inWindow = 0;
+            }
+        }
+    }
+    m.peakDb = 20.0 * std::log10 (peak + 1e-12);
+    m.loudDb = 10.0 * std::log10 (loudest + 1e-24);
+    return m;
+}
+
+// --level-pack <folder>: validates and loudness-matches every .augur5 preset of an expansion pack.
+// Each file carries its role ("category") and loudness target ("target", dB); amp_level is adjusted
+// over up to four passes (never pushing the peak over -3 dBFS). Fails on unknown parameter ids,
+// non-finite output or silence.
+int levelPack (const juce::File& folder)
+{
+    constexpr double sr = 48000.0;
+    auto files = folder.findChildFiles (juce::File::findFiles, true, "*.augur5");
+    files.sort();
+    int failures = 0, adjusted = 0;
+    std::printf ("%-44s %-8s %8s %8s %8s\n", "preset", "role", "target", "peak", "loud");
+    for (const auto& file : files)
+    {
+        auto xml = juce::XmlDocument::parse (file);
+        if (xml == nullptr || ! xml->hasTagName ("AUGUR5_PRESET"))
+        {
+            std::printf ("%s  <-- NOT A PRESET\n", file.getFileName().toRawUTF8());
+            ++failures;
+            continue;
+        }
+        const auto category = xml->getStringAttribute ("category", "Pad");
+        const double target = xml->getDoubleAttribute ("target", -18.0);
+        auto* paramsXml = xml->getChildByName ("PARAMS");
+
+        Measured m;
+        bool unknown = false;
+        for (int pass = 0; pass < 4; ++pass)
+        {
+            std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+            auto* proc = dynamic_cast<Augur5Processor*> (base.get());
+            proc->setPlayConfigDetails (0, 2, sr, 256);
+            proc->prepareToPlay (sr, 256);
+            if (pass == 0 && paramsXml != nullptr)
+                for (auto* e : paramsXml->getChildIterator())
+                    if (proc->getParameters().getParameter (e->getStringAttribute ("id")) == nullptr)
+                    {
+                        std::printf ("%s: UNKNOWN PARAMETER %s\n", file.getFileName().toRawUTF8(), e->getStringAttribute ("id").toRawUTF8());
+                        unknown = true;
+                    }
+            proc->getPresets().loadUser (file);
+            m = measure (*proc, category);
+            proc->releaseResources();
+            if (! m.finite || m.loudDb < -60.0)
+                break;
+
+            const double delta = std::min (target - m.loudDb, -3.0 - m.peakDb);
+            if (std::abs (delta) < 0.4)
+                break;
+            // Rewrite amp_level in the file.
+            juce::XmlElement* level = nullptr;
+            for (auto* e : paramsXml->getChildIterator())
+                if (e->getStringAttribute ("id") == "amp_level")
+                    level = e;
+            if (level == nullptr)
+            {
+                level = paramsXml->createNewChildElement ("P");
+                level->setAttribute ("id", "amp_level");
+                level->setAttribute ("value", -6.0);
+            }
+            const double current = level->getDoubleAttribute ("value", -6.0);
+            level->setAttribute ("value", juce::jlimit (-40.0, 6.0, std::round ((current + delta) * 10.0) / 10.0));
+            xml->writeTo (file);
+            ++adjusted;
+        }
+
+        const bool ok = ! unknown && m.finite && m.loudDb > -40.0 && m.peakDb < -0.5 && std::abs (m.loudDb - target) < 4.0;
+        failures += ok ? 0 : 1;
+        std::printf ("%-44s %-8s %8.1f %8.1f %8.1f %s\n", file.getFileNameWithoutExtension().substring (0, 44).toRawUTF8(),
+                     category.toRawUTF8(), target, m.peakDb, m.loudDb, ok ? "" : "  <-- CHECK");
+    }
+    std::printf ("\n%d presets, %d level adjustments, %d need attention\n", files.size(), adjusted, failures);
+    return failures == 0 ? 0 : 1;
+}
+} // namespace
+
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI juceInit;
+    if (argc >= 3 && std::strcmp (argv[1], "--level-pack") == 0)
+        return levelPack (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])));
     if (argc >= 3 && std::strcmp (argv[1], "--snapshot") == 0)
         return snapshot (juce::String::fromUTF8 (argv[2]), argc >= 4 ? static_cast<float> (std::atof (argv[3])) : 1.0f);
     if (argc >= 4 && std::strcmp (argv[1], "--soak") == 0)

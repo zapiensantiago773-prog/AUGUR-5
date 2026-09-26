@@ -381,7 +381,7 @@
         { "Hollow Pipe Pluck", {
             { "flt_model", 3.0f }, { "flt_mode", 1.0f }, { "flt_cutoff", 900.0f }, { "flt_reso", 0.42f }, { "flt_env_amt", 0.35f },
             { "fenv_d", 0.3f }, { "fenv_s", 0.0f }, { "mix_osc2", 0.6f }, { "aenv_a", 0.001f }, { "aenv_d", 0.7f }, { "aenv_s", 0.0f }, { "aenv_r", 0.5f },
-            { "delay_on", 1.0f }, { "delay_sync", 1.0f }, { "delay_div", 6.0f }, { "delay_mix", 0.25f }, { "amp_level", -18.0f } }, "Pluck" },
+            { "delay_on", 1.0f }, { "delay_sync", 1.0f }, { "delay_div", 6.0f }, { "delay_mix", 0.25f }, { "amp_level", -19.0f } }, "Pluck" },
 
         // ================= KEYS =================
         { "Tine Piano FM", {
@@ -396,7 +396,7 @@
         { "Warm Clav Bite", {
             { "flt_model", 4.0f }, { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 18.0f }, { "mix_osc2", 0.0f },
             { "flt_cutoff", 700.0f }, { "flt_reso", 0.45f }, { "flt_env_amt", 0.4f }, { "fenv_d", 0.18f }, { "fenv_s", 0.1f },
-            { "aenv_a", 0.001f }, { "aenv_d", 0.5f }, { "aenv_s", 0.3f }, { "aenv_r", 0.1f }, { "phaser_on", 1.0f }, { "phaser_mix", 0.3f }, { "amp_level", -14.1f } }, "Keys" },
+            { "aenv_a", 0.001f }, { "aenv_d", 0.5f }, { "aenv_s", 0.3f }, { "aenv_r", 0.1f }, { "phaser_on", 1.0f }, { "phaser_mix", 0.3f }, { "amp_level", -14.3f } }, "Keys" },
 
         { "Ring Bell Keys", {
             { "osc2_freq", 17.0f }, { "osc2_tri", 1.0f }, { "osc2_saw", 0.0f }, { "mix_osc1", 0.3f }, { "mix_osc2", 0.2f }, { "mix_ring", 0.7f },
@@ -465,7 +465,7 @@
             { "flt_model", 3.0f }, { "flt_mode", 1.0f }, { "flt_cutoff", 700.0f }, { "flt_reso", 0.55f }, { "mix_osc2", 0.7f }, { "osc2_freq", 7.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.3f }, { "aenv_s", 0.0f }, { "aenv_r", 0.2f },
             { "delay_on", 1.0f }, { "delay_sync", 1.0f }, { "delay_div", 6.0f }, { "delay_fb", 0.65f }, { "delay_mix", 0.4f },
-            { "reverb_on", 1.0f }, { "reverb_type", 1.0f }, { "reverb_mix", 0.3f }, { "amp_level", -22.9f } }, "Stab" },
+            { "reverb_on", 1.0f }, { "reverb_type", 1.0f }, { "reverb_mix", 0.3f }, { "amp_level", -24.7f } }, "Stab" },
 
         // ================= ARP (built-in arpeggiator) =================
         { "Up Pulse Sequence", {
@@ -615,7 +615,7 @@
             { "mix_osc2", 0.7f }, { "osc2_fine", 7.0f }, { "flt_slope", 1.0f }, { "flt_cutoff", 900.0f }, { "flt_env_amt", 0.35f },
             { "fenv_d", 0.25f }, { "fenv_s", 0.0f }, { "aenv_a", 0.002f }, { "aenv_d", 0.35f }, { "aenv_s", 0.0f }, { "aenv_r", 0.25f },
             { "echo_on", 1.0f }, { "echo_mode", 8.0f }, { "echo_rate", 0.35f }, { "echo_intensity", 0.6f }, { "echo_bass", -0.3f },
-            { "echo_treble", -0.2f }, { "echo_wow", 0.5f }, { "echo_volume", 0.6f }, { "echo_reverb", 0.4f }, { "amp_level", -4.2f } }, "Stab" },
+            { "echo_treble", -0.2f }, { "echo_wow", 0.5f }, { "echo_volume", 0.6f }, { "echo_reverb", 0.4f }, { "amp_level", -4.1f } }, "Stab" },
 
         { "Runaway Tape Lead", {
             { "voice_count", 1.0f }, { "legato", 1.0f }, { "glide", 0.05f }, { "mix_osc2", 0.6f }, { "osc2_fine", 5.0f },
@@ -628,7 +628,7 @@
             { "osc2_tri", 1.0f }, { "osc2_saw", 0.0f }, { "osc2_freq", 12.0f }, { "mix_osc2", 0.5f }, { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f },
             { "osc_xmod", 0.08f }, { "flt_cutoff", 2000.0f }, { "flt_env_amt", 0.3f }, { "flt_velocity", 0.4f }, { "fenv_d", 0.8f }, { "fenv_s", 0.2f },
             { "aenv_a", 0.001f }, { "aenv_d", 2.2f }, { "aenv_s", 0.25f }, { "aenv_r", 0.7f },
-            { "reverb_on", 1.0f }, { "reverb_type", 2.0f }, { "reverb_size", 0.5f }, { "reverb_decay", 2.5f }, { "reverb_mix", 0.4f }, { "amp_level", -10.4f } }, "Keys" },
+            { "reverb_on", 1.0f }, { "reverb_type", 2.0f }, { "reverb_size", 0.5f }, { "reverb_decay", 2.5f }, { "reverb_mix", 0.4f }, { "amp_level", -10.5f } }, "Keys" },
 
         { "Tape Loop Pad", {
             { "mix_osc2", 0.8f }, { "osc2_fine", 9.0f }, { "flt_cutoff", 1300.0f }, { "flt_reso", 0.2f },
@@ -646,4 +646,19 @@
             { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 30.0f }, { "mix_osc2", 0.5f }, { "osc2_freq", 7.0f },
             { "flt_cutoff", 1500.0f }, { "flt_env_amt", 0.3f }, { "fenv_d", 0.15f }, { "fenv_s", 0.0f },
             { "aenv_a", 0.001f }, { "aenv_d", 0.25f }, { "aenv_s", 0.0f }, { "aenv_r", 0.15f },
-            { "echo_on", 1.0f }, { "echo_mode", 11.0f }, { "echo_reverb", 0.8f }, { "amp_level", -4.6f } }, "Stab" },
+            { "echo_on", 1.0f }, { "echo_mode", 11.0f }, { "echo_reverb", 0.8f }, { "amp_level", -4.5f } }, "Stab" },
+
+        // Big trumpeting brass lead: detuned saws in unison, a pitch scoop into every note (mod env -> both
+        // oscillators), filter swell, legato slides, delayed vibrato. Play it mono with slides.
+        { "Savanna Horn Lead", {
+            { "unison", 1.0f }, { "voice_count", 4.0f }, { "voice_detune", 0.38f }, { "legato", 1.0f }, { "glide", 0.09f },
+            { "mix_osc1", 0.9f }, { "mix_osc2", 0.8f }, { "osc2_fine", -9.0f }, { "mix_drive", 0.5f },
+            { "flt_cutoff", 750.0f }, { "flt_reso", 0.25f }, { "flt_env_amt", 0.48f }, { "flt_keytrack", 1.0f },
+            { "fenv_a", 0.07f }, { "fenv_d", 0.7f }, { "fenv_s", 0.45f }, { "fenv_r", 0.4f },
+            { "aenv_a", 0.012f }, { "aenv_d", 0.6f }, { "aenv_s", 0.9f }, { "aenv_r", 0.35f },
+            { "menv_a", 0.001f }, { "menv_d", 0.13f }, { "menv_s", 0.0f }, { "menv_r", 0.1f },
+            { "mm5_src", 8.0f }, { "mm5_dst", 0.0f }, { "mm5_amt", -0.36f }, { "mm6_src", 8.0f }, { "mm6_dst", 1.0f }, { "mm6_amt", -0.36f },
+            { "lfo_rate", 5.4f }, { "lfo_delay", 0.55f }, { "mm4_src", 3.0f }, { "mm4_dst", 0.0f }, { "mm4_amt", 0.08f },
+            { "chorus_on", 1.0f }, { "chorus_mode", 1.0f }, { "chorus_mix", 0.3f },
+            { "delay_on", 1.0f }, { "delay_sync", 1.0f }, { "delay_div", 6.0f }, { "delay_fb", 0.3f }, { "delay_mix", 0.15f },
+            { "reverb_on", 1.0f }, { "reverb_type", 1.0f }, { "reverb_decay", 3.5f }, { "reverb_mix", 0.28f }, { "amp_level", -11.4f } }, "Lead" },

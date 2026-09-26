@@ -34,12 +34,14 @@ private:
     void showBrowserMenu();
     void showSettingsMenu();
     void showSaveDialog();
+    void showInstallPackDialog();
 
     Augur5Processor& processor;
     augur5::ui::AugurLookAndFeel lookAndFeel;
     std::unique_ptr<augur5::ui::Canvas> canvas;
     juce::TooltipWindow tooltips { this, 700 };
     std::unique_ptr<juce::AlertWindow> saveDialog;
+    std::unique_ptr<juce::FileChooser> packChooser;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Augur5Editor)
 };

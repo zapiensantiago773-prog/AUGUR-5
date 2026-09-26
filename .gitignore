@@ -8,3 +8,4 @@ reference/**/*.flac
 .vs/
 .DS_Store
 *.user
+packs/dist/

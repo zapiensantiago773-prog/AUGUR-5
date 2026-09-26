@@ -26,7 +26,11 @@ public:
     int findFactory (const juce::String& name) const;
     void loadFactory (int index);
 
+    // All user presets, including installed expansion packs (sub-folders), sorted by path.
     juce::Array<juce::File> getUserPresets() const;
+    // Installs an expansion pack (.zip of .augur5 presets in folders) into the user folder.
+    // Returns the number of presets installed, or -1 if the file is not a valid pack.
+    static int installPack (const juce::File& zip);
     void loadUser (const juce::File& file);
     bool saveUser (const juce::String& name);
     static juce::File getUserFolder();
