@@ -3,34 +3,34 @@
 <AUGUR5_PRESET formatVersion="1" name="Cloud Atmosphere" category="Pad" target="-18.0"
                genre="Ambient" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="1.237"/>
+    <P id="aenv_a" value="1.236999988555908"/>
     <P id="aenv_d" value="1.5"/>
-    <P id="aenv_r" value="2.8581"/>
-    <P id="aenv_s" value="1"/>
-    <P id="analog_age" value="0.4407"/>
-    <P id="fenv_a" value="1.2853"/>
-    <P id="fenv_d" value="2.3737"/>
-    <P id="fenv_r" value="3"/>
-    <P id="fenv_s" value="0.54"/>
-    <P id="flt_cutoff" value="3193.1286"/>
-    <P id="flt_env_amt" value="0.1706"/>
-    <P id="flt_reso" value="0.2935"/>
-    <P id="flt_slope" value="1"/>
-    <P id="mix_osc2" value="0.4"/>
-    <P id="mm4_amt" value="0.3915"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="osc2_fine" value="6.5679"/>
-    <P id="osc2_freq" value="12"/>
-    <P id="osc2_saw" value="0"/>
-    <P id="osc2_tri" value="1"/>
-    <P id="osc_xmod" value="0.1257"/>
-    <P id="reverb_decay" value="4.6598"/>
-    <P id="reverb_mix" value="0.3001"/>
-    <P id="reverb_on" value="1"/>
-    <P id="reverb_size" value="0.7243"/>
-    <P id="reverb_type" value="0"/>
-    <P id="voice_spread" value="0.8157"/>
-    <P id="amp_level" value="-5.1"/>
+    <P id="aenv_r" value="2.858099937438965"/>
+    <P id="aenv_s" value="1.0"/>
+    <P id="analog_age" value="0.4406999945640564"/>
+    <P id="fenv_a" value="1.285300016403198"/>
+    <P id="fenv_d" value="2.373699903488159"/>
+    <P id="fenv_r" value="3.0"/>
+    <P id="fenv_s" value="0.5400000214576721"/>
+    <P id="flt_cutoff" value="3193.128662109375"/>
+    <P id="flt_env_amt" value="0.1705999970436096"/>
+    <P id="flt_reso" value="0.2935000061988831"/>
+    <P id="flt_slope" value="1.0"/>
+    <P id="mix_osc2" value="0.4000000059604645"/>
+    <P id="mm4_amt" value="0.3914999961853027"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="osc2_fine" value="6.56790018081665"/>
+    <P id="osc2_freq" value="12.0"/>
+    <P id="osc2_saw" value="0.0"/>
+    <P id="osc2_tri" value="1.0"/>
+    <P id="osc_xmod" value="0.1256999969482422"/>
+    <P id="voice_spread" value="0.8156999945640564"/>
+    <P id="amp_level" value="-3.9"/>
+    <P id="fx_reverb_on" value="1.0"/>
+    <P id="fx_reverb_type" value="2.0"/>
+    <P id="fx_reverb_size" value="1.224300026893616"/>
+    <P id="fx_reverb_decay" value="4.659800052642822"/>
+    <P id="fx_reverb_mix" value="0.2200551480054855"/>
   </PARAMS>
 </AUGUR5_PRESET>

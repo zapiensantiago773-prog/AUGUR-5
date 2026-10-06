@@ -204,18 +204,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (percent (P::analog_age, "Analog Age", 0.35f));
 
     // Effects
-    layout.add (toggle (P::chorus_on, "Chorus On", false));
-    layout.add (hertz (P::chorus_rate, "Chorus Rate", 0.05f, 5.0f, 0.6f));
-    layout.add (percent (P::chorus_depth, "Chorus Depth", 0.5f));
-    layout.add (percent (P::chorus_mix, "Chorus Mix", 0.5f));
     layout.add (toggle (P::delay_on, "Delay On", false));
     layout.add (seconds (P::delay_time, "Delay Time", 0.01f, 2.0f, 0.375f));
     layout.add (percent (P::delay_fb, "Delay Feedback", 0.35f));
     layout.add (percent (P::delay_mix, "Delay Mix", 0.3f));
-    layout.add (toggle (P::reverb_on, "Reverb On", false));
-    layout.add (percent (P::reverb_size, "Reverb Size", 0.5f));
-    layout.add (seconds (P::reverb_decay, "Reverb Decay", 0.2f, 20.0f, 2.5f));
-    layout.add (percent (P::reverb_mix, "Reverb Mix", 0.25f));
 
     // Global
     layout.add (std::make_unique<APF> (pid (P::master_tune), "Master Tune", Range (-100.0f, 100.0f), 0.0f, cents));
@@ -235,12 +227,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (percent (P::fuzz_tone, "Fuzz Tone", 0.5f));
     layout.add (percent (P::fuzz_volume, "Fuzz Volume", 0.5f));
     layout.add (percent (P::fuzz_mix, "Fuzz Mix", 1.0f));
-    layout.add (toggle (P::phaser_on, "Phaser On", false));
-    layout.add (hertz (P::phaser_rate, "Phaser Rate", 0.02f, 10.0f, 0.3f));
-    layout.add (percent (P::phaser_depth, "Phaser Depth", 0.7f));
-    layout.add (percent (P::phaser_fb, "Phaser Feedback", 0.4f));
-    layout.add (percent (P::phaser_mix, "Phaser Mix", 0.5f));
-    layout.add (std::make_unique<APC> (pid (P::chorus_mode), "Chorus Mode", juce::StringArray { "FREE", "I", "II", "I+II" }, 0));
     layout.add (toggle (P::delay_sync, "Delay Sync", false));
     {
         juce::StringArray divs;
@@ -249,22 +235,129 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         layout.add (std::make_unique<APC> (pid (P::delay_div), "Delay Division", divs, 6));
     }
     layout.add (toggle (P::delay_pingpong, "Delay Ping-Pong", false));
-    layout.add (std::make_unique<APC> (pid (P::reverb_type), "Reverb Type", juce::StringArray { "HALL", "PLATE", "SPRING" }, 0));
+    // ---- Effects rack (shared with PYTHIA 32) ----
+    {
+        // Every read-out rounds first and has its inverse: hosts let users type values ("1.2 kHz", "45 %").
+        using Fmt = std::function<juce::String (float, int)>;
+        using Parse = std::function<float (const juce::String&)>;
+        const auto rounded = [] (double v, int decimals) {
+            const double scale = std::pow (10.0, decimals);
+            const double r = std::round (v * scale) / scale;
+            return r == 0.0 ? 0.0 : r;
+        };
+        const auto fixed = [rounded] (double v, int decimals) { return juce::String (rounded (v, decimals), decimals); };
+        const auto numberIn = [] (const juce::String& t) { return t.trim().retainCharacters ("+-0123456789.eE").getFloatValue(); };
+        const Parse plain = numberIn;
+        const Parse fromPct = [numberIn] (const juce::String& t) { return numberIn (t) / 100.0f; };
+        const Parse fromHz = [numberIn] (const juce::String& t) { return t.toLowerCase().contains ("k") ? numberIn (t) * 1000.0f : numberIn (t); };
+        const Parse fromMs = [numberIn] (const juce::String& t) {
+            const auto x = t.trim().toLowerCase();
+            return x.endsWith ("ms") || ! x.endsWith ("s") ? numberIn (x) : numberIn (x) * 1000.0f;
+        };
+        const Fmt pct = [] (float v, int) { return juce::String (juce::roundToInt (v * 100.0f)) + " %"; };
+        const Fmt pctBi = [] (float v, int) { const int r = juce::roundToInt (v * 100.0f); return juce::String (r > 0 ? "+" : "") + juce::String (r) + " %"; };
+        const Fmt dB = [rounded, fixed] (float v, int) { return juce::String (rounded (v, 1) > 0.0 ? "+" : "") + fixed (v, 1) + " dB"; };
+        const auto scaled = [rounded, fixed] (double v, const char* unit, const char* bigUnit) {
+            if (rounded (v, 2) < 10.0)
+                return fixed (v, 2) + " " + unit;
+            if (rounded (v, 0) < 1000.0)
+                return fixed (v, 0) + " " + unit;
+            return fixed (v / 1000.0, 2) + " " + bigUnit;
+        };
+        const Fmt hz = [scaled] (float v, int) { return scaled (v, "Hz", "kHz"); };
+        const Fmt ms = [scaled] (float v, int) { return scaled (v, "ms", "s"); };
+        const Fmt sec = [rounded, fixed] (float v, int) { return rounded (v, 2) < 10.0 ? fixed (v, 2) + " s" : fixed (v, 1) + " s"; };
+        const Fmt times = [fixed] (float v, int) { return fixed (v, 2) + juce::String::fromUTF8 (" \xc3\x97"); };
+        const Fmt deg = [] (float v, int) { return juce::String (juce::roundToInt (v)) + juce::String::fromUTF8 ("\xc2\xb0"); };
+        const auto skewed = [] (float lo, float hi, float centre) { Range r (lo, hi); r.setSkewForCentre (centre); return r; };
+        const auto addFmt = [&] (const char* id, const char* name, Range r, float def, Fmt fmt, Parse parse) {
+            layout.add (std::make_unique<APF> (pid (id), name, r, def,
+                                               juce::AudioParameterFloatAttributes().withStringFromValueFunction (std::move (fmt)).withValueFromStringFunction (std::move (parse))));
+        };
+        const auto addB = [&] (const char* id, const char* name, bool def) { layout.add (toggle (id, name, def)); };
+        const auto addC = [&] (const char* id, const char* name, const juce::StringArray& c, int def) {
+            layout.add (std::make_unique<APC> (pid (id), name, c, def));
+        };
 
-    // Tape echo
-    layout.add (toggle (P::echo_on, "Tape Echo On", false));
-    layout.add (std::make_unique<APC> (pid (P::echo_mode), "Tape Echo Mode",
-                                       juce::StringArray { "1: HEAD 1", "2: HEAD 2", "3: HEAD 3", "4: HEADS 2+3", "5: H1 + REV", "6: H2 + REV",
-                                                           "7: H3 + REV", "8: H1+2 + REV", "9: H2+3 + REV", "10: H1+3 + REV",
-                                                           "11: ALL + REV", "12: REVERB" }, 3));
-    layout.add (percent (P::echo_rate, "Tape Echo Repeat Rate", 0.5f));
-    layout.add (percent (P::echo_intensity, "Tape Echo Intensity", 0.45f));
-    layout.add (bipolar (P::echo_bass, "Tape Echo Bass", 0.0f));
-    layout.add (bipolar (P::echo_treble, "Tape Echo Treble", 0.0f));
-    layout.add (percent (P::echo_wow, "Tape Echo Wow/Flutter", 0.4f));
-    layout.add (percent (P::echo_input, "Tape Echo Input", 0.5f));
-    layout.add (percent (P::echo_volume, "Tape Echo Volume", 0.5f));
-    layout.add (percent (P::echo_reverb, "Tape Echo Reverb", 0.35f));
+        addB (P::fx_drive_on, "Drive On", false);
+        addC (P::fx_drive_model, "Drive Model", P::driveModels(), 0);
+        addFmt (P::fx_drive_amount, "Drive Amount", { 0.0f, 48.0f }, 12.0f, dB, plain);
+        addFmt (P::fx_drive_bias, "Drive Bias", { -1.0f, 1.0f }, 0.0f, pctBi, fromPct);
+        addFmt (P::fx_drive_tone, "Drive Tone", { 0.0f, 1.0f }, 0.6f, pct, fromPct);
+        addFmt (P::fx_drive_output, "Drive Output", { -24.0f, 12.0f }, 0.0f, dB, plain);
+        addFmt (P::fx_drive_mix, "Drive Mix", { 0.0f, 1.0f }, 1.0f, pct, fromPct);
+
+        addB (P::fx_chorus_on, "Chorus On", false);
+        addC (P::fx_chorus_mode, "Chorus Mode", P::chorusModes(), 0);
+        addFmt (P::fx_chorus_rate, "Chorus Rate", skewed (0.25f, 4.0f, 1.0f), 1.0f, times, plain);
+        addFmt (P::fx_chorus_depth, "Chorus Depth", { 0.0f, 2.0f }, 1.0f, pct, fromPct);
+        addFmt (P::fx_chorus_tone, "Chorus Tone", { 0.0f, 1.0f }, 0.5f, pct, fromPct);
+        addFmt (P::fx_chorus_hiss, "Chorus Hiss", { 0.0f, 1.0f }, 0.1f, pct, fromPct);
+        addFmt (P::fx_chorus_width, "Chorus Width", { 0.0f, 1.5f }, 1.0f, pct, fromPct);
+        addFmt (P::fx_chorus_mix, "Chorus Mix", { 0.0f, 1.0f }, 0.5f, pct, fromPct);
+
+        addB (P::fx_phaser_on, "Phaser On", false);
+        addC (P::fx_phaser_stages, "Phaser Stages", P::phaserStages(), 1);
+        addFmt (P::fx_phaser_rate, "Phaser Rate", skewed (0.02f, 10.0f, 0.6f), 0.3f, hz, fromHz);
+        addB (P::fx_phaser_sync, "Phaser Sync", false);
+        addC (P::fx_phaser_division, "Phaser Note", P::noteValues(), 9);
+        addFmt (P::fx_phaser_depth, "Phaser Depth", { 0.0f, 1.0f }, 0.8f, pct, fromPct);
+        addFmt (P::fx_phaser_center, "Phaser Manual", skewed (100.0f, 5000.0f, 700.0f), 700.0f, hz, fromHz);
+        addFmt (P::fx_phaser_feedback, "Phaser Color", { -0.95f, 0.95f }, 0.3f, pctBi, fromPct);
+        addFmt (P::fx_phaser_spread, "Phaser Spread", { 0.0f, 180.0f }, 90.0f, deg, plain);
+        addC (P::fx_phaser_lfo, "Phaser LFO", P::phaserLfos(), 1);
+        addFmt (P::fx_phaser_mix, "Phaser Mix", { 0.0f, 1.0f }, 0.5f, pct, fromPct);
+
+        addB (P::fx_flanger_on, "Flanger On", false);
+        addFmt (P::fx_flanger_rate, "Flanger Rate", skewed (0.01f, 10.0f, 0.4f), 0.2f, hz, fromHz);
+        addB (P::fx_flanger_sync, "Flanger Sync", false);
+        addC (P::fx_flanger_division, "Flanger Note", P::noteValues(), 14);
+        addFmt (P::fx_flanger_depth, "Flanger Depth", { 0.0f, 1.0f }, 0.7f, pct, fromPct);
+        addFmt (P::fx_flanger_manual, "Flanger Manual", skewed (0.1f, 10.0f, 2.0f), 2.0f, ms, fromMs);
+        addFmt (P::fx_flanger_feedback, "Flanger Regen", { -0.95f, 0.95f }, 0.5f, pctBi, fromPct);
+        addB (P::fx_flanger_tz, "Flanger Through-Zero", false);
+        addFmt (P::fx_flanger_spread, "Flanger Spread", { 0.0f, 180.0f }, 90.0f, deg, plain);
+        addFmt (P::fx_flanger_mix, "Flanger Mix", { 0.0f, 1.0f }, 0.6f, pct, fromPct);
+
+        addB (P::fx_echo_on, "Tape Echo On", false);
+        addC (P::fx_echo_mode, "Tape Echo Mode", P::echoModes(), 3);
+        addFmt (P::fx_echo_time, "Tape Echo Repeat Rate", skewed (25.0f, 1000.0f, 177.0f), 177.0f, ms, fromMs);
+        addB (P::fx_echo_sync, "Tape Echo Sync", false);
+        addC (P::fx_echo_division, "Tape Echo Note", P::noteValues(), 6);
+        addFmt (P::fx_echo_intensity, "Tape Echo Intensity", { 0.0f, 1.0f }, 0.45f, pct, fromPct);
+        addFmt (P::fx_echo_wow, "Tape Echo Wow", { 0.0f, 1.0f }, 0.25f, pct, fromPct);
+        addFmt (P::fx_echo_flutter, "Tape Echo Flutter", { 0.0f, 1.0f }, 0.2f, pct, fromPct);
+        addFmt (P::fx_echo_sat, "Tape Echo Saturation", { 0.0f, 1.0f }, 0.35f, pct, fromPct);
+        addFmt (P::fx_echo_bass, "Tape Echo Bass", { -12.0f, 12.0f }, 0.0f, dB, plain);
+        addFmt (P::fx_echo_treble, "Tape Echo Treble", { -12.0f, 12.0f }, 0.0f, dB, plain);
+        addFmt (P::fx_echo_age, "Tape Echo Tape Age", { 0.0f, 1.0f }, 0.25f, pct, fromPct);
+        addFmt (P::fx_echo_width, "Tape Echo Width", { 0.0f, 1.0f }, 0.6f, pct, fromPct);
+        addFmt (P::fx_echo_spring, "Tape Echo Spring", { 0.0f, 1.0f }, 0.35f, pct, fromPct);
+        addFmt (P::fx_echo_mix, "Tape Echo Mix", { 0.0f, 1.0f }, 0.3f, pct, fromPct);
+
+        addB (P::fx_reverb_on, "Reverb On", false);
+        addC (P::fx_reverb_type, "Reverb Type", P::reverbTypes(), 0);
+        addFmt (P::fx_reverb_size, "Reverb Size", skewed (0.3f, 2.0f, 1.0f), 1.0f, pct, fromPct);
+        addFmt (P::fx_reverb_decay, "Reverb Decay", skewed (0.2f, 30.0f, 3.0f), 2.5f, sec, plain);
+        addFmt (P::fx_reverb_predelay, "Reverb Pre-Delay", skewed (0.0f, 500.0f, 60.0f), 12.0f, ms, fromMs);
+        addFmt (P::fx_reverb_damp, "Reverb Damping", { 0.0f, 1.0f }, 0.45f, pct, fromPct);
+        addFmt (P::fx_reverb_lowcut, "Reverb Low Cut", skewed (20.0f, 1000.0f, 150.0f), 90.0f, hz, fromHz);
+        addFmt (P::fx_reverb_mod, "Reverb Modulation", { 0.0f, 1.0f }, 0.4f, pct, fromPct);
+        addFmt (P::fx_reverb_width, "Reverb Width", { 0.0f, 1.5f }, 1.0f, pct, fromPct);
+        addFmt (P::fx_reverb_shimmer, "Reverb Shimmer", { 0.0f, 1.0f }, 0.5f, pct, fromPct);
+        addC (P::fx_reverb_pitch, "Reverb Shimmer Pitch", P::shimmerPitches(), 3);
+        addB (P::fx_reverb_freeze, "Reverb Freeze", false);
+        addFmt (P::fx_reverb_mix, "Reverb Mix", { 0.0f, 1.0f }, 0.25f, pct, fromPct);
+
+        addB (P::fx_comp_on, "Comp On", false);
+        addFmt (P::fx_comp_threshold, "Comp Threshold", { -40.0f, 0.0f }, -12.0f, dB, plain);
+        addC (P::fx_comp_ratio, "Comp Ratio", P::compRatios(), 3);
+        addC (P::fx_comp_attack, "Comp Attack", P::compAttacks(), 3);
+        addC (P::fx_comp_release, "Comp Release", P::compReleases(), 4);
+        addFmt (P::fx_comp_makeup, "Comp Make-Up", { 0.0f, 20.0f }, 0.0f, dB, plain);
+        addFmt (P::fx_comp_schpf, "Comp SC High-Pass", skewed (20.0f, 300.0f, 80.0f), 20.0f, hz, fromHz);
+        addFmt (P::fx_comp_mix, "Comp Mix", { 0.0f, 1.0f }, 1.0f, pct, fromPct);
+    }
 
     // Voice mode / trims
     layout.add (std::make_unique<APC> (pid (P::voice_mode), "Voice Mode", juce::StringArray { "POLY", "DUO" }, 0));
@@ -319,13 +412,24 @@ struct ParameterBinding::Raw
     std::array<A, 8> mmSrc, mmDst, mmAmt;
     A mixRing, mixSub, subOct, xmod, lfo2Rate, lfo2Wave, lfo2Sync, lfo2Retrig, mA, mD, mS, mR;
     A detune, spread, pan, voices, age;
-    A chOn, chRate, chDepth, chMix, dlOn, dlTime, dlFb, dlMix, rvOn, rvSize, rvDecay, rvMix;
+    A dlOn, dlTime, dlFb, dlMix;
     A tune, glide, unison, legato, pbRange, vintage;
     A arpOn, arpMode, arpOct, arpRate, arpGate, arpSwing, arpLatch;
     A fltSlope, fltMode, hpf, voiceMode, osc1Oct, osc2Oct, master;
-    A ecOn, ecMode, ecRate, ecInt, ecBass, ecTreb, ecWow, ecIn, ecVol, ecRev;
     std::array<A, 8> trimTune, trimCut;
-    A fzOn, fzSus, fzTone, fzVol, fzMix, phOn, phRate, phDepth, phFb, phMix, chMode, dlSync, dlDiv, dlPing, rvType;
+    A fzOn, fzSus, fzTone, fzVol, fzMix, dlSync, dlDiv, dlPing;
+    struct Rack
+    {
+        A driveOn, driveModel, driveAmount, driveBias, driveTone, driveOutput, driveMix;
+        A chorusOn, chorusMode, chorusRate, chorusDepth, chorusTone, chorusHiss, chorusWidth, chorusMix;
+        A phaserOn, phaserStages, phaserRate, phaserSync, phaserDiv, phaserDepth, phaserCenter, phaserFb, phaserSpread, phaserLfo, phaserMix;
+        A flangerOn, flangerRate, flangerSync, flangerDiv, flangerDepth, flangerManual, flangerFb, flangerTz, flangerSpread, flangerMix;
+        A echoOn, echoMode, echoTime, echoSync, echoDiv, echoIntensity, echoWow, echoFlutter, echoSat, echoBass, echoTreble, echoAge, echoWidth,
+            echoSpring, echoMix;
+        A reverbOn, reverbType, reverbSize, reverbDecay, reverbPredelay, reverbDamp, reverbLowcut, reverbMod, reverbWidth, reverbShimmer,
+            reverbPitch, reverbFreeze, reverbMix;
+        A compOn, compThreshold, compRatio, compAttack, compRelease, compMakeup, compSchpf, compMix;
+    } rack;
 
     // Rev 3 knob digitiser: 7 bits, two-step software hysteresis (service manual 2-12).
     struct Knob7
@@ -383,9 +487,7 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     }
     r.detune = get (P::voice_detune); r.spread = get (P::voice_spread); r.pan = get (P::voice_pan);
     r.voices = get (P::voice_count); r.age = get (P::analog_age);
-    r.chOn = get (P::chorus_on); r.chRate = get (P::chorus_rate); r.chDepth = get (P::chorus_depth); r.chMix = get (P::chorus_mix);
     r.dlOn = get (P::delay_on); r.dlTime = get (P::delay_time); r.dlFb = get (P::delay_fb); r.dlMix = get (P::delay_mix);
-    r.rvOn = get (P::reverb_on); r.rvSize = get (P::reverb_size); r.rvDecay = get (P::reverb_decay); r.rvMix = get (P::reverb_mix);
     r.tune = get (P::master_tune); r.glide = get (P::glide); r.unison = get (P::unison); r.legato = get (P::legato);
     r.pbRange = get (P::pb_range);
     r.vintage = get (P::vintage_cv);
@@ -393,14 +495,38 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     r.lfo2Rate = get (P::lfo2_rate); r.lfo2Wave = get (P::lfo2_wave); r.lfo2Sync = get (P::lfo2_sync); r.lfo2Retrig = get (P::lfo2_retrig);
     r.mA = get (P::menv_a); r.mD = get (P::menv_d); r.mS = get (P::menv_s); r.mR = get (P::menv_r);
     r.fzOn = get (P::fuzz_on); r.fzSus = get (P::fuzz_sustain); r.fzTone = get (P::fuzz_tone); r.fzVol = get (P::fuzz_volume);
-    r.fzMix = get (P::fuzz_mix); r.phOn = get (P::phaser_on); r.phRate = get (P::phaser_rate); r.phDepth = get (P::phaser_depth);
-    r.phFb = get (P::phaser_fb); r.phMix = get (P::phaser_mix); r.chMode = get (P::chorus_mode); r.dlSync = get (P::delay_sync);
-    r.dlDiv = get (P::delay_div); r.dlPing = get (P::delay_pingpong); r.rvType = get (P::reverb_type);
+    r.fzMix = get (P::fuzz_mix); r.dlSync = get (P::delay_sync); r.dlDiv = get (P::delay_div); r.dlPing = get (P::delay_pingpong);
+    {
+        auto& x = r.rack;
+        x.driveOn = get (P::fx_drive_on); x.driveModel = get (P::fx_drive_model); x.driveAmount = get (P::fx_drive_amount);
+        x.driveBias = get (P::fx_drive_bias); x.driveTone = get (P::fx_drive_tone); x.driveOutput = get (P::fx_drive_output); x.driveMix = get (P::fx_drive_mix);
+        x.chorusOn = get (P::fx_chorus_on); x.chorusMode = get (P::fx_chorus_mode); x.chorusRate = get (P::fx_chorus_rate);
+        x.chorusDepth = get (P::fx_chorus_depth); x.chorusTone = get (P::fx_chorus_tone); x.chorusHiss = get (P::fx_chorus_hiss);
+        x.chorusWidth = get (P::fx_chorus_width); x.chorusMix = get (P::fx_chorus_mix);
+        x.phaserOn = get (P::fx_phaser_on); x.phaserStages = get (P::fx_phaser_stages); x.phaserRate = get (P::fx_phaser_rate);
+        x.phaserSync = get (P::fx_phaser_sync); x.phaserDiv = get (P::fx_phaser_division); x.phaserDepth = get (P::fx_phaser_depth);
+        x.phaserCenter = get (P::fx_phaser_center); x.phaserFb = get (P::fx_phaser_feedback); x.phaserSpread = get (P::fx_phaser_spread);
+        x.phaserLfo = get (P::fx_phaser_lfo); x.phaserMix = get (P::fx_phaser_mix);
+        x.flangerOn = get (P::fx_flanger_on); x.flangerRate = get (P::fx_flanger_rate); x.flangerSync = get (P::fx_flanger_sync);
+        x.flangerDiv = get (P::fx_flanger_division); x.flangerDepth = get (P::fx_flanger_depth); x.flangerManual = get (P::fx_flanger_manual);
+        x.flangerFb = get (P::fx_flanger_feedback); x.flangerTz = get (P::fx_flanger_tz); x.flangerSpread = get (P::fx_flanger_spread);
+        x.flangerMix = get (P::fx_flanger_mix);
+        x.echoOn = get (P::fx_echo_on); x.echoMode = get (P::fx_echo_mode); x.echoTime = get (P::fx_echo_time); x.echoSync = get (P::fx_echo_sync);
+        x.echoDiv = get (P::fx_echo_division); x.echoIntensity = get (P::fx_echo_intensity); x.echoWow = get (P::fx_echo_wow);
+        x.echoFlutter = get (P::fx_echo_flutter); x.echoSat = get (P::fx_echo_sat); x.echoBass = get (P::fx_echo_bass);
+        x.echoTreble = get (P::fx_echo_treble); x.echoAge = get (P::fx_echo_age); x.echoWidth = get (P::fx_echo_width);
+        x.echoSpring = get (P::fx_echo_spring); x.echoMix = get (P::fx_echo_mix);
+        x.reverbOn = get (P::fx_reverb_on); x.reverbType = get (P::fx_reverb_type); x.reverbSize = get (P::fx_reverb_size);
+        x.reverbDecay = get (P::fx_reverb_decay); x.reverbPredelay = get (P::fx_reverb_predelay); x.reverbDamp = get (P::fx_reverb_damp);
+        x.reverbLowcut = get (P::fx_reverb_lowcut); x.reverbMod = get (P::fx_reverb_mod); x.reverbWidth = get (P::fx_reverb_width);
+        x.reverbShimmer = get (P::fx_reverb_shimmer); x.reverbPitch = get (P::fx_reverb_pitch); x.reverbFreeze = get (P::fx_reverb_freeze);
+        x.reverbMix = get (P::fx_reverb_mix);
+        x.compOn = get (P::fx_comp_on); x.compThreshold = get (P::fx_comp_threshold); x.compRatio = get (P::fx_comp_ratio);
+        x.compAttack = get (P::fx_comp_attack); x.compRelease = get (P::fx_comp_release); x.compMakeup = get (P::fx_comp_makeup);
+        x.compSchpf = get (P::fx_comp_schpf); x.compMix = get (P::fx_comp_mix);
+    }
     r.voiceMode = get (P::voice_mode);
     r.master = get (P::master_volume);
-    r.ecOn = get (P::echo_on); r.ecMode = get (P::echo_mode); r.ecRate = get (P::echo_rate); r.ecInt = get (P::echo_intensity);
-    r.ecBass = get (P::echo_bass); r.ecTreb = get (P::echo_treble); r.ecWow = get (P::echo_wow); r.ecIn = get (P::echo_input);
-    r.ecVol = get (P::echo_volume); r.ecRev = get (P::echo_reverb);
     r.osc1Oct = get (P::osc1_oct);
     r.osc2Oct = get (P::osc2_oct);
     for (int v = 0; v < P::kNumTrims; ++v)
@@ -451,23 +577,117 @@ void ParameterBinding::fill (augur::SynthParams& p) noexcept
     }
     p.voiceDetune = f (r.detune); p.voiceSpread = f (r.spread); p.voicePan = f (r.pan);
     p.voiceCount = i (r.voices); p.analogAge = f (r.age);
-    p.chorusOn = b (r.chOn); p.chorusRate = f (r.chRate); p.chorusDepth = f (r.chDepth); p.chorusMix = f (r.chMix);
-    p.delayOn = b (r.dlOn); p.delayTime = f (r.dlTime); p.delayFeedback = f (r.dlFb); p.delayMix = f (r.dlMix);
-    p.reverbOn = b (r.rvOn); p.reverbSize = f (r.rvSize); p.reverbDecay = f (r.rvDecay); p.reverbMix = f (r.rvMix);
     p.masterTuneCents = f (r.tune); p.glide = f (r.glide); p.unison = b (r.unison); p.legato = b (r.legato);
     p.pitchBendRange = i (r.pbRange);
     p.mixRing = f (r.mixRing); p.mixSub = f (r.mixSub); p.subOctave = i (r.subOct); p.crossMod = f (r.xmod);
     p.lfo2Rate = f (r.lfo2Rate); p.lfo2Wave = i (r.lfo2Wave); p.lfo2Sync = b (r.lfo2Sync); p.lfo2Retrig = b (r.lfo2Retrig);
     p.menvA = f (r.mA); p.menvD = f (r.mD); p.menvS = f (r.mS); p.menvR = f (r.mR);
     p.fuzzOn = b (r.fzOn); p.fuzzSustain = f (r.fzSus); p.fuzzTone = f (r.fzTone); p.fuzzVolume = f (r.fzVol); p.fuzzMix = f (r.fzMix);
-    p.phaserOn = b (r.phOn); p.phaserRate = f (r.phRate); p.phaserDepth = f (r.phDepth); p.phaserFeedback = f (r.phFb); p.phaserMix = f (r.phMix);
-    p.chorusMode = i (r.chMode); p.delaySync = b (r.dlSync); p.delayDivision = i (r.dlDiv); p.delayPingPong = b (r.dlPing);
-    p.reverbType = i (r.rvType);
+    {
+        // Effects rack (the processing order is plugin state, set by the processor).
+        namespace R = augur::rack;
+        auto& fx = p.fx;
+        const auto& x = r.rack;
+        const auto on = [&fx] (R::FxId id, bool v) { fx.on[static_cast<size_t> (id)] = v; };
+        on (R::FxId::drive, b (x.driveOn));
+        on (R::FxId::chorus, b (x.chorusOn));
+        on (R::FxId::phaser, b (x.phaserOn));
+        on (R::FxId::flanger, b (x.flangerOn));
+        on (R::FxId::delay, b (r.dlOn));
+        on (R::FxId::echo, b (x.echoOn));
+        on (R::FxId::reverb, b (x.reverbOn));
+        on (R::FxId::comp, b (x.compOn));
+
+        fx.drive.model = static_cast<R::DriveModel> (juce::jlimit (0, 4, i (x.driveModel)));
+        fx.drive.driveDb = f (x.driveAmount);
+        fx.drive.bias = f (x.driveBias);
+        fx.drive.tone = f (x.driveTone);
+        fx.drive.outputDb = f (x.driveOutput);
+        fx.drive.mix = f (x.driveMix);
+
+        fx.chorus.mode = static_cast<R::ChorusMode> (juce::jlimit (0, 4, i (x.chorusMode)));
+        fx.chorus.rate = f (x.chorusRate);
+        fx.chorus.depth = f (x.chorusDepth);
+        fx.chorus.tone = f (x.chorusTone);
+        fx.chorus.hiss = f (x.chorusHiss);
+        fx.chorus.width = f (x.chorusWidth);
+        fx.chorus.mix = f (x.chorusMix);
+
+        static constexpr int stageCounts[] { 4, 6, 8, 12 };
+        fx.phaser.stages = stageCounts[juce::jlimit (0, 3, i (x.phaserStages))];
+        fx.phaser.rateHz = f (x.phaserRate);
+        fx.phaserSync = b (x.phaserSync);
+        fx.phaserDivision = i (x.phaserDiv);
+        fx.phaser.depth = f (x.phaserDepth);
+        fx.phaser.centreHz = f (x.phaserCenter);
+        fx.phaser.feedback = f (x.phaserFb);
+        fx.phaser.spreadDeg = f (x.phaserSpread);
+        fx.phaser.lfo = static_cast<R::PhaserLfo> (juce::jlimit (0, 2, i (x.phaserLfo)));
+        fx.phaser.mix = f (x.phaserMix);
+
+        fx.flanger.rateHz = f (x.flangerRate);
+        fx.flangerSync = b (x.flangerSync);
+        fx.flangerDivision = i (x.flangerDiv);
+        fx.flanger.depth = f (x.flangerDepth);
+        fx.flanger.manualMs = f (x.flangerManual);
+        fx.flanger.feedback = f (x.flangerFb);
+        fx.flanger.throughZero = b (x.flangerTz);
+        fx.flanger.spreadDeg = f (x.flangerSpread);
+        fx.flanger.mix = f (x.flangerMix);
+
+        fx.delay.timeSeconds = f (r.dlTime);
+        fx.delay.feedback = f (r.dlFb);
+        fx.delay.mix = f (r.dlMix);
+        fx.delay.sync = b (r.dlSync);
+        fx.delay.division = i (r.dlDiv);
+        fx.delay.pingPong = b (r.dlPing);
+
+        // The classic unit's MODE selector: 1-4 echo only, 5-11 echo + spring, 12 spring only.
+        // Head sets of the rack's echo: 0 H1, 1 H2, 2 H3, 3 H1+H2, 4 H2+H3, 5 H1+H3, 6 all.
+        static constexpr int selectorHeads[12] { 0, 1, 2, 4, 0, 1, 2, 3, 4, 5, 6, 6 };
+        const int selector = juce::jlimit (0, 11, i (x.echoMode));
+        fx.echo.mode = selectorHeads[selector];
+        fx.echoHeadsOff = selector == 11;
+        fx.echoSpring = selector >= 4 ? f (x.echoSpring) : 0.0;
+        fx.echo.headMs = f (x.echoTime);
+        fx.echoSync = b (x.echoSync);
+        fx.echoDivision = i (x.echoDiv);
+        fx.echo.intensity = f (x.echoIntensity);
+        fx.echo.wow = f (x.echoWow);
+        fx.echo.flutter = f (x.echoFlutter);
+        fx.echo.saturation = f (x.echoSat);
+        fx.echo.bassDb = f (x.echoBass);
+        fx.echo.trebleDb = f (x.echoTreble);
+        fx.echo.age = f (x.echoAge);
+        fx.echo.width = f (x.echoWidth);
+        fx.echo.mix = f (x.echoMix);
+
+        const int reverbType = juce::jlimit (0, 4, i (x.reverbType));
+        fx.reverbSpring = reverbType == 4;
+        fx.reverb.type = static_cast<R::ReverbType> (juce::jmin (3, reverbType));
+        fx.reverb.size = f (x.reverbSize);
+        fx.reverb.decayS = f (x.reverbDecay);
+        fx.reverb.predelayMs = f (x.reverbPredelay);
+        fx.reverb.damping = f (x.reverbDamp);
+        fx.reverb.lowCutHz = f (x.reverbLowcut);
+        fx.reverb.modulation = f (x.reverbMod);
+        fx.reverb.width = f (x.reverbWidth);
+        fx.reverb.shimmer = f (x.reverbShimmer);
+        static constexpr double pitches[] { -12.0, 5.0, 7.0, 12.0, 19.0, 24.0 };
+        fx.reverb.pitchSemis = pitches[juce::jlimit (0, 5, i (x.reverbPitch))];
+        fx.reverb.freeze = b (x.reverbFreeze);
+        fx.reverb.mix = f (x.reverbMix);
+
+        fx.comp.thresholdDb = f (x.compThreshold);
+        fx.comp.ratioIndex = i (x.compRatio);
+        fx.comp.attackIndex = i (x.compAttack);
+        fx.comp.releaseIndex = i (x.compRelease);
+        fx.comp.makeupDb = f (x.compMakeup);
+        fx.comp.scHpfHz = f (x.compSchpf);
+        fx.comp.mix = f (x.compMix);
+    }
     p.voiceMode = i (r.voiceMode);
     p.masterVolumeDb = f (r.master);
-    p.echoOn = b (r.ecOn); p.echoMode = i (r.ecMode); p.echoRate = f (r.ecRate); p.echoIntensity = f (r.ecInt);
-    p.echoBass = f (r.ecBass); p.echoTreble = f (r.ecTreb); p.echoWow = f (r.ecWow); p.echoInput = f (r.ecIn);
-    p.echoVolume = f (r.ecVol); p.echoReverb = f (r.ecRev);
     p.osc1Octave = i (r.osc1Oct) - 2;
     p.osc2Octave = i (r.osc2Oct) - 2;
     for (size_t v = 0; v < 8; ++v)

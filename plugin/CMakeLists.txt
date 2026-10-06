@@ -31,6 +31,7 @@ juce_add_binary_data(AugurBinary
     SOURCES
         resources/fonts/Jost-Regular.ttf
         resources/fonts/Jost-Medium.ttf
+        resources/fonts/Jost-Light.ttf
         resources/fonts/Michroma-Regular.ttf
         resources/fonts/JetBrainsMono-Medium.ttf
 )
@@ -41,6 +42,11 @@ target_sources(Augur5 PRIVATE
     ParameterLayout.cpp
     Presets.h
     Presets.cpp
+    LegacyEffects.h
+    LegacyEffects.cpp
+    AudioTap.h
+    AuguryModel.h
+    AuguryModel.cpp
     PluginProcessor.h
     PluginProcessor.cpp
     PluginEditor.h
@@ -51,6 +57,16 @@ target_sources(Augur5 PRIVATE
     gui/AugurLookAndFeel.cpp
     gui/Widgets.h
     gui/Widgets.cpp
+    gui/Displays.h
+    gui/Displays.cpp
+    gui/Horizon.h
+    gui/Horizon.cpp
+    gui/FxPage.h
+    gui/FxPage.cpp
+    gui/Overlays.h
+    gui/Overlays.cpp
+    gui/AuguryPage.h
+    gui/AuguryPage.cpp
 )
 
 target_compile_definitions(Augur5 PUBLIC
@@ -64,6 +80,7 @@ target_link_libraries(Augur5
         augur_dsp
         AugurBinary
         juce::juce_audio_utils
+        juce::juce_dsp
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
@@ -80,10 +97,18 @@ target_sources(augur_preset_audit PRIVATE
     PluginProcessor.cpp
     ParameterLayout.cpp
     Presets.cpp
+    LegacyEffects.h
+    LegacyEffects.cpp
+    AuguryModel.cpp
     PluginEditor.cpp
     gui/Theme.cpp
     gui/AugurLookAndFeel.cpp
     gui/Widgets.cpp
+    gui/Displays.cpp
+    gui/Horizon.cpp
+    gui/FxPage.cpp
+    gui/Overlays.cpp
+    gui/AuguryPage.cpp
 )
 target_compile_definitions(augur_preset_audit PRIVATE
     JUCE_WEB_BROWSER=0
@@ -95,5 +120,6 @@ target_link_libraries(augur_preset_audit PRIVATE
     augur_dsp
     AugurBinary
     juce::juce_audio_utils
+    juce::juce_dsp
     juce::juce_recommended_config_flags
 )

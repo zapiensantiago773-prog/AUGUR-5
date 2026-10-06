@@ -74,7 +74,8 @@ SynthParams richPatch()
     p.pmFilter = true;
     p.matrix[0] = { augur::ModSource::Lfo, augur::ModDest::FilterCutoff, 0.4f };
     p.matrix[1] = { augur::ModSource::Noise, augur::ModDest::Osc2Pw, 0.2f };
-    p.chorusOn = p.delayOn = p.reverbOn = true;
+    for (auto id : { augur::rack::FxId::chorus, augur::rack::FxId::delay, augur::rack::FxId::reverb })
+        p.fx.on[static_cast<size_t> (id)] = true;
     p.analogAge = 0.8f;
     return p;
 }
@@ -106,7 +107,7 @@ TEST_CASE ("Engine renders sound at every sample rate and returns to silence", "
     auto e = std::make_unique<SynthEngine>();
     e->prepare (sr);
     SynthParams p = richPatch();
-    p.delayOn = p.reverbOn = false;
+    p.fx.on.fill (false);
     p.analogAge = 0.0f; // no noise floor, so silence is exact
     p.aenvR = 0.05f;
     e->setParams (p);

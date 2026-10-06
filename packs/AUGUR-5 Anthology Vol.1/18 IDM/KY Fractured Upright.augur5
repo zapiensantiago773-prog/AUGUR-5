@@ -3,31 +3,33 @@
 <AUGUR5_PRESET formatVersion="1" name="Fractured Upright" category="Keys" target="-18.0"
                genre="IDM" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="2"/>
+    <P id="aenv_a" value="0.001000000047497451"/>
+    <P id="aenv_d" value="2.0"/>
     <P id="aenv_r" value="1.5"/>
-    <P id="aenv_s" value="0"/>
-    <P id="analog_age" value="0.3886"/>
-    <P id="delay_div" value="6"/>
-    <P id="delay_fb" value="0.4336"/>
-    <P id="delay_mix" value="0.1965"/>
-    <P id="delay_on" value="1"/>
-    <P id="delay_pingpong" value="1"/>
-    <P id="delay_sync" value="1"/>
-    <P id="flt_cutoff" value="4972.2061"/>
-    <P id="flt_velocity" value="0.4"/>
-    <P id="mix_osc1" value="0.3"/>
-    <P id="mix_osc2" value="0.2"/>
-    <P id="mix_ring" value="0.684"/>
-    <P id="mm4_amt" value="0.337"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="osc2_freq" value="17"/>
-    <P id="osc2_saw" value="0"/>
-    <P id="osc2_tri" value="1"/>
-    <P id="reverb_mix" value="0.3"/>
-    <P id="reverb_on" value="1"/>
-    <P id="reverb_type" value="1"/>
+    <P id="aenv_s" value="0.0"/>
+    <P id="analog_age" value="0.3885999917984009"/>
+    <P id="delay_div" value="6.0"/>
+    <P id="delay_fb" value="0.4336000084877014"/>
+    <P id="delay_mix" value="0.1965000033378601"/>
+    <P id="delay_on" value="1.0"/>
+    <P id="delay_pingpong" value="1.0"/>
+    <P id="delay_sync" value="1.0"/>
+    <P id="flt_cutoff" value="4972.2060546875"/>
+    <P id="flt_velocity" value="0.4000000059604645"/>
+    <P id="mix_osc1" value="0.300000011920929"/>
+    <P id="mix_osc2" value="0.2000000029802322"/>
+    <P id="mix_ring" value="0.6840000152587891"/>
+    <P id="mm4_amt" value="0.3370000123977661"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="osc2_freq" value="17.0"/>
+    <P id="osc2_saw" value="0.0"/>
+    <P id="osc2_tri" value="1.0"/>
     <P id="amp_level" value="-1.0"/>
+    <P id="fx_reverb_on" value="1.0"/>
+    <P id="fx_reverb_type" value="0.0"/>
+    <P id="fx_reverb_size" value="1.0"/>
+    <P id="fx_reverb_decay" value="2.5"/>
+    <P id="fx_reverb_mix" value="0.2199875265359879"/>
   </PARAMS>
 </AUGUR5_PRESET>

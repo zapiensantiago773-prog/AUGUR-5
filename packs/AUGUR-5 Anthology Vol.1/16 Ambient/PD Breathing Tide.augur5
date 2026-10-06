@@ -3,32 +3,36 @@
 <AUGUR5_PRESET formatVersion="1" name="Breathing Tide" category="Pad" target="-18.0"
                genre="Ambient" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="1.4923"/>
+    <P id="aenv_a" value="1.492300033569336"/>
     <P id="aenv_d" value="1.5"/>
-    <P id="aenv_r" value="4.9118"/>
-    <P id="aenv_s" value="1"/>
-    <P id="analog_age" value="0.9319"/>
-    <P id="echo_intensity" value="0.4935"/>
-    <P id="echo_mode" value="8"/>
-    <P id="echo_on" value="1"/>
-    <P id="echo_rate" value="0.2479"/>
-    <P id="echo_reverb" value="0.5"/>
-    <P id="echo_treble" value="-0.4"/>
-    <P id="echo_volume" value="0.45"/>
-    <P id="echo_wow" value="0.7749"/>
-    <P id="fenv_a" value="1.799"/>
-    <P id="fenv_d" value="2.2435"/>
-    <P id="fenv_r" value="3"/>
-    <P id="fenv_s" value="0.4588"/>
-    <P id="flt_cutoff" value="2272.9296"/>
-    <P id="flt_env_amt" value="0.1427"/>
-    <P id="flt_reso" value="0.194"/>
-    <P id="mix_osc2" value="0.8"/>
-    <P id="mm4_amt" value="0.4329"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="osc2_fine" value="9.832"/>
-    <P id="voice_spread" value="0.8148"/>
-    <P id="amp_level" value="-8.9"/>
+    <P id="aenv_r" value="4.911799907684326"/>
+    <P id="aenv_s" value="1.0"/>
+    <P id="analog_age" value="0.9319000244140625"/>
+    <P id="fenv_a" value="1.799000024795532"/>
+    <P id="fenv_d" value="2.243499994277954"/>
+    <P id="fenv_r" value="3.0"/>
+    <P id="fenv_s" value="0.4587999880313873"/>
+    <P id="flt_cutoff" value="2272.9296875"/>
+    <P id="flt_env_amt" value="0.1427000015974045"/>
+    <P id="flt_reso" value="0.1940000057220459"/>
+    <P id="mix_osc2" value="0.800000011920929"/>
+    <P id="mm4_amt" value="0.4329000115394592"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="osc2_fine" value="9.831999778747559"/>
+    <P id="voice_spread" value="0.8148000240325928"/>
+    <P id="amp_level" value="-7.8"/>
+    <P id="fx_echo_on" value="1.0"/>
+    <P id="fx_echo_mode" value="8.0"/>
+    <P id="fx_echo_time" value="171.7618103027344"/>
+    <P id="fx_echo_intensity" value="0.4934999942779541"/>
+    <P id="fx_echo_bass" value="0.0"/>
+    <P id="fx_echo_treble" value="-2.799999952316284"/>
+    <P id="fx_echo_wow" value="0.7749000191688538"/>
+    <P id="fx_echo_flutter" value="0.619920015335083"/>
+    <P id="fx_echo_sat" value="0.5"/>
+    <P id="fx_echo_age" value="0.1500000059604645"/>
+    <P id="fx_echo_spring" value="0.5"/>
+    <P id="fx_echo_mix" value="0.2691971659660339"/>
   </PARAMS>
 </AUGUR5_PRESET>

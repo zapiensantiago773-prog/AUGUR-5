@@ -3,32 +3,33 @@
 <AUGUR5_PRESET formatVersion="1" name="Pirate Tide" category="Pad" target="-18.0"
                genre="UK Garage" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="1.3566"/>
+    <P id="aenv_a" value="1.356600046157837"/>
     <P id="aenv_d" value="1.5"/>
-    <P id="aenv_r" value="3.4199"/>
-    <P id="aenv_s" value="1"/>
-    <P id="analog_age" value="0.3499"/>
-    <P id="chorus_mix" value="0.497"/>
-    <P id="chorus_mode" value="1"/>
-    <P id="chorus_on" value="1"/>
-    <P id="fenv_a" value="1.1309"/>
-    <P id="fenv_d" value="2.5001"/>
-    <P id="fenv_r" value="3"/>
-    <P id="fenv_s" value="0.5331"/>
-    <P id="flt_cutoff" value="2105.8758"/>
-    <P id="flt_env_amt" value="0.121"/>
-    <P id="flt_reso" value="0.2935"/>
-    <P id="mix_osc2" value="0.8"/>
-    <P id="mm4_amt" value="0.3826"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="osc2_fine" value="11.7881"/>
-    <P id="reverb_decay" value="7.3122"/>
-    <P id="reverb_mix" value="0.3289"/>
-    <P id="reverb_on" value="1"/>
-    <P id="reverb_size" value="0.6997"/>
-    <P id="reverb_type" value="1"/>
-    <P id="voice_spread" value="0.7886"/>
-    <P id="amp_level" value="-5.3"/>
+    <P id="aenv_r" value="3.419899940490723"/>
+    <P id="aenv_s" value="1.0"/>
+    <P id="analog_age" value="0.3499000072479248"/>
+    <P id="fenv_a" value="1.130900025367737"/>
+    <P id="fenv_d" value="2.500099897384644"/>
+    <P id="fenv_r" value="3.0"/>
+    <P id="fenv_s" value="0.5331000089645386"/>
+    <P id="flt_cutoff" value="2105.875732421875"/>
+    <P id="flt_env_amt" value="0.1209999993443489"/>
+    <P id="flt_reso" value="0.2935000061988831"/>
+    <P id="mix_osc2" value="0.800000011920929"/>
+    <P id="mm4_amt" value="0.3826000094413757"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="osc2_fine" value="11.78810024261475"/>
+    <P id="voice_spread" value="0.7886000275611877"/>
+    <P id="amp_level" value="-6.1"/>
+    <P id="fx_chorus_on" value="1.0"/>
+    <P id="fx_chorus_mode" value="0.0"/>
+    <P id="fx_chorus_mix" value="0.3719824254512787"/>
+    <P id="fx_chorus_hiss" value="0.05000000074505806"/>
+    <P id="fx_reverb_on" value="1.0"/>
+    <P id="fx_reverb_type" value="0.0"/>
+    <P id="fx_reverb_size" value="1.199699997901917"/>
+    <P id="fx_reverb_decay" value="7.31220006942749"/>
+    <P id="fx_reverb_mix" value="0.2393128871917725"/>
   </PARAMS>
 </AUGUR5_PRESET>

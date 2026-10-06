@@ -3,32 +3,33 @@
 <AUGUR5_PRESET formatVersion="1" name="Soaring Glow" category="Pad" target="-18.0"
                genre="Progressive House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="1.907"/>
+    <P id="aenv_a" value="1.906999945640564"/>
     <P id="aenv_d" value="1.5"/>
-    <P id="aenv_r" value="3.1188"/>
-    <P id="aenv_s" value="1"/>
-    <P id="analog_age" value="0.4483"/>
-    <P id="chorus_mix" value="0.4968"/>
-    <P id="chorus_mode" value="3"/>
-    <P id="chorus_on" value="1"/>
-    <P id="fenv_a" value="1.8734"/>
-    <P id="fenv_d" value="3.7575"/>
-    <P id="fenv_r" value="3"/>
-    <P id="fenv_s" value="0.4064"/>
-    <P id="flt_cutoff" value="1065.8625"/>
-    <P id="flt_env_amt" value="0.1676"/>
-    <P id="flt_reso" value="0.2835"/>
-    <P id="mix_osc2" value="0.8"/>
-    <P id="mm4_amt" value="0.3599"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="osc2_fine" value="9.8788"/>
-    <P id="reverb_decay" value="8.2008"/>
-    <P id="reverb_mix" value="0.5"/>
-    <P id="reverb_on" value="1"/>
-    <P id="reverb_size" value="1"/>
-    <P id="reverb_type" value="1"/>
-    <P id="voice_spread" value="0.7374"/>
-    <P id="amp_level" value="-5.1"/>
+    <P id="aenv_r" value="3.118799924850464"/>
+    <P id="aenv_s" value="1.0"/>
+    <P id="analog_age" value="0.4483000040054321"/>
+    <P id="fenv_a" value="1.873399972915649"/>
+    <P id="fenv_d" value="3.757499933242798"/>
+    <P id="fenv_r" value="3.0"/>
+    <P id="fenv_s" value="0.4063999950885773"/>
+    <P id="flt_cutoff" value="1065.862548828125"/>
+    <P id="flt_env_amt" value="0.167600005865097"/>
+    <P id="flt_reso" value="0.2834999859333038"/>
+    <P id="mix_osc2" value="0.800000011920929"/>
+    <P id="mm4_amt" value="0.3598999977111816"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="osc2_fine" value="9.878800392150879"/>
+    <P id="voice_spread" value="0.7373999953269958"/>
+    <P id="amp_level" value="-5.599999904632568"/>
+    <P id="fx_chorus_on" value="1.0"/>
+    <P id="fx_chorus_mode" value="2.0"/>
+    <P id="fx_chorus_mix" value="0.3718255460262299"/>
+    <P id="fx_chorus_hiss" value="0.05000000074505806"/>
+    <P id="fx_reverb_on" value="1.0"/>
+    <P id="fx_reverb_type" value="0.0"/>
+    <P id="fx_reverb_size" value="1.5"/>
+    <P id="fx_reverb_decay" value="8.200799942016602"/>
+    <P id="fx_reverb_mix" value="0.3440417647361755"/>
   </PARAMS>
 </AUGUR5_PRESET>

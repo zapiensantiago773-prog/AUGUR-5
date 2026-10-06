@@ -382,3 +382,77 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
   - Cómo firmar y notarizar con certificado: `installer/mac/README.md`.
 - **Windows**: `AUGUR-5 1.0.0 (Windows).zip`, con el VST3 y el Standalone.
 - Cada push sube los instaladores como artefactos. Un tag `v*` publica un **GitHub Release** con el .pkg y el .zip.
+
+## D-036 · Rack de efectos de PYTHIA 32 y conversión de presets 1.0 (2026-10-06)
+- AUGUR-5 conserva intacto su motor (VCO CEM3340/SSM2030, filtros, envolventes, poly-mod). Lo que se integra es el **rack de efectos** de PYTHIA 32 (`dsp/Rack/`), con los mismos tests de medición:
+  - DRIVE (triodo 12AX7, diodo, cinta, wavefolder, crusher; 4x OS): alias < −170 dB.
+  - CHORUS (Juno I / II / I+II, Dimension, Ensemble), PHASER (4–12 etapas), FLANGER (BBD o through-zero: −41.8 dB en el cruce).
+  - TAPE ECHO (cabezas RE-201 1 : 1.90 : 2.75) con el **selector de 12 posiciones** y el tanque de muelles; REVERB (plate, room, hall, shimmer y **SPRING**, que es la de AUGUR); BUS COMP (dentro de ±0.2 dB).
+  - DELAY (el delay estéreo de AUGUR) como una unidad más del rack.
+- Orden: FUZZ en el bus sobremuestreado (fijo, antes del decimador) → las 8 unidades del rack **en cualquier orden** (se arrastran en la pestaña FX).
+  - El orden es estado del plugin (`fxOrder` en la sesión y en los presets de usuario). Los presets de fábrica usan el orden por defecto.
+  - El hilo de audio solo recibe permutaciones válidas (atómicos, sin locks).
+- **Compatibilidad:** sesiones y presets 1.0 traen los ids viejos (`chorus_*`, `phaser_*`, `echo_*`, `reverb_*`). `LegacyEffects` los convierte al cargar.
+  - El envío (send) pasa a crossfade con potencia constante: `mix = 2/π · atan(ratio)`.
+  - Los ids viejos no se reutilizan nunca.
+- **CPU** (48 kHz, 5 voces, GREAT):
+  - Motor sin efectos: 9.9 % (antes 9.3 %; el rack en reposo cuesta 0.6 %).
+  - Por efecto: delay +0.2 %, chorus/phaser/flanger +0.7 %, eco y comp +1.2 %, reverb +3.2 %, drive +3.9 %.
+  - Los 8 a la vez: 21.3 %.
+- **Niveles:** librería de fábrica re-nivelada (3 pasadas, 170 presets).
+  - Tres drones de Atmos & FX quedan 0.7–1.8 dB bajo el objetivo, con LEVEL ya al máximo (+6 dB).
+  - El pack Anthology: `--level-pack` ahora reescribe los presets con los ids del rack (358 de 500 traían efectos 1.0) y los vuelve a nivelar.
+    - Resultado: 500/500 dentro de rango.
+    - "FX Depth Ghost" (ruido filtrado) quedaba 4 dB bajo con LEVEL al máximo; se abrió su filtro de 1.1 a 2.6 kHz.
+    - `make_anthology.py` sigue escribiendo los ids 1.0: después de regenerar hay que pasar `--level-pack`, que los convierte.
+
+## D-037 · Interfaz blanca con pestañas y horizonte de frecuencias "AUGURY" (2026-10-06)
+- Formato de la serie TONAL LAB (MANTIS-37, PYTHIA 32): canvas fijo de 1536 × 1024 escalado en una pieza; cabecera con presets y pestañas; páginas; franja de interpretación.
+- Pestañas:
+
+| Pestaña | Contenido |
+|---|---|
+| MAIN | Solo el panel clásico: osciladores (con octava), mixer, filtro (curva de respuesta en vivo), voces, poly-mod, LFO, envolventes y amplificador |
+| MOD | Matriz de 8 slots, LFO 2 con su forma animada, envolvente de modulación y un **mapa de ruteo** (fuente → destino, grosor = cantidad) |
+| ARP | Arpegiador, vista del patrón y teclado tocable |
+| VOICE | Extras de oscilador y de filtro, motor (circuito VCO, calidad, modo de voz, bend, 7 bits) y calibración por voz |
+| FX | Cadena reordenable y un editor grande por efecto, con su vista en vivo |
+| AUGURY | Ver D-038 |
+
+- **Las vistas en vivo de FX** (la "calidad Pythia"):
+  - curva de transferencia (drive y las dos etapas del fuzz, más la respuesta del tone stack);
+  - líneas BBD del chorus;
+  - respuesta del phaser en su barrido real y peine del flanger con su retardo real;
+  - repeticiones del delay (con ping-pong);
+  - lazo de cinta con las cabezas activas, sus ms reales y el tanque de muelles;
+  - decaimiento de la reverb y aguja de reducción de ganancia del compresor.
+- **Tema claro minimalista:** fondo de escritorio gris cálido y tarjetas blancas; tinta para el texto; acento terracota (#c8552f) y pizarra (#3c6684).
+  - Perillas blancas con arco de valor (bipolar desde el centro).
+  - El valor exacto con unidades sustituye a la etiqueta mientras la perilla está bajo el cursor.
+- **Horizonte AUGURY** (versión blanca del atardecer de MANTIS y la luna de PYTHIA):
+  - Espectro real de la salida: FFT Hann de 2048 puntos, eje logarítmico de 30 Hz a 16 kHz, de −72 a 0 dB, con ataque rápido y caída lenta.
+  - Se dibujan 18 crestas en perspectiva con tinta fina sobre papel. La más cercana, en terracota, lleva la **escala de frecuencias en Hz**.
+  - Un sol pálido respira con el nivel, y una bandada de aves (el augur leía su vuelo) cruza el cielo y bate las alas más rápido cuando suena.
+  - El audio llega por un FIFO sin locks (`AudioTap`).
+- El teclado en pantalla y las ruedas envían MIDI por una cola sin locks (`UiMidiQueue`) que se reproduce al inicio del bloque. Nada de `MidiKeyboardState`, que usa un lock.
+- **Revisión:** `augur_preset_audit --snapshot out.png 1 <pestaña>` (10–18 = cada efecto) produce las capturas que se revisan antes de cada commit.
+
+## D-038 · AUGURY: morph de 4 esquinas y OMEN (2026-10-06)
+- Lo que no tienen ni PYTHIA ni MANTIS. Son herramientas que trabajan sobre el sonido completo; el motor no cambia.
+- **MORPH:** se captura un sonido en cada esquina de un campo XY y se "vuela" entre ellas.
+  - Los parámetros continuos se mezclan con pesos bilineales en su rango normalizado (con sesgo), así que el cutoff se desliza en octavas y no en Hz.
+  - Los interruptores y las listas siguen a la esquina de mayor peso. Las esquinas vacías no participan.
+  - No se mueven los ajustes del instrumento (MASTER, calidad), los trims de calibración, el bend, el circuito del VCO ni los 7 bits.
+- **OMEN:** variación reproducible del sonido actual.
+  - Cada grupo desbloqueado (osciladores, mixer, filtro, envolventes, modulación, efectos) camina al azar con semilla; AMOUNT fija el tamaño del paso.
+  - Guardas para que siga siendo tocable: cutoff ≥ 180 Hz, resonancia ≤ 0.82, ataque ≤ 1.2 s, sustain ≥ 0.15, mezclas de efecto ≤ 60 %, sin freeze, al menos una forma de onda por oscilador. Los efectos encendidos siguen encendidos.
+- Todo pasa por la ruta que notifica al host: automatización, UNDO y presets lo ven.
+- Las esquinas se guardan con la sesión (estado v2).
+- **Medido** (`augur_preset_audit --check-augury`), 10/10:
+  - las esquinas reproducen su sonido exacto;
+  - el centro es la media;
+  - la misma semilla da la misma variación;
+  - un grupo bloqueado no se mueve;
+  - las esquinas y el orden del rack sobreviven a guardar y cargar.
+- Limitación: el morph corre en el hilo de mensajes (gestos del usuario). No es automatizable como un solo parámetro.
+- Versión **1.1.0**.

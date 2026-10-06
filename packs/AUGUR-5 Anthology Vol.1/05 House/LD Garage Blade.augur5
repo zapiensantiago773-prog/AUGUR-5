@@ -1,38 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<AUGUR5_PRESET formatVersion="1" name="Garage Blade" category="Lead" target="-18.0" genre="House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+
+<AUGUR5_PRESET formatVersion="1" name="Garage Blade" category="Lead" target="-18.0"
+               genre="House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="0.0176"/>
+    <P id="aenv_a" value="0.01759999990463257"/>
     <P id="aenv_d" value="0.5"/>
-    <P id="aenv_r" value="0.6157"/>
-    <P id="aenv_s" value="0.9"/>
-    <P id="analog_age" value="0.3687"/>
-    <P id="chorus_mix" value="0.35"/>
-    <P id="chorus_mode" value="1"/>
-    <P id="chorus_on" value="1"/>
-    <P id="delay_div" value="6"/>
-    <P id="delay_fb" value="0.5151"/>
-    <P id="delay_mix" value="0.1833"/>
-    <P id="delay_on" value="1"/>
-    <P id="delay_pingpong" value="1"/>
-    <P id="delay_sync" value="1"/>
-    <P id="fenv_a" value="0.01"/>
-    <P id="fenv_d" value="0.6"/>
-    <P id="fenv_r" value="0.4"/>
-    <P id="fenv_s" value="0.6"/>
-    <P id="flt_cutoff" value="2115.0517"/>
-    <P id="flt_env_amt" value="0.2"/>
-    <P id="glide" value="0.0734"/>
-    <P id="legato" value="0"/>
-    <P id="lfo_delay" value="0.3161"/>
-    <P id="lfo_rate" value="5.8912"/>
-    <P id="mix_osc2" value="0.8"/>
-    <P id="mm4_amt" value="0.06"/>
-    <P id="mm4_dst" value="0"/>
-    <P id="mm4_src" value="3"/>
-    <P id="osc2_fine" value="4.3334"/>
-    <P id="osc2_freq" value="12"/>
-    <P id="voice_count" value="4"/>
-    <P id="voice_detune" value="0.56"/>
-    <P id="voice_mode" value="1"/>
+    <P id="aenv_r" value="0.6157000064849854"/>
+    <P id="aenv_s" value="0.8999999761581421"/>
+    <P id="analog_age" value="0.3686999976634979"/>
+    <P id="delay_div" value="6.0"/>
+    <P id="delay_fb" value="0.5151000022888184"/>
+    <P id="delay_mix" value="0.1833000034093857"/>
+    <P id="delay_on" value="1.0"/>
+    <P id="delay_pingpong" value="1.0"/>
+    <P id="delay_sync" value="1.0"/>
+    <P id="fenv_a" value="0.009999999776482582"/>
+    <P id="fenv_d" value="0.6000000238418579"/>
+    <P id="fenv_r" value="0.4000000059604645"/>
+    <P id="fenv_s" value="0.6000000238418579"/>
+    <P id="flt_cutoff" value="2115.0517578125"/>
+    <P id="flt_env_amt" value="0.2000000029802322"/>
+    <P id="glide" value="0.07339999824762344"/>
+    <P id="legato" value="0.0"/>
+    <P id="lfo_delay" value="0.316100001335144"/>
+    <P id="lfo_rate" value="5.891200065612793"/>
+    <P id="mix_osc2" value="0.800000011920929"/>
+    <P id="mm4_amt" value="0.05999999865889549"/>
+    <P id="mm4_dst" value="0.0"/>
+    <P id="mm4_src" value="3.0"/>
+    <P id="osc2_fine" value="4.333399772644043"/>
+    <P id="osc2_freq" value="12.0"/>
+    <P id="voice_count" value="4.0"/>
+    <P id="voice_detune" value="0.5600000023841858"/>
+    <P id="voice_mode" value="1.0"/>
+    <P id="fx_chorus_on" value="1.0"/>
+    <P id="fx_chorus_mode" value="0.0"/>
+    <P id="fx_chorus_mix" value="0.2554301917552948"/>
+    <P id="fx_chorus_hiss" value="0.05000000074505806"/>
+    <P id="amp_level" value="-7.3"/>
   </PARAMS>
 </AUGUR5_PRESET>

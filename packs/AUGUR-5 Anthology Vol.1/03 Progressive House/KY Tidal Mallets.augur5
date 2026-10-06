@@ -3,36 +3,40 @@
 <AUGUR5_PRESET formatVersion="1" name="Tidal Mallets" category="Keys" target="-18.0"
                genre="Progressive House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="2.2583"/>
-    <P id="aenv_r" value="0.6419"/>
-    <P id="aenv_s" value="0.1518"/>
-    <P id="analog_age" value="0.3078"/>
-    <P id="chorus_mix" value="0.3"/>
-    <P id="chorus_mode" value="1"/>
-    <P id="chorus_on" value="1"/>
-    <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.8"/>
+    <P id="aenv_a" value="0.001000000047497451"/>
+    <P id="aenv_d" value="2.258300065994263"/>
+    <P id="aenv_r" value="0.6419000029563904"/>
+    <P id="aenv_s" value="0.1518000066280365"/>
+    <P id="analog_age" value="0.3077999949455261"/>
+    <P id="fenv_a" value="0.001000000047497451"/>
+    <P id="fenv_d" value="0.800000011920929"/>
     <P id="fenv_r" value="0.5"/>
-    <P id="fenv_s" value="0.2"/>
-    <P id="flt_cutoff" value="1669.2382"/>
-    <P id="flt_env_amt" value="0.3"/>
-    <P id="flt_velocity" value="0.4"/>
+    <P id="fenv_s" value="0.2000000029802322"/>
+    <P id="flt_cutoff" value="1669.238159179688"/>
+    <P id="flt_env_amt" value="0.300000011920929"/>
+    <P id="flt_velocity" value="0.4000000059604645"/>
     <P id="mix_osc2" value="0.5"/>
-    <P id="mm4_amt" value="0.313"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="osc1_pulse" value="1"/>
-    <P id="osc1_saw" value="0"/>
-    <P id="osc2_freq" value="12"/>
-    <P id="osc2_saw" value="0"/>
-    <P id="osc2_tri" value="1"/>
-    <P id="osc_xmod" value="0.0991"/>
-    <P id="phaser_depth" value="0.7657"/>
-    <P id="phaser_fb" value="0.469"/>
-    <P id="phaser_mix" value="0.4"/>
-    <P id="phaser_on" value="1"/>
-    <P id="phaser_rate" value="0.3649"/>
-    <P id="amp_level" value="-7.3"/>
+    <P id="mm4_amt" value="0.3129999935626984"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="osc1_pulse" value="1.0"/>
+    <P id="osc1_saw" value="0.0"/>
+    <P id="osc2_freq" value="12.0"/>
+    <P id="osc2_saw" value="0.0"/>
+    <P id="osc2_tri" value="1.0"/>
+    <P id="osc_xmod" value="0.09910000115633011"/>
+    <P id="amp_level" value="-7.300000190734863"/>
+    <P id="fx_chorus_on" value="1.0"/>
+    <P id="fx_chorus_mode" value="0.0"/>
+    <P id="fx_chorus_mix" value="0.2160003930330276"/>
+    <P id="fx_chorus_hiss" value="0.05000000074505806"/>
+    <P id="fx_phaser_on" value="1.0"/>
+    <P id="fx_phaser_stages" value="1.0"/>
+    <P id="fx_phaser_rate" value="0.3648999929428101"/>
+    <P id="fx_phaser_depth" value="0.7656999826431274"/>
+    <P id="fx_phaser_center" value="700.0"/>
+    <P id="fx_phaser_feedback" value="0.4455499947071075"/>
+    <P id="fx_phaser_lfo" value="1.0"/>
+    <P id="fx_phaser_mix" value="0.4000000059604645"/>
   </PARAMS>
 </AUGUR5_PRESET>

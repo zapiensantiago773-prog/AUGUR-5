@@ -3,32 +3,33 @@
 <AUGUR5_PRESET formatVersion="1" name="Supersonic Canvas" category="Pad" target="-18.0"
                genre="Future Bass" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="1.5427"/>
+    <P id="aenv_a" value="1.542700052261353"/>
     <P id="aenv_d" value="1.5"/>
-    <P id="aenv_r" value="3.2232"/>
-    <P id="aenv_s" value="1"/>
-    <P id="analog_age" value="0.4845"/>
-    <P id="chorus_mix" value="0.3118"/>
-    <P id="chorus_mode" value="2"/>
-    <P id="chorus_on" value="1"/>
-    <P id="fenv_a" value="2.3311"/>
-    <P id="fenv_d" value="3.7664"/>
-    <P id="fenv_r" value="3"/>
-    <P id="fenv_s" value="0.533"/>
-    <P id="flt_cutoff" value="1955.4545"/>
-    <P id="flt_env_amt" value="0.1895"/>
-    <P id="flt_reso" value="0.2565"/>
-    <P id="mix_osc2" value="0.8"/>
-    <P id="mm4_amt" value="0.4919"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="osc2_fine" value="6.8395"/>
-    <P id="reverb_decay" value="8.0939"/>
-    <P id="reverb_mix" value="0.5"/>
-    <P id="reverb_on" value="1"/>
-    <P id="reverb_size" value="1"/>
-    <P id="reverb_type" value="1"/>
-    <P id="voice_spread" value="0.7971"/>
-    <P id="amp_level" value="-4.9"/>
+    <P id="aenv_r" value="3.223200082778931"/>
+    <P id="aenv_s" value="1.0"/>
+    <P id="analog_age" value="0.484499990940094"/>
+    <P id="fenv_a" value="2.331099987030029"/>
+    <P id="fenv_d" value="3.766400098800659"/>
+    <P id="fenv_r" value="3.0"/>
+    <P id="fenv_s" value="0.5329999923706055"/>
+    <P id="flt_cutoff" value="1955.454467773438"/>
+    <P id="flt_env_amt" value="0.1895000040531158"/>
+    <P id="flt_reso" value="0.2565000057220459"/>
+    <P id="mix_osc2" value="0.800000011920929"/>
+    <P id="mm4_amt" value="0.4918999969959259"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="osc2_fine" value="6.839499950408936"/>
+    <P id="voice_spread" value="0.7971000075340271"/>
+    <P id="amp_level" value="-6.6"/>
+    <P id="fx_chorus_on" value="1.0"/>
+    <P id="fx_chorus_mode" value="1.0"/>
+    <P id="fx_chorus_mix" value="0.2252622246742249"/>
+    <P id="fx_chorus_hiss" value="0.05000000074505806"/>
+    <P id="fx_reverb_on" value="1.0"/>
+    <P id="fx_reverb_type" value="0.0"/>
+    <P id="fx_reverb_size" value="1.5"/>
+    <P id="fx_reverb_decay" value="8.093899726867676"/>
+    <P id="fx_reverb_mix" value="0.3440417647361755"/>
   </PARAMS>
 </AUGUR5_PRESET>

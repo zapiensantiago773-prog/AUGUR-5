@@ -1,10 +1,7 @@
 #include "TestHelpers.h"
 #include "Effects/Fuzz.h"
 #include "Util/HalfbandFir.h"
-#include "Effects/Phaser.h"
-#include "Effects/PlateReverb.h"
 #include "Effects/TapeDelay.h"
-#include "Effects/TapeEcho.h"
 #include "Effects/SpringReverb.h"
 #include "Engine/SynthEngine.h"
 #include "Util/Random.h"
@@ -77,40 +74,6 @@ TEST_CASE ("Half-band up/down stages are transparent in the audio band and rejec
     }
 }
 
-TEST_CASE ("Plate reverb decays with the requested RT60", "[fx][plate]")
-{
-    constexpr double sr = 48000.0;
-    const float rt60 = GENERATE (1.0f, 3.0f);
-    augur::PlateReverb plate;
-    plate.prepare (sr);
-    const std::size_t n = static_cast<std::size_t> (sr * rt60 * 2.0);
-    std::vector<float> l (n, 0.0f), r (n, 0.0f);
-    l[0] = r[0] = 1.0f;
-    plate.process (l.data(), r.data(), static_cast<int> (n), 0.5f, rt60, 1.0f);
-    l[0] = r[0] = 0.0f; // remove the dry impulse
-
-    // Schroeder backward integration; RT60 from the -5 .. -25 dB slope (T20 x 3).
-    std::vector<double> edc (n);
-    double acc = 0.0;
-    for (std::size_t i = n; i-- > 0;)
-    {
-        acc += static_cast<double> (l[i]) * l[i] + static_cast<double> (r[i]) * r[i];
-        edc[i] = acc;
-    }
-    const auto timeAt = [&] (double db) {
-        for (std::size_t i = 0; i < n; ++i)
-            if (10.0 * std::log10 (edc[i] / edc[0]) <= db)
-                return static_cast<double> (i) / sr;
-        return static_cast<double> (n) / sr;
-    };
-    const double measured = 3.0 * (timeAt (-25.0) - timeAt (-5.0));
-    INFO ("RT60 set " << rt60 << " measured " << measured);
-    CHECK (measured > 0.7 * rt60);
-    CHECK (measured < 1.3 * rt60);
-    for (float v : l)
-        REQUIRE (std::isfinite (v));
-}
-
 TEST_CASE ("Ping-pong delay alternates sides", "[fx][delay]")
 {
     constexpr double sr = 48000.0;
@@ -135,31 +98,15 @@ TEST_CASE ("Ping-pong delay alternates sides", "[fx][delay]")
     CHECK (energy (r, second - 2500, second + 2500) > 10.0 * energy (l, second - 2500, second + 2500));
 }
 
-TEST_CASE ("Phaser stays bounded at full feedback", "[fx][phaser]")
-{
-    augur::Phaser ph;
-    ph.prepare (48000.0);
-    augur::Random rng (5);
-    std::vector<float> l (96000), r (96000);
-    for (size_t i = 0; i < l.size(); ++i)
-        l[i] = r[i] = rng.nextBipolar() * 0.5f;
-    ph.process (l.data(), r.data(), static_cast<int> (l.size()), 3.0f, 1.0f, 0.95f, 0.5f);
-    float peak = 0.0f;
-    for (float v : l)
-    {
-        REQUIRE (std::isfinite (v));
-        peak = std::max (peak, std::abs (v));
-    }
-    CHECK (peak < 4.0f);
-}
-
 TEST_CASE ("Engine with every effect on is bit-identical however the host slices blocks", "[fx][determinism]")
 {
     augur::SynthParams p;
-    p.fuzzOn = p.phaserOn = p.chorusOn = p.delayOn = p.reverbOn = true;
-    p.chorusMode = 3;
-    p.delaySync = p.delayPingPong = true;
-    p.reverbType = 1;
+    p.fuzzOn = true;
+    p.fx.on.fill (true);                     // the whole rack: drive, chorus, phaser, flanger, delay, echo, reverb, comp
+    p.fx.order = { 3, 1, 7, 0, 5, 2, 6, 4 }; // in a shuffled order
+    p.fx.chorus.mode = augur::rack::ChorusMode::juno12;
+    p.fx.delay.sync = p.fx.delay.pingPong = true;
+    p.fx.phaserSync = true;
     const auto render = [&] (augur::Random* rng) {
         auto e = std::make_unique<augur::SynthEngine>();
         e->prepare (48000.0);
@@ -204,62 +151,6 @@ TEST_CASE ("Fuzz MIX blends time-aligned signals (no comb filter)", "[fx][fuzz]"
     }
 }
 
-TEST_CASE ("Tape echo heads repeat at their tape positions", "[fx][tapeecho]")
-{
-    constexpr double sr = 48000.0;
-    const int mode = GENERATE (0, 1, 2);
-    augur::TapeEcho echo;
-    echo.prepare (sr);
-    augur::TapeEcho::Settings s;
-    s.mode = mode;
-    s.rate = 1.0f;
-    s.intensity = 0.0f;
-    s.wow = 0.0f;
-    s.echoLevel = 1.0f;
-    s.reverbLevel = 0.0f;
-    std::vector<float> l (48000, 0.0f), r (48000, 0.0f);
-    echo.process (l.data(), r.data(), 24000, s, 1.0f); // transport settles on the setting
-    std::fill (l.begin(), l.end(), 0.0f);
-    std::fill (r.begin(), r.end(), 0.0f);
-    l[0] = r[0] = 1.0f;
-    echo.process (l.data(), r.data(), 48000, s, 1.0f);
-
-    std::size_t peak = 100;
-    for (std::size_t i = 100; i < l.size(); ++i)
-        if (std::abs (l[i] + r[i]) > std::abs (l[peak] + r[peak]))
-            peak = i;
-    const double ratio[] = { 1.0, 1.95, 2.9 };
-    const double expected = augur::TapeEcho::head1Seconds (1.0f) * ratio[mode] * sr;
-    INFO ("mode " << mode + 1 << ": echo at " << peak << " samples, expected " << expected);
-    CHECK (std::abs (static_cast<double> (peak) - expected) < 0.03 * expected + 12.0);
-}
-
-TEST_CASE ("Tape echo runaway stays bounded", "[fx][tapeecho]")
-{
-    augur::TapeEcho echo;
-    echo.prepare (48000.0);
-    augur::TapeEcho::Settings s;
-    s.mode = 10;
-    s.intensity = 1.0f;
-    s.bass = 1.0f;
-    s.treble = 1.0f;
-    s.input = 1.0f;
-    s.echoLevel = 1.0f;
-    s.reverbLevel = 1.0f;
-    augur::Random rng (4);
-    std::vector<float> l (48000 * 6), r (l.size());
-    for (std::size_t i = 0; i < 48000; ++i)
-        l[i] = r[i] = rng.nextBipolar();
-    echo.process (l.data(), r.data(), static_cast<int> (l.size()), s, 1.0f);
-    float peak = 0.0f;
-    for (float v : l)
-    {
-        REQUIRE (std::isfinite (v));
-        peak = std::max (peak, std::abs (v));
-    }
-    CHECK (peak < 6.0f);
-}
-
 TEST_CASE ("Spring reverb decays with the requested RT60", "[fx][spring]")
 {
     constexpr double sr = 48000.0;
@@ -292,10 +183,11 @@ TEST_CASE ("Spring reverb decays with the requested RT60", "[fx][spring]")
 TEST_CASE ("Engine with tape echo and spring is bit-identical however the host slices blocks", "[fx][determinism]")
 {
     augur::SynthParams p;
-    p.echoOn = true;
-    p.echoMode = 10;
-    p.reverbOn = true;
-    p.reverbType = 2;
+    p.fx.on[static_cast<size_t> (augur::rack::FxId::echo)] = true;
+    p.fx.echo.mode = 6;
+    p.fx.echoSpring = 0.6;
+    p.fx.on[static_cast<size_t> (augur::rack::FxId::reverb)] = true;
+    p.fx.reverbSpring = true;
     const auto render = [&] (augur::Random* rng) {
         auto e = std::make_unique<augur::SynthEngine>();
         e->prepare (48000.0);

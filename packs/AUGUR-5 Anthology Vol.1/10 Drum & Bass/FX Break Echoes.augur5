@@ -4,34 +4,35 @@
                target="-18.0" genre="Drum &amp; Bass" pack="AUGUR-5 Anthology Vol.1"
                author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="2.2539"/>
-    <P id="aenv_d" value="2"/>
-    <P id="aenv_r" value="4.6003"/>
-    <P id="aenv_s" value="1"/>
-    <P id="analog_age" value="0.4607"/>
-    <P id="flt_cutoff" value="148.1991"/>
-    <P id="flt_reso" value="0.4"/>
-    <P id="menv_a" value="7.352"/>
-    <P id="menv_d" value="1"/>
+    <P id="aenv_a" value="2.253900051116943"/>
+    <P id="aenv_d" value="2.0"/>
+    <P id="aenv_r" value="4.600299835205078"/>
+    <P id="aenv_s" value="1.0"/>
+    <P id="analog_age" value="0.4607000052928925"/>
+    <P id="flt_cutoff" value="148.1990966796875"/>
+    <P id="flt_reso" value="0.4000000059604645"/>
+    <P id="menv_a" value="7.35200023651123"/>
+    <P id="menv_d" value="1.0"/>
     <P id="menv_r" value="0.5"/>
-    <P id="menv_s" value="1"/>
-    <P id="mix_noise" value="0.4"/>
-    <P id="mix_osc2" value="0.8"/>
-    <P id="mm4_amt" value="0.3479"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="mm5_amt" value="1"/>
-    <P id="mm5_dst" value="4"/>
-    <P id="mm5_src" value="8"/>
-    <P id="mm6_amt" value="0.3"/>
-    <P id="mm6_dst" value="0"/>
-    <P id="mm6_src" value="8"/>
-    <P id="osc2_fine" value="8.5497"/>
-    <P id="reverb_decay" value="10.3138"/>
-    <P id="reverb_mix" value="0.5"/>
-    <P id="reverb_on" value="1"/>
-    <P id="reverb_size" value="1"/>
-    <P id="voice_spread" value="0.9"/>
-    <P id="amp_level" value="-1.8"/>
+    <P id="menv_s" value="1.0"/>
+    <P id="mix_noise" value="0.4000000059604645"/>
+    <P id="mix_osc2" value="0.800000011920929"/>
+    <P id="mm4_amt" value="0.347900003194809"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="mm5_amt" value="1.0"/>
+    <P id="mm5_dst" value="4.0"/>
+    <P id="mm5_src" value="8.0"/>
+    <P id="mm6_amt" value="0.300000011920929"/>
+    <P id="mm6_dst" value="0.0"/>
+    <P id="mm6_src" value="8.0"/>
+    <P id="osc2_fine" value="8.549699783325195"/>
+    <P id="voice_spread" value="0.8999999761581421"/>
+    <P id="amp_level" value="-1.0"/>
+    <P id="fx_reverb_on" value="1.0"/>
+    <P id="fx_reverb_type" value="2.0"/>
+    <P id="fx_reverb_size" value="1.5"/>
+    <P id="fx_reverb_decay" value="10.31379985809326"/>
+    <P id="fx_reverb_mix" value="0.3440417647361755"/>
   </PARAMS>
 </AUGUR5_PRESET>

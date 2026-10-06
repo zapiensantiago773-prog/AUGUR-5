@@ -26,20 +26,29 @@ add_library(augur_dsp STATIC
     Modulation/Lfo.h
     Effects/Fuzz.h
     Effects/Fuzz.cpp
-    Effects/Phaser.h
-    Effects/Phaser.cpp
-    Effects/PlateReverb.h
-    Effects/PlateReverb.cpp
     Effects/SpringReverb.h
     Effects/SpringReverb.cpp
-    Effects/TapeEcho.h
-    Effects/TapeEcho.cpp
-    Effects/Chorus.h
-    Effects/Chorus.cpp
     Effects/TapeDelay.h
+    Rack/FxCommon.h
+    Rack/RackFastMath.h
+    Rack/RackRng.h
+    Rack/Drive.h
+    Rack/Drive.cpp
+    Rack/Chorus.h
+    Rack/Chorus.cpp
+    Rack/Phaser.h
+    Rack/Phaser.cpp
+    Rack/Flanger.h
+    Rack/Flanger.cpp
+    Rack/TapeEcho.h
+    Rack/TapeEcho.cpp
+    Rack/Reverb.h
+    Rack/Reverb.cpp
+    Rack/BusComp.h
+    Rack/BusComp.cpp
+    Rack/FxRack.h
+    Rack/FxRack.cpp
     Effects/TapeDelay.cpp
-    Effects/Reverb.h
-    Effects/Reverb.cpp
     Voice/SynthVoice.h
     Voice/SynthVoice.cpp
     Engine/SynthParams.h

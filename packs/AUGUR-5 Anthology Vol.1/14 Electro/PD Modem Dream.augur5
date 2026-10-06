@@ -3,32 +3,32 @@
 <AUGUR5_PRESET formatVersion="1" name="Modem Dream" category="Pad" target="-18.0"
                genre="Electro" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="0.6395"/>
+    <P id="aenv_a" value="0.6395000219345093"/>
     <P id="aenv_d" value="1.5"/>
-    <P id="aenv_r" value="3.1137"/>
-    <P id="aenv_s" value="1"/>
-    <P id="analog_age" value="0.345"/>
-    <P id="fenv_a" value="1.015"/>
-    <P id="fenv_d" value="3.0007"/>
-    <P id="fenv_r" value="3"/>
-    <P id="fenv_s" value="0.5264"/>
-    <P id="flt_cutoff" value="830.5773"/>
-    <P id="flt_env_amt" value="0.1925"/>
-    <P id="flt_mode" value="1"/>
-    <P id="flt_model" value="3"/>
-    <P id="flt_reso" value="0.5445"/>
-    <P id="mix_noise" value="0.1"/>
-    <P id="mix_osc2" value="0.8"/>
-    <P id="mm4_amt" value="0.3715"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="osc2_fine" value="9.918"/>
-    <P id="reverb_decay" value="3.1053"/>
-    <P id="reverb_mix" value="0.3351"/>
-    <P id="reverb_on" value="1"/>
-    <P id="reverb_size" value="0.9212"/>
-    <P id="reverb_type" value="0"/>
-    <P id="voice_spread" value="0.9426"/>
-    <P id="amp_level" value="-15.0"/>
+    <P id="aenv_r" value="3.113699913024902"/>
+    <P id="aenv_s" value="1.0"/>
+    <P id="analog_age" value="0.3449999988079071"/>
+    <P id="fenv_a" value="1.014999985694885"/>
+    <P id="fenv_d" value="3.000699996948242"/>
+    <P id="fenv_r" value="3.0"/>
+    <P id="fenv_s" value="0.5264000296592712"/>
+    <P id="flt_cutoff" value="830.5772705078125"/>
+    <P id="flt_env_amt" value="0.1924999952316284"/>
+    <P id="flt_mode" value="1.0"/>
+    <P id="flt_model" value="3.0"/>
+    <P id="flt_reso" value="0.5444999933242798"/>
+    <P id="mix_noise" value="0.1000000014901161"/>
+    <P id="mix_osc2" value="0.800000011920929"/>
+    <P id="mm4_amt" value="0.3714999854564667"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="osc2_fine" value="9.918000221252441"/>
+    <P id="voice_spread" value="0.9426000118255615"/>
+    <P id="amp_level" value="-14.5"/>
+    <P id="fx_reverb_on" value="1.0"/>
+    <P id="fx_reverb_type" value="2.0"/>
+    <P id="fx_reverb_size" value="1.421200037002563"/>
+    <P id="fx_reverb_decay" value="3.105299949645996"/>
+    <P id="fx_reverb_mix" value="0.2434005290269852"/>
   </PARAMS>
 </AUGUR5_PRESET>

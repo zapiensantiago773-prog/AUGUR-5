@@ -3,29 +3,29 @@
 <AUGUR5_PRESET formatVersion="1" name="Morning Canvas" category="Pad" target="-18.0"
                genre="Ambient" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="1.6059"/>
+    <P id="aenv_a" value="1.605900049209595"/>
     <P id="aenv_d" value="1.5"/>
-    <P id="aenv_r" value="4.172"/>
-    <P id="aenv_s" value="1"/>
-    <P id="analog_age" value="0.5619"/>
-    <P id="fenv_a" value="1.8426"/>
-    <P id="fenv_d" value="3.9672"/>
-    <P id="fenv_r" value="3"/>
-    <P id="fenv_s" value="0.6036"/>
-    <P id="flt_cutoff" value="1356.3922"/>
-    <P id="flt_env_amt" value="0.282"/>
-    <P id="flt_reso" value="0.1708"/>
-    <P id="mix_osc2" value="0.8"/>
-    <P id="mm4_amt" value="0.3823"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="osc2_fine" value="7.3056"/>
-    <P id="reverb_decay" value="7.2567"/>
-    <P id="reverb_mix" value="0.5"/>
-    <P id="reverb_on" value="1"/>
-    <P id="reverb_size" value="1"/>
-    <P id="reverb_type" value="1"/>
-    <P id="voice_spread" value="0.8813"/>
-    <P id="amp_level" value="-8.1"/>
+    <P id="aenv_r" value="4.171999931335449"/>
+    <P id="aenv_s" value="1.0"/>
+    <P id="analog_age" value="0.5619000196456909"/>
+    <P id="fenv_a" value="1.842599987983704"/>
+    <P id="fenv_d" value="3.967200040817261"/>
+    <P id="fenv_r" value="3.0"/>
+    <P id="fenv_s" value="0.603600025177002"/>
+    <P id="flt_cutoff" value="1356.392211914062"/>
+    <P id="flt_env_amt" value="0.2820000052452087"/>
+    <P id="flt_reso" value="0.1708000004291534"/>
+    <P id="mix_osc2" value="0.800000011920929"/>
+    <P id="mm4_amt" value="0.3822999894618988"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="osc2_fine" value="7.305600166320801"/>
+    <P id="voice_spread" value="0.8812999725341797"/>
+    <P id="amp_level" value="-8.6"/>
+    <P id="fx_reverb_on" value="1.0"/>
+    <P id="fx_reverb_type" value="0.0"/>
+    <P id="fx_reverb_size" value="1.5"/>
+    <P id="fx_reverb_decay" value="7.256700038909912"/>
+    <P id="fx_reverb_mix" value="0.3440417647361755"/>
   </PARAMS>
 </AUGUR5_PRESET>

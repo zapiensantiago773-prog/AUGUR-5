@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Rack/FxRack.h"
+
 #include <array>
 
 namespace augur
@@ -122,25 +124,11 @@ struct SynthParams
     std::array<float, 8> trimTune {};   // per-voice tuning trims, cents (voices 9..16 reuse 1..8)
     std::array<float, 8> trimCutoff {}; // per-voice cutoff trims, octaves
 
-    // Effects
-    bool chorusOn = false;
-    float chorusRate = 0.6f, chorusDepth = 0.5f, chorusMix = 0.5f;
-    bool delayOn = false;
-    float delayTime = 0.375f, delayFeedback = 0.35f, delayMix = 0.3f;
-    bool reverbOn = false;
-    float reverbSize = 0.5f, reverbDecay = 2.5f, reverbMix = 0.25f;
-    int reverbType = 0;       // 0 = hall (FDN), 1 = plate, 2 = spring
-    bool echoOn = false;      // tape echo (multi-head tape loop + spring)
-    int echoMode = 3;         // selector positions 1..12 as 0..11
-    float echoRate = 0.5f, echoIntensity = 0.45f, echoBass = 0.0f, echoTreble = 0.0f, echoWow = 0.4f, echoInput = 0.5f;
-    float echoVolume = 0.5f, echoReverb = 0.35f;
-    int chorusMode = 0;       // 0 = free, 1 = I, 2 = II, 3 = I+II
-    bool delaySync = false, delayPingPong = false;
-    int delayDivision = 6;    // index into delaySyncBeats (1/8 dotted)
+    // Effects: AUGUR's FUZZ pedal (on the oversampled voice bus) ...
     bool fuzzOn = false;
     float fuzzSustain = 0.6f, fuzzTone = 0.5f, fuzzVolume = 0.5f, fuzzMix = 1.0f;
-    bool phaserOn = false;
-    float phaserRate = 0.3f, phaserDepth = 0.7f, phaserFeedback = 0.4f, phaserMix = 0.5f;
+    // ... then the effects rack (drive, chorus, phaser, flanger, delay, tape echo, reverb, bus comp), any order.
+    rack::FxParams fx;
 
     // Global
     float masterTuneCents = 0.0f, glide = 0.0f;

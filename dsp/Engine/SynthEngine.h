@@ -1,14 +1,8 @@
 #pragma once
 
-#include "Effects/Chorus.h"
 #include "Effects/Fuzz.h"
-#include "Effects/Phaser.h"
-#include "Effects/PlateReverb.h"
-#include "Effects/SpringReverb.h"
-#include "Effects/TapeEcho.h"
-#include "Effects/Reverb.h"
-#include "Effects/TapeDelay.h"
 #include "Engine/ChunkSignals.h"
+#include "Rack/FxRack.h"
 #include "Engine/SynthParams.h"
 #include "Modulation/Arpeggiator.h"
 #include "Modulation/Lfo.h"
@@ -71,6 +65,13 @@ public:
     void warmUp() noexcept;
 
     int getOversampling() const noexcept { return oversampling; }
+
+    // Effect read-outs for the GUI (audio -> GUI, relaxed).
+    float getCompGainReduction() const noexcept { return compGr.load (std::memory_order_relaxed); }
+    float getPhaserHz() const noexcept { return phaserHzMeter.load (std::memory_order_relaxed); }
+    float getFlangerMs() const noexcept { return flangerMsMeter.load (std::memory_order_relaxed); }
+    float getEchoHeadMs() const noexcept { return echoHeadMeter.load (std::memory_order_relaxed); }
+    double getTempo() const noexcept { return tempoMeter.load (std::memory_order_relaxed); }
     float getVoiceLevel (int voice) const noexcept { return voiceLevels[static_cast<size_t> (voice)].load (std::memory_order_relaxed); }
 
 private:
@@ -148,10 +149,10 @@ private:
     LinearSmoother smMix1, smMix2, smMixNoise, smDrive, smCutoff, smReso, smEnvAmt, smPmFenv, smPmOsc2, smLfoAmount;
     LinearSmoother smLevel, smMixRing, smMixSub, smCrossMod;
     double lfo2Phase = 0.0; // free-running LFO 2 (voices start from it when not retriggered)
-    float chorusMix = 0.0f, delayMix = 0.0f, reverbMix = 0.0f, fxCoeff = 0.1f;
-    float fuzzMix = 0.0f, phaserMix = 0.0f, hallMix = 0.0f, plateMix = 0.0f, springMix = 0.0f, echoMix = 0.0f;
-    bool chorusActive = false, delayActive = false, reverbActive = false;
-    bool fuzzActive = false, phaserActive = false, plateActive = false, springActive = false, echoActive = false;
+    float fxCoeff = 0.1f;
+    bool fuzzActive = false;
+    std::atomic<float> compGr { 0.0f }, phaserHzMeter { 600.0f }, flangerMsMeter { 2.0f }, echoHeadMeter { 177.0f };
+    std::atomic<double> tempoMeter { 120.0 };
 
     // Output stage
     std::array<float, ChunkSignals::maxSamples> busL {}, busR {};
@@ -159,14 +160,8 @@ private:
     HalfbandDownsampler<27> quadL, quadR; // DIVINE: 4x -> 2x before the main decimator
     float dcL = 0.0f, dcR = 0.0f, dcCoeff = 0.0f;
     Random floorNoise;
-    Chorus chorus;
-    TapeDelay delay;
-    Reverb reverb;
-    PlateReverb plate;
-    SpringReverb springReverb;
-    TapeEcho tapeEcho;
     Fuzz fuzz;
-    Phaser phaser;
+    rack::FxRack rack;
 };
 
 } // namespace augur

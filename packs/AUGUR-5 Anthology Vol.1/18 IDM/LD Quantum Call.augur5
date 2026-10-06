@@ -3,34 +3,35 @@
 <AUGUR5_PRESET formatVersion="1" name="Quantum Call" category="Lead" target="-18.0"
                genre="IDM" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="0.0175"/>
+    <P id="aenv_a" value="0.01750000007450581"/>
     <P id="aenv_d" value="0.5"/>
-    <P id="aenv_r" value="0.4466"/>
-    <P id="aenv_s" value="0.9"/>
-    <P id="analog_age" value="0.4958"/>
-    <P id="chorus_mix" value="0.3107"/>
-    <P id="chorus_mode" value="1"/>
-    <P id="chorus_on" value="1"/>
-    <P id="delay_div" value="6"/>
-    <P id="delay_fb" value="0.4385"/>
-    <P id="delay_mix" value="0.2021"/>
-    <P id="delay_on" value="1"/>
-    <P id="delay_pingpong" value="0"/>
-    <P id="delay_sync" value="1"/>
-    <P id="flt_cutoff" value="2502.8319"/>
-    <P id="glide" value="0.0305"/>
-    <P id="legato" value="1"/>
-    <P id="lfo_delay" value="0.4927"/>
-    <P id="lfo_rate" value="5.7435"/>
-    <P id="mix_osc1" value="0.4"/>
-    <P id="mix_osc2" value="0.2"/>
-    <P id="mix_ring" value="0.6194"/>
-    <P id="mm4_amt" value="0.0814"/>
-    <P id="mm4_dst" value="0"/>
-    <P id="mm4_src" value="3"/>
-    <P id="osc2_fine" value="19.4869"/>
-    <P id="osc2_freq" value="7"/>
-    <P id="voice_count" value="1"/>
-    <P id="amp_level" value="4.0"/>
+    <P id="aenv_r" value="0.4465999901294708"/>
+    <P id="aenv_s" value="0.8999999761581421"/>
+    <P id="analog_age" value="0.4957999885082245"/>
+    <P id="delay_div" value="6.0"/>
+    <P id="delay_fb" value="0.4384999871253967"/>
+    <P id="delay_mix" value="0.2020999938249588"/>
+    <P id="delay_on" value="1.0"/>
+    <P id="delay_pingpong" value="0.0"/>
+    <P id="delay_sync" value="1.0"/>
+    <P id="flt_cutoff" value="2502.831787109375"/>
+    <P id="glide" value="0.03050000034272671"/>
+    <P id="legato" value="1.0"/>
+    <P id="lfo_delay" value="0.4927000105381012"/>
+    <P id="lfo_rate" value="5.743500232696533"/>
+    <P id="mix_osc1" value="0.4000000059604645"/>
+    <P id="mix_osc2" value="0.2000000029802322"/>
+    <P id="mix_ring" value="0.6194000244140625"/>
+    <P id="mm4_amt" value="0.08139999955892563"/>
+    <P id="mm4_dst" value="0.0"/>
+    <P id="mm4_src" value="3.0"/>
+    <P id="osc2_fine" value="19.48690032958984"/>
+    <P id="osc2_freq" value="7.0"/>
+    <P id="voice_count" value="1.0"/>
+    <P id="amp_level" value="2.9"/>
+    <P id="fx_chorus_on" value="1.0"/>
+    <P id="fx_chorus_mode" value="0.0"/>
+    <P id="fx_chorus_mix" value="0.2243974953889847"/>
+    <P id="fx_chorus_hiss" value="0.05000000074505806"/>
   </PARAMS>
 </AUGUR5_PRESET>

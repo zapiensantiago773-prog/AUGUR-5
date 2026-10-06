@@ -60,14 +60,8 @@ void SynthEngine::prepare (double hostSampleRate, std::uint64_t unitSeed, int ov
         f.prepare (internalRate);
     lfo.prepare (internalRate, deriveSeed (unitSeed, 7));
     floorNoise.setSeed (deriveSeed (unitSeed, 8));
-    chorus.prepare (hostSampleRate);
+    rack.prepare (hostSampleRate, deriveSeed (unitSeed, 9));
     fuzz.prepare (internalRate);
-    phaser.prepare (hostSampleRate);
-    plate.prepare (hostSampleRate);
-    springReverb.prepare (hostSampleRate);
-    tapeEcho.prepare (hostSampleRate);
-    delay.prepare (hostSampleRate);
-    reverb.prepare (hostSampleRate);
 
     dcCoeff = static_cast<float> (1.0 - std::exp (-2.0 * 3.14159265358979 * 6.0 / hostSampleRate));
     fxCoeff = static_cast<float> (1.0 - std::exp (-(controlInterval / hostSampleRate) / 0.03));
@@ -96,20 +90,9 @@ void SynthEngine::reset() noexcept
     quadL.reset();
     quadR.reset();
     dcL = dcR = 0.0f;
-    chorus.reset();
-    delay.reset();
-    reverb.reset();
+    rack.reset();
     fuzz.reset();
-    phaser.reset();
-    plate.reset();
-    springReverb.reset();
-    tapeEcho.reset();
-    springMix = echoMix = 0.0f;
-    springActive = echoActive = false;
-    chorusMix = delayMix = reverbMix = 0.0f;
-    fuzzMix = phaserMix = hallMix = plateMix = 0.0f;
-    chorusActive = delayActive = reverbActive = false;
-    fuzzActive = phaserActive = plateActive = false;
+    fuzzActive = false;
 
     sampleCounter = 0;
     chunkPos = 0;
@@ -668,14 +651,6 @@ void SynthEngine::controlUpdate() noexcept
         v.updateControl (sig);
 
     // Effect send levels fade in/out instead of switching.
-    chorusMix += ((params.chorusOn ? params.chorusMix : 0.0f) - chorusMix) * fxCoeff;
-    delayMix += ((params.delayOn ? params.delayMix : 0.0f) - delayMix) * fxCoeff;
-    reverbMix += ((params.reverbOn ? params.reverbMix : 0.0f) - reverbMix) * fxCoeff;
-    hallMix += ((params.reverbOn && params.reverbType == 0 ? params.reverbMix : 0.0f) - hallMix) * fxCoeff;
-    plateMix += ((params.reverbOn && params.reverbType == 1 ? params.reverbMix : 0.0f) - plateMix) * fxCoeff;
-    springMix += ((params.reverbOn && params.reverbType == 2 ? params.reverbMix : 0.0f) - springMix) * fxCoeff;
-    echoMix += ((params.echoOn ? 1.0f : 0.0f) - echoMix) * fxCoeff;
-    phaserMix += ((params.phaserOn ? params.phaserMix : 0.0f) - phaserMix) * fxCoeff;
 }
 
 void SynthEngine::renderSegment (float* left, float* right, int offset, int numSamples) noexcept
@@ -802,62 +777,19 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
         right[k] = r - dcR + floorAmp * floorNoise.nextBipolar();
     }
 
-    // Effects: chorus -> delay -> reverb. Each runs only while audible, and clears when it goes idle.
-    const auto runFx = [&] (bool on, float mix, bool& active, auto&& processFx, auto&& resetFx) {
-        if (on || mix > 1.0e-4f)
-        {
-            active = true;
-            processFx();
-        }
-        else if (active)
-        {
-            active = false;
-            resetFx();
-        }
-    };
-
-    runFx (params.phaserOn, phaserMix, phaserActive,
-           [&] { phaser.process (left, right, numSamples, params.phaserRate, params.phaserDepth, params.phaserFeedback, phaserMix); },
-           [&] { phaser.reset(); });
-    runFx (params.chorusOn, chorusMix, chorusActive,
-           [&] { chorus.process (left, right, numSamples, params.chorusRate, params.chorusDepth, chorusMix, params.chorusMode); },
-           [&] { chorus.reset(); });
-    const float delaySeconds = params.delaySync
-                                   ? static_cast<float> (delaySyncBeats[static_cast<size_t> (std::clamp (params.delayDivision, 0, 11))] * 60.0 / bpm)
-                                   : params.delayTime;
-    runFx (params.delayOn, delayMix, delayActive,
-           [&] { delay.process (left, right, numSamples, delaySeconds, params.delayFeedback, delayMix, params.delayPingPong); },
-           [&] { delay.reset(); });
-    runFx (params.echoOn, echoMix, echoActive,
-           [&] {
-               TapeEcho::Settings es;
-               es.mode = params.echoMode;
-               es.rate = params.echoRate;
-               es.intensity = params.echoIntensity;
-               es.bass = params.echoBass;
-               es.treble = params.echoTreble;
-               es.wow = params.echoWow;
-               es.input = params.echoInput;
-               es.echoLevel = params.echoVolume;
-               es.reverbLevel = params.echoReverb;
-               tapeEcho.process (left, right, numSamples, es, echoMix);
-           },
-           [&] { tapeEcho.reset(); });
-    runFx (params.reverbOn && params.reverbType == 2, springMix, springActive,
-           [&] {
-               float mono[controlInterval];
-               for (int k = 0; k < numSamples; ++k)
-                   mono[k] = 0.5f * (left[k] + right[k]);
-               // SIZE = spring tension, DECAY = RT60 of the tank.
-               springReverb.process (mono, left, right, numSamples, std::min (params.reverbDecay, 6.0f), params.reverbSize, springMix);
-           },
-           [&] { springReverb.reset(); });
-    runFx (params.reverbOn && params.reverbType == 0, hallMix, reverbActive,
-           [&] { reverb.process (left, right, numSamples, params.reverbSize, params.reverbDecay, hallMix); },
-           [&] { reverb.reset(); });
-    runFx (params.reverbOn && params.reverbType == 1, plateMix, plateActive,
-           [&] { plate.process (left, right, numSamples, params.reverbSize, params.reverbDecay, plateMix); },
-           [&] { plate.reset(); });
+    // Effects rack (any order), one stereo sample at a time; each unit costs nothing while switched off.
+    for (int k = 0; k < numSamples; ++k)
+    {
+        double l = left[k], r = right[k];
+        rack.process (l, r, params.fx, bpm);
+        left[k] = static_cast<float> (l);
+        right[k] = static_cast<float> (r);
+    }
+    compGr.store (rack.compGainReduction(), std::memory_order_relaxed);
+    phaserHzMeter.store (static_cast<float> (rack.phaserHz()), std::memory_order_relaxed);
+    flangerMsMeter.store (static_cast<float> (rack.flangerMs()), std::memory_order_relaxed);
+    echoHeadMeter.store (static_cast<float> (rack.echoHeadMs (0)), std::memory_order_relaxed);
+    tempoMeter.store (bpm, std::memory_order_relaxed);
 
     for (int k = 0; k < numSamples; ++k)
     {

@@ -57,6 +57,8 @@ def main(report_path: str) -> None:
         setting = '{ "amp_level", %.1ff }' % new
         body = body.replace(m.group(0), setting) if m else body[: body.rindex("}") + 1] + ", " + setting + body[body.rindex("}") + 1 :]
         sources[f] = source[:start] + body + source[end:]
+        if abs(delta) >= 0.5:
+            print(f"  {name:<24} {category:<12} peak {peak:6.1f}  loud {loud:6.1f}  -> {delta:+.1f} dB")
         worst = max(worst, abs(delta))
     for f, src in sources.items():
         f.write_text(src, encoding="utf-8")

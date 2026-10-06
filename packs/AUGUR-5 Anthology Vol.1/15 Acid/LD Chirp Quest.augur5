@@ -3,41 +3,46 @@
 <AUGUR5_PRESET formatVersion="1" name="Chirp Quest" category="Lead" target="-18.0"
                genre="Acid" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="0.0221"/>
+    <P id="aenv_a" value="0.02209999971091747"/>
     <P id="aenv_d" value="0.5"/>
-    <P id="aenv_r" value="0.3452"/>
-    <P id="aenv_s" value="0.9"/>
+    <P id="aenv_r" value="0.3452000021934509"/>
+    <P id="aenv_s" value="0.8999999761581421"/>
     <P id="analog_age" value="0.3125"/>
-    <P id="echo_intensity" value="0.4572"/>
-    <P id="echo_mode" value="3"/>
-    <P id="echo_on" value="1"/>
-    <P id="echo_rate" value="0.5121"/>
-    <P id="echo_reverb" value="0.3641"/>
-    <P id="echo_volume" value="0.3531"/>
-    <P id="echo_wow" value="0.3478"/>
-    <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.3"/>
-    <P id="fenv_r" value="0.2"/>
-    <P id="fenv_s" value="0.2"/>
-    <P id="flt_cutoff" value="1042.6815"/>
+    <P id="fenv_a" value="0.001000000047497451"/>
+    <P id="fenv_d" value="0.300000011920929"/>
+    <P id="fenv_r" value="0.2000000029802322"/>
+    <P id="fenv_s" value="0.2000000029802322"/>
+    <P id="flt_cutoff" value="1042.681518554688"/>
     <P id="flt_env_amt" value="0.5"/>
-    <P id="flt_model" value="4"/>
-    <P id="flt_reso" value="0.7967"/>
-    <P id="glide" value="0.0791"/>
-    <P id="legato" value="1"/>
-    <P id="lfo_delay" value="0.6577"/>
-    <P id="lfo_rate" value="5.9881"/>
-    <P id="mix_osc2" value="0.3"/>
-    <P id="mm4_amt" value="0.0981"/>
-    <P id="mm4_dst" value="0"/>
-    <P id="mm4_src" value="3"/>
-    <P id="osc2_fine" value="5.4021"/>
-    <P id="reverb_decay" value="5.5977"/>
-    <P id="reverb_mix" value="0.2323"/>
-    <P id="reverb_on" value="1"/>
-    <P id="reverb_size" value="0.5466"/>
-    <P id="reverb_type" value="1"/>
-    <P id="voice_count" value="1"/>
-    <P id="amp_level" value="-4.9"/>
+    <P id="flt_model" value="4.0"/>
+    <P id="flt_reso" value="0.7967000007629395"/>
+    <P id="glide" value="0.07909999787807465"/>
+    <P id="legato" value="1.0"/>
+    <P id="lfo_delay" value="0.6577000021934509"/>
+    <P id="lfo_rate" value="5.988100051879883"/>
+    <P id="mix_osc2" value="0.300000011920929"/>
+    <P id="mm4_amt" value="0.09809999912977219"/>
+    <P id="mm4_dst" value="0.0"/>
+    <P id="mm4_src" value="3.0"/>
+    <P id="osc2_fine" value="5.402100086212158"/>
+    <P id="voice_count" value="1.0"/>
+    <P id="amp_level" value="-5.8"/>
+    <P id="fx_echo_on" value="1.0"/>
+    <P id="fx_echo_mode" value="3.0"/>
+    <P id="fx_echo_time" value="115.1316375732422"/>
+    <P id="fx_echo_intensity" value="0.4571999907493591"/>
+    <P id="fx_echo_bass" value="0.0"/>
+    <P id="fx_echo_treble" value="0.0"/>
+    <P id="fx_echo_wow" value="0.3477999866008759"/>
+    <P id="fx_echo_flutter" value="0.2782399952411652"/>
+    <P id="fx_echo_sat" value="0.5"/>
+    <P id="fx_echo_age" value="0.1500000059604645"/>
+    <P id="fx_echo_spring" value="0.3641000092029572"/>
+    <P id="fx_echo_mix" value="0.2160903066396713"/>
+    <P id="fx_reverb_on" value="1.0"/>
+    <P id="fx_reverb_type" value="0.0"/>
+    <P id="fx_reverb_size" value="1.046599984169006"/>
+    <P id="fx_reverb_decay" value="5.597700119018555"/>
+    <P id="fx_reverb_mix" value="0.17307049036026"/>
   </PARAMS>
 </AUGUR5_PRESET>

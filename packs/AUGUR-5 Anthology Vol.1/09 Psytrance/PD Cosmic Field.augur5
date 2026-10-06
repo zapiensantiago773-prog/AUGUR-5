@@ -3,38 +3,38 @@
 <AUGUR5_PRESET formatVersion="1" name="Cosmic Field" category="Pad" target="-18.0"
                genre="Psytrance" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="1.5214"/>
+    <P id="aenv_a" value="1.521399974822998"/>
     <P id="aenv_d" value="1.5"/>
-    <P id="aenv_r" value="3.5288"/>
-    <P id="aenv_s" value="1"/>
-    <P id="analog_age" value="0.4986"/>
-    <P id="fenv_a" value="1.2746"/>
-    <P id="fenv_d" value="2.2445"/>
-    <P id="fenv_r" value="3"/>
-    <P id="fenv_s" value="0.4032"/>
-    <P id="flt_cutoff" value="1685.0378"/>
-    <P id="flt_env_amt" value="0.2046"/>
-    <P id="flt_mode" value="2"/>
-    <P id="flt_model" value="3"/>
-    <P id="flt_reso" value="0.4"/>
-    <P id="lfo2_rate" value="0.144"/>
-    <P id="lfo2_wave" value="6"/>
-    <P id="mix_noise" value="0.3697"/>
+    <P id="aenv_r" value="3.528800010681152"/>
+    <P id="aenv_s" value="1.0"/>
+    <P id="analog_age" value="0.4986000061035156"/>
+    <P id="fenv_a" value="1.274600028991699"/>
+    <P id="fenv_d" value="2.244499921798706"/>
+    <P id="fenv_r" value="3.0"/>
+    <P id="fenv_s" value="0.4032000005245209"/>
+    <P id="flt_cutoff" value="1685.037841796875"/>
+    <P id="flt_env_amt" value="0.2046000063419342"/>
+    <P id="flt_mode" value="2.0"/>
+    <P id="flt_model" value="3.0"/>
+    <P id="flt_reso" value="0.4000000059604645"/>
+    <P id="lfo2_rate" value="0.1439999938011169"/>
+    <P id="lfo2_wave" value="6.0"/>
+    <P id="mix_noise" value="0.369700014591217"/>
     <P id="mix_osc1" value="0.5"/>
     <P id="mix_osc2" value="0.5"/>
-    <P id="mm4_amt" value="0.4696"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="mm5_amt" value="0.3"/>
-    <P id="mm5_dst" value="4"/>
-    <P id="mm5_src" value="9"/>
-    <P id="osc2_fine" value="7.5614"/>
-    <P id="reverb_decay" value="4.2421"/>
-    <P id="reverb_mix" value="0.2784"/>
-    <P id="reverb_on" value="1"/>
-    <P id="reverb_size" value="0.6974"/>
-    <P id="reverb_type" value="0"/>
-    <P id="voice_spread" value="0.8048"/>
-    <P id="amp_level" value="-5.5"/>
+    <P id="mm4_amt" value="0.4695999920368195"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="mm5_amt" value="0.300000011920929"/>
+    <P id="mm5_dst" value="4.0"/>
+    <P id="mm5_src" value="9.0"/>
+    <P id="osc2_fine" value="7.561399936676025"/>
+    <P id="voice_spread" value="0.8047999739646912"/>
+    <P id="amp_level" value="-5.1"/>
+    <P id="fx_reverb_on" value="1.0"/>
+    <P id="fx_reverb_type" value="2.0"/>
+    <P id="fx_reverb_size" value="1.197399973869324"/>
+    <P id="fx_reverb_decay" value="4.242099761962891"/>
+    <P id="fx_reverb_mix" value="0.2052604854106903"/>
   </PARAMS>
 </AUGUR5_PRESET>

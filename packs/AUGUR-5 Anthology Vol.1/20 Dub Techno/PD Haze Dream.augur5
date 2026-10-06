@@ -3,34 +3,39 @@
 <AUGUR5_PRESET formatVersion="1" name="Haze Dream" category="Pad" target="-18.0"
                genre="Dub Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="1.243"/>
+    <P id="aenv_a" value="1.243000030517578"/>
     <P id="aenv_d" value="1.5"/>
-    <P id="aenv_r" value="3.0982"/>
-    <P id="aenv_s" value="1"/>
-    <P id="analog_age" value="0.6459"/>
-    <P id="echo_intensity" value="0.4949"/>
-    <P id="echo_mode" value="8"/>
-    <P id="echo_on" value="1"/>
-    <P id="echo_rate" value="0.4169"/>
-    <P id="echo_reverb" value="0.4271"/>
-    <P id="echo_volume" value="0.5191"/>
-    <P id="echo_wow" value="0.3584"/>
-    <P id="fenv_a" value="0.996"/>
-    <P id="fenv_d" value="3.968"/>
-    <P id="fenv_r" value="3"/>
-    <P id="fenv_s" value="0.696"/>
-    <P id="flt_cutoff" value="790.8602"/>
-    <P id="flt_env_amt" value="0.3469"/>
-    <P id="flt_mode" value="1"/>
-    <P id="flt_model" value="3"/>
-    <P id="flt_reso" value="0.4626"/>
-    <P id="mix_noise" value="0.1"/>
-    <P id="mix_osc2" value="0.8"/>
-    <P id="mm4_amt" value="0.4047"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="osc2_fine" value="10.6929"/>
-    <P id="voice_spread" value="0.7832"/>
-    <P id="amp_level" value="-12.5"/>
+    <P id="aenv_r" value="3.098200082778931"/>
+    <P id="aenv_s" value="1.0"/>
+    <P id="analog_age" value="0.6459000110626221"/>
+    <P id="fenv_a" value="0.9959999918937683"/>
+    <P id="fenv_d" value="3.967999935150146"/>
+    <P id="fenv_r" value="3.0"/>
+    <P id="fenv_s" value="0.6959999799728394"/>
+    <P id="flt_cutoff" value="790.8602294921875"/>
+    <P id="flt_env_amt" value="0.3468999862670898"/>
+    <P id="flt_mode" value="1.0"/>
+    <P id="flt_model" value="3.0"/>
+    <P id="flt_reso" value="0.4625999927520752"/>
+    <P id="mix_noise" value="0.1000000014901161"/>
+    <P id="mix_osc2" value="0.800000011920929"/>
+    <P id="mm4_amt" value="0.4047000110149384"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="osc2_fine" value="10.69289970397949"/>
+    <P id="voice_spread" value="0.7832000255584717"/>
+    <P id="amp_level" value="-12.0"/>
+    <P id="fx_echo_on" value="1.0"/>
+    <P id="fx_echo_mode" value="8.0"/>
+    <P id="fx_echo_time" value="132.9829711914062"/>
+    <P id="fx_echo_intensity" value="0.4948999881744385"/>
+    <P id="fx_echo_bass" value="0.0"/>
+    <P id="fx_echo_treble" value="0.0"/>
+    <P id="fx_echo_wow" value="0.3583999872207642"/>
+    <P id="fx_echo_flutter" value="0.2867200076580048"/>
+    <P id="fx_echo_sat" value="0.5"/>
+    <P id="fx_echo_age" value="0.1500000059604645"/>
+    <P id="fx_echo_spring" value="0.4271000027656555"/>
+    <P id="fx_echo_mix" value="0.3048202991485596"/>
   </PARAMS>
 </AUGUR5_PRESET>

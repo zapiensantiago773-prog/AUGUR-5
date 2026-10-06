@@ -3,32 +3,33 @@
 <AUGUR5_PRESET formatVersion="1" name="Concrete Harp" category="Keys" target="-18.0"
                genre="Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
   <PARAMS>
-    <P id="aenv_a" value="0.005"/>
+    <P id="aenv_a" value="0.004999999888241291"/>
     <P id="aenv_d" value="0.5"/>
-    <P id="aenv_r" value="0.1"/>
-    <P id="aenv_s" value="1"/>
-    <P id="analog_age" value="0.376"/>
-    <P id="chorus_mix" value="0.4"/>
-    <P id="chorus_mode" value="3"/>
-    <P id="chorus_on" value="1"/>
-    <P id="flt_cutoff" value="2139.6331"/>
-    <P id="flt_slope" value="1"/>
-    <P id="flt_velocity" value="0.4"/>
+    <P id="aenv_r" value="0.1000000014901161"/>
+    <P id="aenv_s" value="1.0"/>
+    <P id="analog_age" value="0.3759999871253967"/>
+    <P id="flt_cutoff" value="2139.633056640625"/>
+    <P id="flt_slope" value="1.0"/>
+    <P id="flt_velocity" value="0.4000000059604645"/>
     <P id="mix_osc2" value="0.5"/>
     <P id="mix_sub" value="0.5"/>
-    <P id="mm4_amt" value="0.4852"/>
-    <P id="mm4_dst" value="4"/>
-    <P id="mm4_src" value="4"/>
-    <P id="osc1_pulse" value="1"/>
-    <P id="osc1_saw" value="0"/>
-    <P id="osc2_freq" value="12"/>
-    <P id="osc2_pulse" value="1"/>
-    <P id="osc2_saw" value="0"/>
-    <P id="reverb_decay" value="4.4533"/>
-    <P id="reverb_mix" value="0.3383"/>
-    <P id="reverb_on" value="1"/>
-    <P id="reverb_size" value="0.7656"/>
-    <P id="reverb_type" value="0"/>
-    <P id="amp_level" value="-11.4"/>
+    <P id="mm4_amt" value="0.4851999878883362"/>
+    <P id="mm4_dst" value="4.0"/>
+    <P id="mm4_src" value="4.0"/>
+    <P id="osc1_pulse" value="1.0"/>
+    <P id="osc1_saw" value="0.0"/>
+    <P id="osc2_freq" value="12.0"/>
+    <P id="osc2_pulse" value="1.0"/>
+    <P id="osc2_saw" value="0.0"/>
+    <P id="amp_level" value="-12.0"/>
+    <P id="fx_chorus_on" value="1.0"/>
+    <P id="fx_chorus_mode" value="2.0"/>
+    <P id="fx_chorus_mix" value="0.2951672375202179"/>
+    <P id="fx_chorus_hiss" value="0.05000000074505806"/>
+    <P id="fx_reverb_on" value="1.0"/>
+    <P id="fx_reverb_type" value="2.0"/>
+    <P id="fx_reverb_size" value="1.265599966049194"/>
+    <P id="fx_reverb_decay" value="4.453299999237061"/>
+    <P id="fx_reverb_mix" value="0.2455020397901535"/>
   </PARAMS>
 </AUGUR5_PRESET>

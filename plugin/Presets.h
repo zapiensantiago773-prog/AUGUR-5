@@ -44,6 +44,9 @@ public:
 
     juce::String getCurrentName() const { return currentName; }
     std::function<void()> onPresetLoaded; // message thread, after every factory/user preset load
+    // The effects rack order is plugin state, not a parameter: user presets carry it, factory sounds use the default.
+    std::function<juce::String()> saveFxOrder;
+    std::function<void (const juce::String&)> loadFxOrder; // "" = default order
     void setCurrentName (const juce::String& n) { currentName = n; }
 
 private:

@@ -89,9 +89,8 @@ namespace augur5::params
     inline constexpr auto analog_age   = "analog_age";   // 0 = freshly calibrated .. 1 = worn vintage
 
     // ---------- EFFECTS ----------
-    inline constexpr auto chorus_on = "chorus_on", chorus_rate = "chorus_rate", chorus_depth = "chorus_depth", chorus_mix = "chorus_mix";
+    // AUGUR's stereo delay (a unit of the effects rack).
     inline constexpr auto delay_on  = "delay_on",  delay_time  = "delay_time",  delay_fb     = "delay_fb",     delay_mix  = "delay_mix";
-    inline constexpr auto reverb_on = "reverb_on", reverb_size = "reverb_size", reverb_decay = "reverb_decay", reverb_mix = "reverb_mix";
 
     // ---------- GLOBAL ----------
     inline constexpr auto master_tune = "master_tune"; // cents -100..+100
@@ -120,18 +119,53 @@ namespace augur5::params
     // ---------- EFFECTS (expansion) ----------
     inline constexpr auto fuzz_on = "fuzz_on", fuzz_sustain = "fuzz_sustain", fuzz_tone = "fuzz_tone",
                           fuzz_volume = "fuzz_volume", fuzz_mix = "fuzz_mix";
-    inline constexpr auto phaser_on = "phaser_on", phaser_rate = "phaser_rate", phaser_depth = "phaser_depth",
-                          phaser_fb = "phaser_fb", phaser_mix = "phaser_mix";
-    inline constexpr auto chorus_mode    = "chorus_mode";    // choice: FREE, I, II, I+II
     inline constexpr auto delay_sync     = "delay_sync";     // bool
     inline constexpr auto delay_div      = "delay_div";      // choice: 1/32 .. 1 BAR (when synced)
     inline constexpr auto delay_pingpong = "delay_pingpong"; // bool
-    inline constexpr auto reverb_type    = "reverb_type";    // choice: HALL, PLATE, SPRING
 
-    // ---------- TAPE ECHO (multi-head tape loop + spring) ----------
-    inline constexpr auto echo_on = "echo_on", echo_mode = "echo_mode", echo_rate = "echo_rate", echo_intensity = "echo_intensity",
-                          echo_bass = "echo_bass", echo_treble = "echo_treble", echo_wow = "echo_wow", echo_input = "echo_input",
-                          echo_volume = "echo_volume", echo_reverb = "echo_reverb";
+    // ---------- EFFECTS RACK (shared with PYTHIA 32; any order) ----------
+    // DRIVE, CHORUS, PHASER, FLANGER, DELAY (above), TAPE ECHO, REVERB, BUS COMP. The order is plugin state.
+    inline constexpr auto fx_drive_on = "fx_drive_on", fx_drive_model = "fx_drive_model", fx_drive_amount = "fx_drive_amount",
+                          fx_drive_bias = "fx_drive_bias", fx_drive_tone = "fx_drive_tone", fx_drive_output = "fx_drive_output",
+                          fx_drive_mix = "fx_drive_mix";
+    inline constexpr auto fx_chorus_on = "fx_chorus_on", fx_chorus_mode = "fx_chorus_mode", fx_chorus_rate = "fx_chorus_rate",
+                          fx_chorus_depth = "fx_chorus_depth", fx_chorus_tone = "fx_chorus_tone", fx_chorus_hiss = "fx_chorus_hiss",
+                          fx_chorus_width = "fx_chorus_width", fx_chorus_mix = "fx_chorus_mix";
+    inline constexpr auto fx_phaser_on = "fx_phaser_on", fx_phaser_stages = "fx_phaser_stages", fx_phaser_rate = "fx_phaser_rate",
+                          fx_phaser_sync = "fx_phaser_sync", fx_phaser_division = "fx_phaser_division", fx_phaser_depth = "fx_phaser_depth",
+                          fx_phaser_center = "fx_phaser_center", fx_phaser_feedback = "fx_phaser_feedback",
+                          fx_phaser_spread = "fx_phaser_spread", fx_phaser_lfo = "fx_phaser_lfo", fx_phaser_mix = "fx_phaser_mix";
+    inline constexpr auto fx_flanger_on = "fx_flanger_on", fx_flanger_rate = "fx_flanger_rate", fx_flanger_sync = "fx_flanger_sync",
+                          fx_flanger_division = "fx_flanger_division", fx_flanger_depth = "fx_flanger_depth",
+                          fx_flanger_manual = "fx_flanger_manual", fx_flanger_feedback = "fx_flanger_feedback",
+                          fx_flanger_tz = "fx_flanger_tz", fx_flanger_spread = "fx_flanger_spread", fx_flanger_mix = "fx_flanger_mix";
+    // TAPE ECHO: the classic unit's 12-position MODE selector (1-4 echo, 5-11 echo + spring, 12 spring only).
+    inline constexpr auto fx_echo_on = "fx_echo_on", fx_echo_mode = "fx_echo_mode", fx_echo_time = "fx_echo_time",
+                          fx_echo_sync = "fx_echo_sync", fx_echo_division = "fx_echo_division", fx_echo_intensity = "fx_echo_intensity",
+                          fx_echo_wow = "fx_echo_wow", fx_echo_flutter = "fx_echo_flutter", fx_echo_sat = "fx_echo_sat",
+                          fx_echo_bass = "fx_echo_bass", fx_echo_treble = "fx_echo_treble", fx_echo_age = "fx_echo_age",
+                          fx_echo_width = "fx_echo_width", fx_echo_spring = "fx_echo_spring", fx_echo_mix = "fx_echo_mix";
+    inline constexpr auto fx_reverb_on = "fx_reverb_on", fx_reverb_type = "fx_reverb_type", fx_reverb_size = "fx_reverb_size",
+                          fx_reverb_decay = "fx_reverb_decay", fx_reverb_predelay = "fx_reverb_predelay", fx_reverb_damp = "fx_reverb_damp",
+                          fx_reverb_lowcut = "fx_reverb_lowcut", fx_reverb_mod = "fx_reverb_mod", fx_reverb_width = "fx_reverb_width",
+                          fx_reverb_shimmer = "fx_reverb_shimmer", fx_reverb_pitch = "fx_reverb_pitch",
+                          fx_reverb_freeze = "fx_reverb_freeze", fx_reverb_mix = "fx_reverb_mix";
+    inline constexpr auto fx_comp_on = "fx_comp_on", fx_comp_threshold = "fx_comp_threshold", fx_comp_ratio = "fx_comp_ratio",
+                          fx_comp_attack = "fx_comp_attack", fx_comp_release = "fx_comp_release", fx_comp_makeup = "fx_comp_makeup",
+                          fx_comp_schpf = "fx_comp_schpf", fx_comp_mix = "fx_comp_mix";
+
+    inline juce::StringArray driveModels()   { return { "TUBE", "DIODE", "TAPE", "FOLD", "CRUSH" }; }
+    inline juce::StringArray chorusModes()   { return { "JUNO I", "JUNO II", "JUNO I+II", "DIMENSION", "ENSEMBLE" }; }
+    inline juce::StringArray phaserStages()  { return { "4", "6", "8", "12" }; }
+    inline juce::StringArray phaserLfos()    { return { "SINE", "TRIANGLE", "ENVELOPE" }; }
+    inline juce::StringArray echoModes()     { return { "1  H1", "2  H2", "3  H3", "4  H2+H3", "5  H1 + SPRING", "6  H2 + SPRING", "7  H3 + SPRING",
+                                                       "8  H1+H2 + SPRING", "9  H2+H3 + SPRING", "10  H1+H3 + SPRING", "11  ALL + SPRING", "12  SPRING" }; }
+    inline juce::StringArray reverbTypes()   { return { "PLATE", "ROOM", "HALL", "SHIMMER", "SPRING" }; }
+    inline juce::StringArray shimmerPitches(){ return { "-12", "+5", "+7", "+12", "+19", "+24" }; }
+    inline juce::StringArray noteValues()    { return { "1/32", "1/16T", "1/32.", "1/16", "1/8T", "1/16.", "1/8", "1/4T", "1/8.", "1/4", "1/2T", "1/4.", "1/2", "1/2.", "1/1", "2/1" }; }
+    inline juce::StringArray compRatios()    { return { "1.5:1", "2:1", "3:1", "4:1", "5:1", "10:1", "LIMIT" }; }
+    inline juce::StringArray compAttacks()   { return { "0.1 ms", "0.3 ms", "1 ms", "3 ms", "10 ms", "30 ms" }; }
+    inline juce::StringArray compReleases()  { return { "0.1 s", "0.3 s", "0.6 s", "1.2 s", "AUTO" }; }
 
     // ---------- VOICE MODE / TRIMS ----------
     inline constexpr auto voice_mode = "voice_mode"; // choice: POLY, DUO
