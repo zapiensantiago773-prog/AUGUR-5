@@ -285,7 +285,7 @@ public:
             for (int k = 0; k < 4; ++k)
                 mod.knob (ids[k], labels[k], 32, 1222 + 60 * k, 412, plum);
         }
-        views.push_back (mod.add (std::make_unique<MatrixMap> (state), { 72, 562, 1392, 174 }));
+        views.push_back (mod.add (std::make_unique<MatrixMap> (state), { 72, 526, 1392, 210 }));
         pages[1]->painter = [] (juce::Graphics& g) {
             drawSection (g, { 52, 116, 860, 388 }, "MODULATION MATRIX", colours::accent);
             drawCaption (g, "SOURCE", 92.0f, 162.0f);

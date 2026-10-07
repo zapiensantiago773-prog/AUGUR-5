@@ -105,12 +105,31 @@ int soak (const juce::String& presetName, double seconds)
 
 // --snapshot out.png [scale] [tab]: renders the plugin editor (design canvas) to a PNG, for layout review.
 // tab: 0 MAIN, 1 MOD, 2 ARP, 3 VOICE, 4 FX, 5 AUGURY, 6 = the preset browser open, 7 = settings open,
-// 10..18 = the FX tab showing effect 0..8.
+// 10..18 = the FX tab showing effect 0..8, 19 = the MOD tab with a busy test matrix.
 int snapshot (const juce::String& path, float scale, int tab)
 {
     std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
     base->setPlayConfigDetails (0, 2, 48000.0, 256);
     base->prepareToPlay (48000.0, 256);
+    if (tab == 19)
+    {
+        // A busy matrix for the ROUTING review: positive, negative, shared destination, the same route twice and a
+        // route the engine cannot apply (a per-voice source to the shared LFO's rate).
+        auto& st = dynamic_cast<Augur5Processor*> (base.get())->getParameters();
+        const auto set = [&st] (const juce::String& id, float v) {
+            if (auto* p = st.getParameter (id))
+                p->setValueNotifyingHost (p->convertTo0to1 (v));
+        };
+        const float routes[8][3] { { 3, 4, 0.4f }, { 4, 7, 0.6f }, { 5, 7, 0.5f }, { 8, 0, -0.3f },
+                                   { 9, 4, 0.2f }, { 3, 4, -0.25f }, { 6, 5, 0.7f }, { 11, 3, 1.0f } };
+        for (int s = 0; s < 8; ++s)
+        {
+            set (augur5::params::mmSrc (s + 1), routes[s][0]);
+            set (augur5::params::mmDst (s + 1), routes[s][1]);
+            set (augur5::params::mmAmt (s + 1), routes[s][2]);
+        }
+        tab = 1;
+    }
     auto* editor = base->createEditorIfNeeded();
     editor->setScaleFactor (1.0f);
     if (auto* augur = dynamic_cast<Augur5Editor*> (editor))

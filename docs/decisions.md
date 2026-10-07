@@ -456,3 +456,14 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
   - las esquinas y el orden del rack sobreviven a guardar y cargar.
 - Limitación: el morph corre en el hilo de mensajes (gestos del usuario). No es automatizable como un solo parámetro.
 - Versión **1.1.0**.
+
+## D-039 · Verificación de la matriz y del mapa ROUTING (2026-10-07)
+- Test nuevo `[matrix]`: cada una de las 12 × 16 combinaciones fuente → destino, de una en una, contra el mismo patch con la cantidad a 0. Se prueban las dos polaridades, porque un nivel que está en 0 solo se mueve hacia arriba.
+  - **182 rutas cambian el sonido** (diferencia > 1 %, −40 dB).
+  - **10 no hacen nada:** las fuentes por voz hacia LFO RATE. El LFO es uno para todo el instrumento, como en el original, así que su velocidad solo puede seguir a MOD WHEEL y AFTERTOUCH. El test exige que esas 10 den exactamente cero.
+- La regla vive en el DSP (`augur::isMatrixRouteActive`) y la usan el motor, el test y la interfaz.
+  - **MOD:** la cantidad de esas rutas aparece tachada en la matriz y lleva tooltip.
+  - **ROUTING:** las dibuja punteadas en gris, con la nota "DASHED = NO EFFECT" junto al título.
+  - También marca como punteadas las rutas desde LFO cuando LFO AMOUNT está en 0.
+  - Las rutas repetidas (misma fuente y destino) separan sus números a lo largo de la línea.
+- Captura de revisión: `augur_preset_audit --snapshot out.png 1 19` (pestaña MOD con una matriz cargada).

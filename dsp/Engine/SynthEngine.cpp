@@ -634,9 +634,9 @@ void SynthEngine::controlUpdate() noexcept
     }
     for (const auto& s : params.matrix)
     {
-        if (s.dest != ModDest::LfoRate || s.amount == 0.0f)
+        if (s.dest != ModDest::LfoRate || s.amount == 0.0f || ! isMatrixRouteActive (s.source, s.dest))
             continue;
-        const float src = s.source == ModSource::ModWheel ? modWheel : (s.source == ModSource::Aftertouch ? channelPressure : 0.0f);
+        const float src = s.source == ModSource::ModWheel ? modWheel : channelPressure;
         rate *= static_cast<double> (fastmath::exp2 (s.amount * src * 3.0f));
     }
     // A hint of analog instability on the LFO rate.

@@ -462,6 +462,19 @@ MatrixRow::MatrixRow (APVTS& state, int s) : slot (s)
     dstAttachment = std::make_unique<APVTS::ComboBoxAttachment> (state, params::mmDst (slot), dest);
     amtAttachment = std::make_unique<APVTS::SliderAttachment> (state, params::mmAmt (slot), amount);
     setupDefaultOnDoubleClick (amount, state, params::mmAmt (slot));
+    source.onChange = dest.onChange = [this] { refreshActive(); };
+    refreshActive();
+}
+
+void MatrixRow::refreshActive()
+{
+    // The engine's own rule: a per-voice source has nothing to act on at LFO RATE (one LFO for all voices).
+    active = augur::isMatrixRouteActive (static_cast<augur::ModSource> (juce::jmax (0, source.getSelectedItemIndex())),
+                                         static_cast<augur::ModDest> (juce::jmax (0, dest.getSelectedItemIndex())));
+    const juce::String why = active ? juce::String() : juce::String ("No effect: LFO RATE follows only MOD WHEEL and AFTERTOUCH (one LFO for all voices)");
+    amount.setTooltip (why.isEmpty() ? juce::String ("Matrix " + juce::String (slot) + " Amount") : why);
+    dest.setTooltip (why);
+    repaint();
 }
 
 void MatrixRow::resized()
@@ -480,8 +493,16 @@ void MatrixRow::paint (juce::Graphics& g)
     g.setColour (colours::caption);
     g.strokePath (arrow, juce::PathStrokeType (1.2f), juce::AffineTransform::translation (static_cast<float> (source.getRight() + 8), 11.0f));
     const int v = juce::roundToInt (amount.getValue() * 100.0);
-    drawTracked (g, (v > 0 ? "+" : "") + juce::String (v) + " %", { static_cast<float> (getWidth() - 50), 0.0f, 50.0f, 30.0f }, Fonts::mono (9.5f),
-                 v == 0 ? colours::caption : colours::accent.darker (0.2f), juce::Justification::centredRight);
+    const juce::Rectangle<float> valueArea { static_cast<float> (getWidth() - 50), 0.0f, 50.0f, 30.0f };
+    drawTracked (g, (v > 0 ? "+" : "") + juce::String (v) + " %", valueArea, Fonts::mono (9.5f),
+                 v == 0 || ! active ? colours::caption : colours::accent.darker (0.2f), juce::Justification::centredRight);
+    if (! active && v != 0)
+    {
+        // Struck through: this route does nothing (see the tooltip and the ROUTING map).
+        const float textW = juce::GlyphArrangement::getStringWidth (Fonts::mono (9.5f), (v > 0 ? "+" : "") + juce::String (v) + " %");
+        g.setColour (colours::caption);
+        g.fillRect (valueArea.getRight() - textW - 1.0f, 15.0f, textW + 2.0f, 1.0f);
+    }
 }
 
 //==============================================================================

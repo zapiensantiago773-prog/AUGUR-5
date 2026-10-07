@@ -205,13 +205,16 @@ void LfoShape::paint (juce::Graphics& g)
 MatrixMap::MatrixMap (APVTS& state)
     : ParamView (state, { P::mmSrc (1), P::mmDst (1), P::mmAmt (1), P::mmSrc (2), P::mmDst (2), P::mmAmt (2), P::mmSrc (3), P::mmDst (3),
                           P::mmAmt (3), P::mmSrc (4), P::mmDst (4), P::mmAmt (4), P::mmSrc (5), P::mmDst (5), P::mmAmt (5), P::mmSrc (6),
-                          P::mmDst (6), P::mmAmt (6), P::mmSrc (7), P::mmDst (7), P::mmAmt (7), P::mmSrc (8), P::mmDst (8), P::mmAmt (8) })
+                          P::mmDst (6), P::mmAmt (6), P::mmSrc (7), P::mmDst (7), P::mmAmt (7), P::mmSrc (8), P::mmDst (8), P::mmAmt (8),
+                          P::lfo_amount })
 {
 }
 
 void MatrixMap::paint (juce::Graphics& g)
 {
-    const auto r = getLocalBounds().toFloat();
+    // The top band (level with the section title) carries the notes; the map is drawn below it.
+    const auto notesBand = getLocalBounds().toFloat().withHeight (16.0f);
+    const auto r = getLocalBounds().toFloat().withTrimmedTop (36.0f);
     const auto& sources = matrixSourceNames();
     const auto& dests = matrixDestNames();
     const float topY = r.getY() + 16.0f, bottomY = r.getBottom() - 16.0f;
@@ -225,7 +228,13 @@ void MatrixMap::paint (juce::Graphics& g)
     {
         int slot, src, dst;
         float amt;
+        bool active;
+        int twin; // how many earlier routes share this source and destination (their badges are spread out)
     };
+    // A route does nothing when the engine cannot apply it (per-voice source -> the shared LFO's rate), or when its
+    // source is the LFO with LFO AMOUNT at 0 (the amount scales every use of the LFO).
+    const bool lfoSilent = value (24) < 0.001f;
+    bool anyRateNote = false, anyLfoNote = false;
     std::vector<Route> routes;
     for (int s = 0; s < 8; ++s)
     {
@@ -234,9 +243,19 @@ void MatrixMap::paint (juce::Graphics& g)
         const float amt = value (static_cast<size_t> (s * 3 + 2));
         if (std::abs (amt) < 0.005f)
             continue;
-        routes.push_back ({ s + 1, src, dst, amt });
-        srcUsed[static_cast<size_t> (src)] = true;
-        dstUsed[static_cast<size_t> (dst)] = true;
+        const bool engineOk = augur::isMatrixRouteActive (static_cast<augur::ModSource> (src), static_cast<augur::ModDest> (dst));
+        const bool lfoOk = ! (lfoSilent && static_cast<augur::ModSource> (src) == augur::ModSource::Lfo);
+        anyRateNote = anyRateNote || ! engineOk;
+        anyLfoNote = anyLfoNote || ! lfoOk;
+        int twin = 0;
+        for (const auto& earlier : routes)
+            twin += earlier.src == src && earlier.dst == dst ? 1 : 0;
+        routes.push_back ({ s + 1, src, dst, amt, engineOk && lfoOk, twin });
+        if (engineOk && lfoOk)
+        {
+            srcUsed[static_cast<size_t> (src)] = true;
+            dstUsed[static_cast<size_t> (dst)] = true;
+        }
     }
 
     // Rails.
@@ -258,29 +277,70 @@ void MatrixMap::paint (juce::Graphics& g)
         drawLedDot (g, { dstX (i) - 3.0f, bottomY - 13.0f, 6.0f, 6.0f }, colours::slate, used ? 1.0f : 0.0f);
     }
 
-    for (const auto& rt : routes)
-    {
-        const juce::Point<float> a (srcX (rt.src), topY + 13.0f), b (dstX (rt.dst), bottomY - 14.0f);
-        const float midY = (a.y + b.y) * 0.5f;
-        juce::Path p;
-        p.startNewSubPath (a);
-        p.cubicTo (a.x, midY, b.x, midY, b.x, b.y);
-        const auto c = rt.amt > 0.0f ? colours::accent : colours::slate;
-        const float mag = std::abs (rt.amt);
-        g.setColour (c.withAlpha (0.12f));
-        g.strokePath (p, juce::PathStrokeType (3.0f + 6.0f * mag, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-        g.setColour (c.withAlpha (0.45f + 0.5f * mag));
-        g.strokePath (p, juce::PathStrokeType (0.8f + 1.6f * mag, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-        const auto mid = p.getPointAlongPath (p.getLength() * 0.5f);
-        g.setColour (juce::Colours::white);
-        g.fillEllipse (mid.x - 8.0f, mid.y - 8.0f, 16.0f, 16.0f);
-        g.setColour (c);
-        g.drawEllipse (mid.x - 8.0f, mid.y - 8.0f, 16.0f, 16.0f, 1.0f);
-        drawTracked (g, juce::String (rt.slot), { mid.x - 8.0f, mid.y - 7.0f, 16.0f, 14.0f }, Fonts::mono (7.5f), c.darker (0.2f), juce::Justification::centred);
-    }
+    // Inactive routes first (underneath), dashed and grey; then the working ones, thickness = amount.
+    for (const bool drawActive : { false, true })
+        for (const auto& rt : routes)
+        {
+            if (rt.active != drawActive)
+                continue;
+            const juce::Point<float> a (srcX (rt.src), topY + 13.0f), b (dstX (rt.dst), bottomY - 14.0f);
+            const float midY = (a.y + b.y) * 0.5f;
+            juce::Path p;
+            p.startNewSubPath (a);
+            p.cubicTo (a.x, midY, b.x, midY, b.x, b.y);
+            const float mag = std::abs (rt.amt);
+            const auto c = ! rt.active ? colours::caption : (rt.amt > 0.0f ? colours::accent : colours::slate);
+            if (rt.active)
+            {
+                g.setColour (c.withAlpha (0.12f));
+                g.strokePath (p, juce::PathStrokeType (3.0f + 6.0f * mag, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+                g.setColour (c.withAlpha (0.45f + 0.5f * mag));
+                g.strokePath (p, juce::PathStrokeType (0.8f + 1.6f * mag, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+            }
+            else
+            {
+                juce::Path dashed;
+                const float dashes[] { 4.0f, 4.0f };
+                juce::PathStrokeType (1.0f).createDashedStroke (dashed, p, dashes, 2);
+                g.setColour (c.withAlpha (0.8f));
+                g.fillPath (dashed);
+            }
+            // Badges of routes sharing a source and destination sit apart along the line.
+            const float along = 0.5f + (rt.twin % 2 == 1 ? -1.0f : 1.0f) * 0.13f * static_cast<float> ((rt.twin + 1) / 2);
+            const auto mid = p.getPointAlongPath (p.getLength() * juce::jlimit (0.15f, 0.85f, along));
+            g.setColour (juce::Colours::white);
+            g.fillEllipse (mid.x - 8.0f, mid.y - 8.0f, 16.0f, 16.0f);
+            g.setColour (c);
+            g.drawEllipse (mid.x - 8.0f, mid.y - 8.0f, 16.0f, 16.0f, 1.0f);
+            drawTracked (g, juce::String (rt.slot), { mid.x - 8.0f, mid.y - 7.0f, 16.0f, 14.0f }, Fonts::mono (7.5f), c.darker (0.2f),
+                         juce::Justification::centred);
+        }
+
     if (routes.empty())
         drawTracked (g, "NO ACTIVE ROUTES  -  SET AN AMOUNT IN THE MATRIX ABOVE", r.withSizeKeepingCentre (r.getWidth(), 16.0f),
                      Fonts::jost (9.0f, true, 0.2f), colours::caption, juce::Justification::centred);
+
+    // Why a dashed route does nothing, level with the section title.
+    juce::StringArray notes;
+    if (anyRateNote)
+        notes.add ("LFO RATE FOLLOWS ONLY MOD WHEEL AND AFTERTOUCH (ONE LFO FOR ALL VOICES)");
+    if (anyLfoNote)
+        notes.add ("LFO AMOUNT IS AT 0 (MAIN > LFO)");
+    if (! notes.isEmpty())
+    {
+        const auto band = notesBand.withTrimmedLeft (160.0f);
+        const auto text = "DASHED = NO EFFECT:  " + notes.joinIntoString ("  /  ");
+        drawTracked (g, text, band, Fonts::jost (8.5f, true, 0.12f), colours::captionLight, juce::Justification::centredRight);
+        const float w = juce::jmin (band.getWidth(), juce::GlyphArrangement::getStringWidth (Fonts::jost (8.5f, true, 0.12f), text));
+        // A dashed sample before the note.
+        juce::Path sample, dashed;
+        sample.startNewSubPath (band.getRight() - w - 34.0f, band.getCentreY());
+        sample.lineTo (band.getRight() - w - 10.0f, band.getCentreY());
+        const float dashes[] { 4.0f, 4.0f };
+        juce::PathStrokeType (1.0f).createDashedStroke (dashed, sample, dashes, 2);
+        g.setColour (colours::caption);
+        g.fillPath (dashed);
+    }
 }
 
 //==============================================================================

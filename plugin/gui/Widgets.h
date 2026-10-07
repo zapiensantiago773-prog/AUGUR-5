@@ -225,7 +225,10 @@ public:
     void resized() override;
 
 private:
+    void refreshActive();
+
     int slot;
+    bool active = true;
     juce::ComboBox source, dest;
     juce::Slider amount;
     std::unique_ptr<APVTS::ComboBoxAttachment> srcAttachment, dstAttachment;

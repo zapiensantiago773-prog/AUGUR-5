@@ -45,6 +45,14 @@ enum class ModDest
     count
 };
 
+// The LFO is one for the whole instrument (as on the original panel), so LFO RATE can only follow the global
+// performance sources (MOD WHEEL, AFTERTOUCH); a per-voice source routed there has nothing to act on.
+// Every other source / destination pair is applied per voice. The editor greys out inactive routes.
+inline constexpr bool isMatrixRouteActive (ModSource s, ModDest d) noexcept
+{
+    return d != ModDest::LfoRate || s == ModSource::ModWheel || s == ModSource::Aftertouch;
+}
+
 struct ModSlot
 {
     ModSource source = ModSource::FilterEnv;
