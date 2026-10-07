@@ -467,3 +467,13 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
   - También marca como punteadas las rutas desde LFO cuando LFO AMOUNT está en 0.
   - Las rutas repetidas (misma fuente y destino) separan sus números a lo largo de la línea.
 - Captura de revisión: `augur_preset_audit --snapshot out.png 1 19` (pestaña MOD con una matriz cargada).
+
+## D-040 · Logo de AUGUR-5 (2026-10-07)
+- Misma composición que la serie: un símbolo dentro de un círculo y la palabra en tipografía ligera (como PYTHIA), con el número en color y el modelo pequeño (como MANTIS).
+  - Símbolo: el *templum* (el círculo de cielo que leía el augur), la línea del horizonte, un sol poniéndose en terracota con los cortes del panel AUGURY y dos aves cruzando.
+  - Se descartó el lituus (el báculo del augur) porque a tamaño de cabecera se leía como un "9".
+- Palabra: `AUGUR` en Jost Light, el guion como una barra terracota y el `5` en terracota. `3340` en pizarra. Subtítulo "ANALOG MODELING · 5-VOICE POLYSYNTH".
+- El logo aparece en la cabecera y en el bloque de marca de la franja inferior. El símbolo es también el icono de la app Standalone y de la carpeta VST3 en Windows (`ICON_BIG`).
+- Imágenes en `docs/brand/`, regenerables con `augur_preset_audit --logo <carpeta>`:
+  - logo completo sobre blanco, a 4x;
+  - símbolo de 1024 px sobre papel y sobre oscuro.

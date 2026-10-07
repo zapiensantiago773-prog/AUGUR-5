@@ -75,6 +75,14 @@ void drawCaption (juce::Graphics& g, const juce::String& text, float x, float y,
 void drawNote (juce::Graphics& g, const juce::String& text, juce::Rectangle<float> r);
 void drawLedDot (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour colour, float intensity);
 
+// The AUGUR-5 logo, in the series' composition (PYTHIA: mark in a circle + light wordmark + number in colour;
+// MANTIS: wordmark + number + model). The mark: the augur's lituus (the curled staff that marked out the sky)
+// inside the templum (the quartered circle of sky that was read), with a bird crossing it.
+void drawAugurMark (juce::Graphics& g, juce::Point<float> centre, float radius, juce::Colour ink = colours::ink,
+                    juce::Colour accent = colours::accent);
+// Wordmark "AUGUR-5" + "3340" + subtitle, mark on the left; (x, y) = top left; height ~ 70 * scale. Returns its width.
+float drawAugurLogo (juce::Graphics& g, float x, float y, float scale = 1.0f, bool withSubtitle = true);
+
 // "IDs" mode: labels show parameter IDs instead of names (automation lookup).
 inline bool showIds = false;
 

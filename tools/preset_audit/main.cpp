@@ -3,6 +3,7 @@
 // clipping, so the factory library can be checked after every change.
 
 #include "LegacyEffects.h"
+#include "gui/Theme.h"
 #include "Parameters.h"
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
@@ -380,8 +381,65 @@ int checkAugury()
     return failures == 0 ? 0 : 1;
 }
 
+// --logo dir: writes the brand images: the full logo on white (4x), the mark alone on paper (1024 px, also the app
+// icon) and the mark on dark (for dark backgrounds).
+int exportLogo (const juce::File& dir)
+{
+    dir.createDirectory();
+    const auto write = [] (const juce::Image& image, const juce::File& file) {
+        file.deleteFile();
+        juce::FileOutputStream out (file);
+        juce::PNGImageFormat png;
+        const bool ok = out.openedOk() && png.writeImageToStream (image, out);
+        std::printf ("%s %dx%d -> %s\n", ok ? "wrote" : "FAILED", image.getWidth(), image.getHeight(), file.getFullPathName().toRawUTF8());
+        return ok;
+    };
+    bool ok = true;
+
+    // Full logo: measure once, then draw at 4x.
+    float width = 0.0f;
+    {
+        juce::Image scratch (juce::Image::ARGB, 8, 8, true);
+        juce::Graphics g (scratch);
+        width = augur5::ui::drawAugurLogo (g, 0.0f, 0.0f);
+    }
+    constexpr float margin = 28.0f, height = 70.0f, zoom = 4.0f;
+    // (Each Graphics is closed before its image is written: GPU-backed images are only flushed then.)
+    {
+        juce::Image image (juce::Image::ARGB, juce::roundToInt ((width + 2.0f * margin) * zoom), juce::roundToInt ((height + 2.0f * margin) * zoom), true);
+        {
+            juce::Graphics g (image);
+            g.fillAll (juce::Colours::white);
+            g.addTransform (juce::AffineTransform::scale (zoom));
+            augur5::ui::drawAugurLogo (g, margin, margin);
+        }
+        ok = write (image, dir.getChildFile ("AUGUR-5 logo.png")) && ok;
+    }
+
+    // The mark alone: paper tile (app icon) and on dark.
+    for (const bool dark : { false, true })
+    {
+        constexpr int size = 1024;
+        juce::Image image (juce::Image::ARGB, size, size, true);
+        {
+            juce::Graphics g (image);
+            const auto tile = juce::Rectangle<float> (0.0f, 0.0f, static_cast<float> (size), static_cast<float> (size)).reduced (40.0f);
+            g.setColour (dark ? juce::Colour (0xff17181b) : juce::Colour (0xfffbf9f5));
+            g.fillRoundedRectangle (tile, 190.0f);
+            g.setColour (dark ? juce::Colour (0xff2a2b30) : augur5::ui::colours::panelBorder);
+            g.drawRoundedRectangle (tile.reduced (2.0f), 188.0f, 4.0f);
+            augur5::ui::drawAugurMark (g, tile.getCentre(), 330.0f, dark ? juce::Colour (0xffeeeae3) : augur5::ui::colours::ink,
+                                       augur5::ui::colours::accent);
+        }
+        ok = write (image, dir.getChildFile (dark ? "AUGUR-5 mark (dark).png" : "AUGUR-5 mark.png")) && ok;
+    }
+    return ok ? 0 : 1;
+}
+
 int main (int argc, char** argv)
 {
+    if (argc >= 3 && std::strcmp (argv[1], "--logo") == 0)
+        return exportLogo (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])));
     if (argc >= 2 && std::strcmp (argv[1], "--check-augury") == 0)
         return checkAugury();
     juce::ScopedJuceInitialiser_GUI juceInit;

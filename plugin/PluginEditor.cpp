@@ -95,27 +95,6 @@ public:
     }
 };
 
-void drawLogo (juce::Graphics& g)
-{
-    const auto big = Fonts::michroma (25.0f, 0.14f);
-    const auto small = Fonts::michroma (11.5f, 0.16f);
-    constexpr float baseline = 61.0f, x = 52.0f;
-    g.setColour (colours::title);
-    g.setFont (big);
-    g.drawSingleLineText ("AUGUR-5", juce::roundToInt (x), juce::roundToInt (baseline));
-    const float w1 = juce::GlyphArrangement::getStringWidth (big, "AUGUR-5");
-    g.setColour (colours::accent);
-    g.setFont (small);
-    g.drawSingleLineText ("3340", juce::roundToInt (x + w1 + 12.0f), juce::roundToInt (baseline));
-    const float w2 = juce::GlyphArrangement::getStringWidth (small, "3340");
-    const float tx = x + w1 + 12.0f + w2 + 24.0f;
-    g.setColour (colours::hairline.darker (0.1f));
-    g.fillRect (tx - 12.0f, 36.0f, 1.0f, 30.0f);
-    const auto tagline = Fonts::jost (8.5f, false, 0.3f);
-    drawTracked (g, "ANALOG MODELING", { tx, 35.0f, 180.0f, 12.0f }, tagline, colours::captionLight, juce::Justification::centredLeft);
-    drawTracked (g, u8 ("POLYSYNTH  \xc2\xb7  5 VOICES"), { tx, 50.0f, 180.0f, 12.0f }, tagline, colours::captionLight, juce::Justification::centredLeft);
-}
-
 // The FX page's view of the processor.
 class ProcessorFxModel final : public FxModel
 {
@@ -524,7 +503,7 @@ public:
         g.fillAll();
 
         // Header
-        drawLogo (g);
+        drawAugurLogo (g, 52.0f, 22.0f);
         const auto box = presetBox();
         g.setColour (juce::Colours::black.withAlpha (0.04f));
         g.fillRoundedRectangle (box.translated (0.0f, 1.5f), 7.0f);
@@ -550,12 +529,14 @@ public:
         drawCaption (g, "SOUNDS", 1262.0f, 784.0f, 110.0f);
         drawTracked (g, u8 ("click a sound family to browse it  \xc2\xb7  the horizon is the live spectrum, 30 Hz \xe2\x80\x93 16 kHz"),
                      { 388.0f, 969.0f, 760.0f, 12.0f }, Fonts::jost (8.0f, false, 0.08f), colours::caption, juce::Justification::centred);
-        drawTracked (g, "AUGUR-5", { 1394.0f, 836.0f, 90.0f, 16.0f }, Fonts::michroma (10.5f, 0.2f), colours::title, juce::Justification::centred);
-        drawTracked (g, u8 ("\xe2\x80\x9c" "3340\xe2\x80\x9d"), { 1394.0f, 858.0f, 90.0f, 12.0f }, Fonts::jost (9.0f, false, 0.3f), colours::caption,
+        // Brand block: the mark, the name, the model, the maker.
+        drawAugurMark (g, { 1437.0f, 818.0f }, 17.0f);
+        drawTracked (g, "AUGUR-5", { 1394.0f, 846.0f, 90.0f, 16.0f }, Fonts::light (12.0f, 0.2f), colours::title, juce::Justification::centred);
+        drawTracked (g, u8 ("\xe2\x80\x9c" "3340\xe2\x80\x9d"), { 1394.0f, 866.0f, 90.0f, 12.0f }, Fonts::jost (9.0f, false, 0.3f), colours::caption,
                      juce::Justification::centred);
         g.setColour (colours::accent.withAlpha (0.8f));
-        g.fillRect (1414.0f, 880.0f, 50.0f, 1.0f);
-        drawTracked (g, "TONAL LAB", { 1394.0f, 888.0f, 90.0f, 12.0f }, Fonts::jost (8.0f, true, 0.3f), colours::captionLight, juce::Justification::centred);
+        g.fillRect (1414.0f, 888.0f, 50.0f, 1.0f);
+        drawTracked (g, "TONAL LAB", { 1394.0f, 896.0f, 90.0f, 12.0f }, Fonts::jost (8.0f, true, 0.3f), colours::captionLight, juce::Justification::centred);
 
         // Footer
         drawTracked (g, "ANALOG SOUL  /  DIGITAL PRECISION", { 52.0f, 996.0f, 400.0f, 18.0f }, Fonts::jost (8.5f, false, 0.3f), colours::caption,
