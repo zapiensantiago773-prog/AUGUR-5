@@ -96,6 +96,7 @@ void SynthEngine::reset() noexcept
 
     sampleCounter = 0;
     chunkPos = 0;
+    lfo2Phase = 0.0; // the free-running LFO 2 restarts too: after prepare / reset the instrument is in a known state
 
     arp.reset();
     freeOriginSample = 0;
@@ -561,6 +562,9 @@ void SynthEngine::controlUpdate() noexcept
         initSmoother (smCrossMod, 0.02, params.crossMod, internalRate);
         lastMonoMode = isMonoMode();
         lastVoiceCount = activeVoiceCount();
+        lastVoiceMode = pending.voiceMode;
+        lastArpOn = pending.arpOn;
+        lastArpLatch = pending.arpLatch;
         paramsInitialised = true;
     }
 

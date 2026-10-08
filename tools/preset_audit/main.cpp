@@ -3,6 +3,7 @@
 // clipping, so the factory library can be checked after every change.
 
 #include "LegacyEffects.h"
+#include "PackAnalysis.h"
 #include "gui/Theme.h"
 #include "Parameters.h"
 #include "PluginEditor.h"
@@ -436,8 +437,113 @@ int exportLogo (const juce::File& dir)
     return ok ? 0 : 1;
 }
 
+// --params: every parameter as CSV (id;kind;min;max;default;choices) so pack generators clamp to the real ranges and
+// never write an id the instrument does not have.
+int dumpParams()
+{
+    std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+    std::printf ("id;kind;min;max;default;choices\n");
+    for (auto* p : base->getParameters())
+    {
+        auto* rp = dynamic_cast<juce::RangedAudioParameter*> (p);
+        if (rp == nullptr)
+            continue;
+        const auto range = rp->getNormalisableRange();
+        juce::String kind = "float", choices;
+        if (auto* c = dynamic_cast<juce::AudioParameterChoice*> (rp))
+        {
+            kind = "choice";
+            choices = c->choices.joinIntoString ("|");
+        }
+        else if (dynamic_cast<juce::AudioParameterBool*> (rp) != nullptr)
+            kind = "bool";
+        else if (dynamic_cast<juce::AudioParameterInt*> (rp) != nullptr)
+            kind = "int";
+        std::printf ("%s;%s;%g;%g;%g;%s\n", rp->getParameterID().toRawUTF8(), kind.toRawUTF8(), range.start, range.end,
+                     rp->convertFrom0to1 (rp->getDefaultValue()), choices.toRawUTF8());
+    }
+    return 0;
+}
+
+// --pack <folder> [--dry] [--wav <dir>]: every .augur5 below the folder, played as its role (META element written by the
+// pack generator), fresh engine per preset. CSV on stdout. --dry also renders every preset with its effects off (fpdry),
+// so the generator judges whether two presets differ on the synth itself, not on the effects. AUGUR_AUDIT_REVERSE=1 plays
+// the folder in reverse order: comparing both runs proves a preset sounds the same whatever was played before it.
+int packAudit (const juce::File& folder, const juce::File& wavDir, bool dryFingerprint)
+{
+    constexpr double sr = 48000.0;
+    constexpr int block = 256;
+    std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+    auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+    proc.setPlayConfigDetails (0, 2, sr, block);
+    proc.prepareToPlay (sr, block);
+    std::printf ("path;role;peak;loud;level;centroid;low;high;dc;width;tail;attack;finite;fp;fpdry\n");
+    auto files = folder.findChildFiles (juce::File::findFiles, true, "*.augur5");
+    files.sort();
+    if (juce::SystemStats::getEnvironmentVariable ("AUGUR_AUDIT_REVERSE", {}).isNotEmpty())
+        std::reverse (files.begin(), files.end());
+    const auto join = [] (const std::vector<float>& v) {
+        juce::String out;
+        for (const auto x : v)
+            out << (out.isEmpty() ? "" : "|") << juce::String (x, 2);
+        return out;
+    };
+    for (const auto& f : files)
+    {
+        auto xml = juce::XmlDocument::parse (f);
+        if (xml == nullptr)
+            continue;
+        juce::String role = "pad";
+        int root = 60;
+        if (auto* meta = xml->getChildByName ("META"))
+        {
+            role = meta->getStringAttribute ("role", role);
+            root = meta->getIntAttribute ("note", root);
+        }
+        proc.getPresets().loadUser (f);
+        proc.prepareToPlay (sr, block); // fresh state: no tails from the previous sound
+        const double seconds = role == "pad" || role == "drone" || role == "fx" ? 8.0 : 6.0;
+        const auto rel = f.getRelativePathFrom (folder);
+        const auto wav = wavDir == juce::File() ? juce::File() : wavDir.getChildFile (rel).withFileExtension ("wav");
+        const auto m = packaudit::analyse (proc, role, root, seconds, wav);
+        const float level = proc.getParameters().getRawParameterValue (augur5::params::amp_level)->load();
+        juce::String dry;
+        if (dryFingerprint)
+        {
+            proc.getPresets().loadUser (f);
+            for (const char* id : { augur5::params::fuzz_on, augur5::params::delay_on, augur5::params::fx_drive_on, augur5::params::fx_chorus_on,
+                                    augur5::params::fx_phaser_on, augur5::params::fx_flanger_on, augur5::params::fx_echo_on,
+                                    augur5::params::fx_reverb_on, augur5::params::fx_comp_on })
+                if (auto* p = proc.getParameters().getParameter (id))
+                    p->setValueNotifyingHost (0.0f);
+            proc.prepareToPlay (sr, block);
+            dry = join (packaudit::analyse (proc, role, root, seconds).fingerprint);
+        }
+        std::printf ("%s;%s;%.2f;%.2f;%.2f;%.0f;%.4f;%.4f;%.5f;%.3f;%.2f;%.3f;%d;%s;%s\n", rel.replaceCharacter ('\\', '/').toRawUTF8(),
+                     role.toRawUTF8(), m.peakDb, m.loudDb, level, m.centroid, m.low, m.high, m.dc, m.width, m.tail, m.attack, m.finite ? 1 : 0,
+                     join (m.fingerprint).toRawUTF8(), dry.toRawUTF8());
+        std::fflush (stdout);
+    }
+    return 0;
+}
+
 int main (int argc, char** argv)
 {
+    if (argc >= 2 && std::strcmp (argv[1], "--params") == 0)
+        return dumpParams();
+    if (argc >= 3 && std::strcmp (argv[1], "--pack") == 0)
+    {
+        juce::File wavDir;
+        bool dry = false;
+        for (int a = 3; a < argc; ++a)
+        {
+            if (std::strcmp (argv[a], "--dry") == 0)
+                dry = true;
+            else if (std::strcmp (argv[a], "--wav") == 0 && a + 1 < argc)
+                wavDir = juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[++a]));
+        }
+        return packAudit (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])), wavDir, dry);
+    }
     if (argc >= 3 && std::strcmp (argv[1], "--logo") == 0)
         return exportLogo (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])));
     if (argc >= 2 && std::strcmp (argv[1], "--check-augury") == 0)

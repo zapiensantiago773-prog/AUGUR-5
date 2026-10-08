@@ -82,6 +82,9 @@ void SynthVoice::prepare (double internalRate, double controlRate, std::uint64_t
 
     model = -1;
     tunedAgeBucket = -1;
+    envCacheValid = false; // envelope coefficients depend on the rate: recompute them even if the settings did not change
+    dcCache.fill (-1.0f);
+    dcA = dcB = 0.0f;
     reset();
 }
 
@@ -97,9 +100,16 @@ void SynthVoice::reset() noexcept
     note = -1;
     held = false;
     hasPitch = false;
+    order = 0;
+    pitch = pitchTarget = 60.0f;
+    unisonOffset = 0.0f;
+    lfoDelayGain = 1.0f;
+    lfo2RateMod = 0.0f;
+    pinkState = 0.0f;
     lastOscB = 0.0f;
     polyPressure = 0.0f;
     cvNoise.fill (0.0f);
+    panL = panR = panLTarget = panRTarget = 0.7071f; // the first chunk's pan ramp starts from the centre, not the last sound
 }
 
 void SynthVoice::configureUnits (int newModel, float age) noexcept

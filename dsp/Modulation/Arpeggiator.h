@@ -89,7 +89,8 @@ private:
     int position = 0;          // position inside the sequence
     double nextOn = 0.0, nextOff = 1.0e300;
     int sounding = -1;
-    Random rng { 0xA4B1u };
+    static constexpr std::uint64_t randomSeed = 0xA4B1u;
+    Random rng { randomSeed };
 };
 
 } // namespace augur

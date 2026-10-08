@@ -28,6 +28,7 @@ public:
     {
         rng.setSeed (seed);
         slewCoeff = static_cast<float> (1.0 - std::exp (-1.0 / (0.0015 * sampleRate)));
+        held = previous = smoothed = 0.0f; // nothing from before prepare: the smooth / S&H waves start from a known value
         restart (0.0);
     }
 

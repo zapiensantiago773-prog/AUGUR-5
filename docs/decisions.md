@@ -477,3 +477,47 @@ Basado en [prophet5_vco_analysis.md](prophet5_vco_analysis.md) (manual de servic
 - Imágenes en `docs/brand/`, regenerables con `augur_preset_audit --logo <carpeta>`:
   - logo completo sobre blanco, a 4x;
   - símbolo de 1024 px sobre papel y sobre oscuro.
+
+## D-041 · Estado limpio después de prepare: envolventes, LFO 2, arpegiador y voces (2026-10-07)
+Lo encontró el chequeo de orden de SUN ATLAS: cada preset se toca dos veces, en orden directo e inverso, y el nivel debe ser el mismo. Diferían hasta 4.7 dB. Un test nuevo (`After prepare the engine sounds exactly like a new one…`) exige ahora que un motor que ya sonó, después de `prepare`, sea **bit a bit idéntico** a uno nuevo.
+
+| Estado | Problema | Efecto |
+|---|---|---|
+| **Coeficientes de las envolventes** (`envCache`) | No se invalidaban al cambiar la tasa interna con los mismos ajustes | **Bug real**: al cambiar QUALITY, o en un render offline en DIVINE, las envolventes iban al doble o a la mitad de velocidad hasta cargar otro preset. Medido: ataque de 0.5 s → 0.38 s a 2x, **0.20 s tras pasar a 4x**, 0.72 s a 1x. Corregido: 0.38 / 0.38 / 0.36 s (test `[samplerate]`) |
+| Fase libre del LFO 2 (`lfo2Phase`) | No se reiniciaba | Los drones con deriva cambiaban según lo tocado antes |
+| Generador del arpegiador en RANDOM | No se re-sembraba | El patrón aleatorio dependía de la historia |
+| PolyLfo (`held`, `previous`, `smoothed`) | Valores viejos | SMOOTH y S&H empezaban desde el sonido anterior |
+| Rampa de paneo de la voz | Arrancaba del último sonido | Diferencias de 1e-5 a 6e-4 al inicio de nota |
+| Contabilidad de la voz | Orden de asignación, pitch, ruido del modulador NOISE, retardo del LFO, caché de DC del mixer | Restos de la historia de cada voz |
+
+El comportamiento en uso no cambia: los LFO siguen siendo libres entre notas; solo `prepare` / `reset` vuelve a un estado conocido.
+
+## D-042 · SUN ATLAS: el banco grande de AUGUR-5, 1000 presets (2026-10-08)
+- Tercer atlas de la serie TONAL LAB: MOON ATLAS en PYTHIA 32, HORIZON ATLAS en MANTIS-37 y **SUN ATLAS** en AUGUR-5.
+  - Mismo método que los otros dos y mismas 11 categorías: PAD 160, KEYS 95, PLUCK 100, LEAD 95, BASS 120, BRASS 60, ARP 100, SEQ 90, TEXTURE 85, DRONE 55, FX 40.
+  - Las 7 familias de estilo (IDM, NEO, CINE, TECHNO, HOUSE, COLOR, HYPNO) son etiquetas internas; ningún nombre menciona artistas ni marcas.
+- **Diseño para este instrumento** (`tools/pack/make_sun_atlas.py`): 87 arquetipos que usan lo propio de AUGUR.
+  - Leads con sync y POLY-MOD (filter env → freq A), campanas y e-pianos por POLY-MOD (OSC B → freq A).
+  - Rev 1 / Rev 3 y los modelos de filtro, unísono, DUO.
+  - Matriz: deriva por LFO 2 suave, acentos de SEQ por NOTE RANDOM, wheel → cutoff en todos.
+  - Arpegiador para ARP (acordes) y SEQ (una tecla sobre octavas), y el rack completo.
+  - Resonancia moderada: mediana 0.15.
+- **Proceso** (como la serie):
+  1. 3000 candidatos.
+  2. Cada uno se toca por el procesador real con `augur_preset_audit --pack`, interpretado según su papel: acordes para pads, keys y brass; semicorcheas para bajos; una línea para plucks y leads; un acorde sostenido para ARP; una tecla para SEQ. Analizador nuevo `tools/preset_audit/PackAnalysis.h`, portado de MANTIS.
+  3. 4 rondas de corrección y nivel: −16 dB (los 400 ms más fuertes) con pico ≤ −1 dBFS.
+  4. Puertas: no finito, silencio, DC, brillo (> 1/8 de la energía sobre 6 kHz), bajos anchos, delgados o brillantes, colas infinitas.
+  5. **Nueva puerta "spiky"**: un sonido percusivo que su transitorio deja más de 4 dB bajo el nivel recibe BUS COMP rápido (0.1 ms, 10:1), luego drive de cinta. Si sigue más de 6 dB bajo, se descarta.
+  6. Fuera el 6 % más brillante de cada categoría.
+  7. Selección por *farthest-point* sobre la huella tímbrica sin efectos, dentro de cada categoría × familia.
+- **Resultado** (`docs/pack_sun_atlas.md`):
+  - Nivel: mediana −16.0 dB, pico máximo −0.9 dBFS; ninguno por encima de −15.
+  - Bajo el objetivo quedan los percusivos (la ventana de 400 ms incluye los silencios entre notas): 78 a más de 3 dB, 9 a más de 4 dB.
+  - Diferencias entre sonidos: mediana 1.63 al vecino más cercano de su categoría (1.0 ≈ audible).
+  - **Orden**: directo vs inverso, máximo 0.02 dB. Antes de D-041 era 4.7 dB.
+  - Descartados: level 175, más brillantes 151, spiky 143, DC 33, brillo 33.
+- La librería de fábrica no cambia con D-041: 170 presets medidos antes y después, diferencia 0.00 dB.
+- **Distribución**:
+  - `packs/SUN ATLAS/<CATEGORÍA>/<nombre>.augur5` más el README.
+  - Zip con `python tools/pack/build_zip.py "SUN ATLAS"` → `packs/dist/TONAL LAB - AUGUR-5 SUN ATLAS (1000 presets).zip` (937 KB).
+  - Se instala con PRESETS > INSTALL PACK (.ZIP). En el navegador es la colección **SUN ATLAS**.

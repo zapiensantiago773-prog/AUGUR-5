@@ -95,6 +95,7 @@ juce_add_console_app(augur_preset_audit PRODUCT_NAME "augur_preset_audit")
 target_include_directories(augur_preset_audit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(augur_preset_audit PRIVATE
     ${CMAKE_SOURCE_DIR}/tools/preset_audit/main.cpp
+    ${CMAKE_SOURCE_DIR}/tools/preset_audit/PackAnalysis.h
     PluginProcessor.cpp
     ParameterLayout.cpp
     Presets.cpp

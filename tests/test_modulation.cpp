@@ -134,6 +134,98 @@ TEST_CASE ("Mod envelope and LFO 2 drive their matrix destinations", "[modulatio
     CHECK (hi > 3.0 * lo);
 }
 
+TEST_CASE ("After prepare the engine sounds exactly like a new one, whatever it played before", "[modulation][determinism]")
+{
+    // Free-running modulators (LFO 2 without retrigger, the shared LFO, the drift) must restart on prepare: a host may
+    // call prepareToPlay many times, and a preset must sound the same whatever was played before it.
+    SynthParams p = openParams();
+    p.mixOsc1 = 0.6f;
+    p.mixOsc2 = 0.5f;
+    p.osc2Fine = 3.0f;
+    p.lfo2Retrig = false;
+    p.lfo2Wave = 6; // smooth random
+    p.lfo2Rate = 0.2f;
+    p.matrix[0] = { ModSource::Lfo2, ModDest::Osc1Freq, 0.05f };
+    p.matrix[1] = { ModSource::Lfo, ModDest::FilterCutoff, 0.1f };
+    p.cutoffHz = 2000.0f;
+    p.analogAge = 0.5f;
+
+    // The arpeggiator in RANDOM mode too: its pattern must restart with the instrument.
+    p.arpOn = true;
+    p.arpMode = 3;
+    p.arpOctaves = 3;
+    const auto renderNote = [&p] (SynthEngine& e) {
+        // The processor's sequence after every prepareToPlay / preset load: parameters, then warmUp.
+        e.setParams (p);
+        e.warmUp();
+        e.noteOn (45, 0.8f);
+        e.noteOn (48, 0.8f);
+        e.noteOn (52, 0.8f);
+        std::vector<float> l (24000), r (l.size());
+        e.process (l.data(), r.data(), static_cast<int> (l.size()));
+        return l;
+    };
+    auto fresh = std::make_unique<SynthEngine>();
+    fresh->prepare (48000.0);
+    const auto expected = renderNote (*fresh);
+
+    auto used = std::make_unique<SynthEngine>();
+    used->prepare (48000.0);
+    auto other = p;
+    other.lfo2Rate = 3.3f;
+    used->setParams (other);
+    used->noteOn (60, 0.9f);
+    used->noteOn (64, 0.9f);
+    std::vector<float> l (77777), r (l.size());
+    used->process (l.data(), r.data(), static_cast<int> (l.size()));
+    used->prepare (48000.0);
+    const auto got = renderNote (*used);
+    size_t first = got.size();
+    float worst = 0.0f;
+    for (size_t i = 0; i < got.size(); ++i)
+        if (got[i] != expected[i])
+        {
+            first = std::min (first, i);
+            worst = std::max (worst, std::abs (got[i] - expected[i]));
+        }
+    INFO ("first difference at sample " << first << ", largest " << worst);
+    REQUIRE (first == got.size());
+}
+
+TEST_CASE ("Envelope times stay right when the engine is re-prepared at another internal rate", "[modulation][samplerate]")
+{
+    // QUALITY changes and offline DIVINE renders re-prepare the voices at another internal rate with the same envelope
+    // settings: the envelope coefficients must follow the new rate.
+    SynthParams p = openParams();
+    p.mixOsc1 = 0.8f;
+    p.aenvA = 0.5f;
+    p.aenvS = 1.0f;
+    const auto attackSeconds = [&p] (SynthEngine& e) {
+        e.setParams (p);
+        e.warmUp();
+        e.noteOn (60, 1.0f);
+        std::vector<float> l (96000), r (l.size());
+        e.process (l.data(), r.data(), static_cast<int> (l.size()));
+        // Time for the 10 ms RMS to reach 90 % of its final value.
+        const size_t w = 480;
+        const double final = augur::test::rms (std::vector<float> (l.end() - static_cast<long> (w), l.end()));
+        for (size_t s = 0; s + w <= l.size(); s += w)
+            if (augur::test::rms (std::vector<float> (l.begin() + static_cast<long> (s), l.begin() + static_cast<long> (s + w))) > 0.9 * final)
+                return static_cast<double> (s) / 48000.0;
+        return 99.0;
+    };
+    auto e = std::make_unique<SynthEngine>();
+    e->prepare (48000.0, SynthEngine::defaultUnitSeed, 2);
+    const double at2x = attackSeconds (*e);
+    e->prepare (48000.0, SynthEngine::defaultUnitSeed, 4); // same settings, twice the internal rate
+    const double at4x = attackSeconds (*e);
+    e->prepare (48000.0, SynthEngine::defaultUnitSeed, 1);
+    const double at1x = attackSeconds (*e);
+    INFO ("attack: 2x " << at2x << " s, 4x " << at4x << " s, 1x " << at1x << " s");
+    CHECK (std::abs (at4x - at2x) < 0.03); // 10 ms measuring windows
+    CHECK (std::abs (at1x - at2x) < 0.03);
+}
+
 TEST_CASE ("Every active matrix route changes the sound; inactive ones are exactly silent", "[modulation][matrix]")
 {
     // Each of the 12 x 16 source / destination pairs, one at a time, against the same patch with the amount at 0.

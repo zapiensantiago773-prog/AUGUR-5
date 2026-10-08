@@ -11,6 +11,7 @@ void Arpeggiator::reset() noexcept
     numHeld = 0;
     physicallyDown.fill (false);
     numPhysical = 0;
+    rng.setSeed (randomSeed); // RANDOM mode plays the same pattern after every reset (prepare, preset load)
     stop();
 }
 
