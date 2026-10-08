@@ -363,30 +363,26 @@ public:
         const char* tabNames[Augur5Editor::numTabs] = { "MAIN", "MOD", "ARP", "VOICE", "FX", "AUGURY" };
         for (int t = 0; t < Augur5Editor::numTabs; ++t)
         {
-            auto* b = fixed.add (std::make_unique<TabButton> (tabNames[t]), { 940 + 62 * t, 36, 58, 28 });
+            auto* b = fixed.add (std::make_unique<TabButton> (tabNames[t]), { 792 + 57 * t, 36, 54, 28 });
             b->onClick = [this, t] { showTab (t); };
             tabs[static_cast<size_t> (t)] = b;
         }
-        prevPreset = fixed.add (std::make_unique<ArrowButton> (false), { 622, 35, 30, 30 });
-        nextPreset = fixed.add (std::make_unique<ArrowButton> (true), { 884, 35, 30, 30 });
+        prevPreset = fixed.add (std::make_unique<ArrowButton> (false), { 504, 35, 30, 30 });
+        nextPreset = fixed.add (std::make_unique<ArrowButton> (true), { 746, 35, 30, 30 });
         undo = fixed.add (std::make_unique<HeaderButton> ("", std::vector<juce::Path> { svgPath ("M5 7 H12 A4 4 0 0 1 12 15 H7"), svgPath ("M7 4 L4 7 L7 10") }),
-                          { 1338, 36, 30, 28 });
+                          { 1142, 36, 30, 28 });
         redo = fixed.add (std::make_unique<HeaderButton> ("", std::vector<juce::Path> { svgPath ("M13 7 H6 A4 4 0 0 0 6 15 H11"), svgPath ("M11 4 L14 7 L11 10") }),
-                          { 1370, 36, 30, 28 });
+                          { 1172, 36, 30, 28 });
         {
-            juce::Path box;
-            box.addRoundedRectangle (3.0f, 3.0f, 12.0f, 12.0f, 1.5f);
-            browserButton = fixed.add (std::make_unique<HeaderButton> ("", std::vector<juce::Path> { box, svgPath ("M6 7 H12 M6 10 H12 M6 13 H10") }),
-                                       { 1402, 36, 30, 28 });
+            // (The preset name opens the browser: no separate button, as in MANTIS-37.)
             juce::Path ring;
             ring.addEllipse (5.0f, 5.0f, 8.0f, 8.0f);
             settings = fixed.add (std::make_unique<HeaderButton> ("", std::vector<juce::Path> {
                                                                           ring, svgPath ("M9 1 V4 M9 14 V17 M1 9 H4 M14 9 H17 M3.3 3.3 L5.4 5.4 M12.6 12.6 L14.7 14.7 M3.3 14.7 L5.4 12.6 M12.6 5.4 L14.7 3.3") }),
-                                  { 1434, 36, 30, 28 });
+                                  { 1202, 36, 30, 28 });
         }
         undo->setTooltip ("Undo");
         redo->setTooltip ("Redo");
-        browserButton->setTooltip ("Presets");
         settings->setTooltip ("Settings");
 
         wheels.push_back (fixed.add (std::make_unique<Wheel> (true, [&proc] { return proc.getBendShown(); }, [&proc] (float v) {
@@ -435,7 +431,7 @@ public:
     std::function<void (const juce::String&)> onCategory;
     ArrowButton* prevPreset = nullptr;
     ArrowButton* nextPreset = nullptr;
-    HeaderButton *undo = nullptr, *redo = nullptr, *browserButton = nullptr, *settings = nullptr;
+    HeaderButton *undo = nullptr, *redo = nullptr, *settings = nullptr;
 
     void showEffect (int id)
     {
@@ -514,6 +510,11 @@ public:
         drawTracked (g, presetName ? presetName() : shownPreset, box.reduced (40.0f, 0.0f), Fonts::jost (14.0f, false, 0.04f), colours::text,
                      juce::Justification::centred);
         drawTracked (g, "PRESET", { box.getX(), 78.0f, box.getWidth(), 11.0f }, Fonts::jost (8.0f, false, 0.3f), colours::caption, juce::Justification::centred);
+        // The maker, in the header's corner as on MANTIS-37 and PYTHIA 32.
+        g.setColour (colours::panelBorder);
+        g.fillRect (1262.0f, 32.0f, 1.0f, 40.0f);
+        drawTonalLabLogo (g, { 1276.0f, 24.0f, 208.0f, 52.0f }, TonalLabLogo::horizontal,
+                          juce::RectanglePlacement::xRight | juce::RectanglePlacement::yMid);
         g.setColour (colours::panelBorder);
         g.fillRect (52.0f, 100.0f, w - 104.0f, 1.0f);
 
@@ -529,24 +530,16 @@ public:
         drawCaption (g, "SOUNDS", 1262.0f, 784.0f, 110.0f);
         drawTracked (g, u8 ("click a sound family to browse it  \xc2\xb7  the horizon is the live spectrum, 30 Hz \xe2\x80\x93 16 kHz"),
                      { 388.0f, 969.0f, 760.0f, 12.0f }, Fonts::jost (8.0f, false, 0.08f), colours::caption, juce::Justification::centred);
-        // Brand block: the mark, the name, the model, the maker.
-        drawAugurMark (g, { 1437.0f, 818.0f }, 17.0f);
-        drawTracked (g, "AUGUR-5", { 1394.0f, 846.0f, 90.0f, 16.0f }, Fonts::light (12.0f, 0.2f), colours::title, juce::Justification::centred);
-        drawTracked (g, u8 ("\xe2\x80\x9c" "3340\xe2\x80\x9d"), { 1394.0f, 866.0f, 90.0f, 12.0f }, Fonts::jost (9.0f, false, 0.3f), colours::caption,
-                     juce::Justification::centred);
-        g.setColour (colours::accent.withAlpha (0.8f));
-        g.fillRect (1414.0f, 888.0f, 50.0f, 1.0f);
-        drawTracked (g, "TONAL LAB", { 1394.0f, 896.0f, 90.0f, 12.0f }, Fonts::jost (8.0f, true, 0.3f), colours::captionLight, juce::Justification::centred);
+        // The maker's plate: TONAL LAB, stacked, as on MANTIS-37.
+        drawTonalLabLogo (g, { 1401.0f, 806.0f, 72.0f, 140.0f }, TonalLabLogo::stacked);
 
         // Footer
         drawTracked (g, "ANALOG SOUL  /  DIGITAL PRECISION", { 52.0f, 996.0f, 400.0f, 18.0f }, Fonts::jost (8.5f, false, 0.3f), colours::caption,
                      juce::Justification::centredLeft);
-        // The maker's logo, centred under the instrument.
-        drawTonalLabLogo (g, { w * 0.5f - 70.0f, 990.0f, 140.0f, 32.0f }, TonalLabLogo::horizontal);
     }
 
 private:
-    static juce::Rectangle<float> presetBox() { return { 618.0f, 28.0f, 300.0f, 44.0f }; }
+    static juce::Rectangle<float> presetBox() { return { 500.0f, 28.0f, 280.0f, 44.0f }; }
 
     void shiftKeys (int delta)
     {
@@ -591,7 +584,6 @@ Augur5Editor::Augur5Editor (Augur5Processor& p) : AudioProcessorEditor (p), proc
     canvas->nextPreset->onClick = [&presets] { presets.next(); };
     canvas->undo->onClick = [this] { processor.getUndoManager().undo(); };
     canvas->redo->onClick = [this] { processor.getUndoManager().redo(); };
-    canvas->browserButton->onClick = [this] { browser->open(); };
     canvas->settings->onClick = [this] { settingsPanel->open(); };
 
     // Overlay panels inside the scaled canvas: sharp and proportional at every size.

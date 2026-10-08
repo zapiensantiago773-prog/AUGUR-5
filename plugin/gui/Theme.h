@@ -75,20 +75,17 @@ void drawCaption (juce::Graphics& g, const juce::String& text, float x, float y,
 void drawNote (juce::Graphics& g, const juce::String& text, juce::Rectangle<float> r);
 void drawLedDot (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour colour, float intensity);
 
-// The AUGUR-5 logo, in the series' composition (PYTHIA: mark in a circle + light wordmark + number in colour;
-// MANTIS: wordmark + number + model). The mark: the augur's lituus (the curled staff that marked out the sky)
-// inside the templum (the quartered circle of sky that was read), with a bird crossing it.
-void drawAugurMark (juce::Graphics& g, juce::Point<float> centre, float radius, juce::Colour ink = colours::ink,
-                    juce::Colour accent = colours::accent);
-// Wordmark "AUGUR-5" + "3340" + subtitle, mark on the left; (x, y) = top left; height ~ 70 * scale. Returns its width.
+// The AUGUR-5 name, type only (as MANTIS-37's): "AUGUR-5" + "3340" + subtitle; (x, y) = top left; height ~ 70 * scale.
+// Returns its width.
 float drawAugurLogo (juce::Graphics& g, float x, float y, float scale = 1.0f, bool withSubtitle = true);
 
-// The maker's brand (plugin/resources/brand/tonal_lab, from the TONAL LAB logo kit): the light-background "brand"
-// colouring, whose sun runs from dusk orange to night blue like AUGUR's two accents. Drawn from the SVG, so it stays sharp
-// at any window size.
+// The maker's brand (plugin/resources/brand/tonal_lab, the TONAL LAB logo kit), as in MANTIS-37 and PYTHIA 32: the
+// horizontal lockup in the header's corner, the stacked one as the maker's plate of the performance strip. AUGUR uses the
+// light-background "brand" colouring: its sun runs from dusk orange to night blue, like AUGUR's terracotta and slate.
 enum class TonalLabLogo
 {
-    horizontal, // sun + TONAL LAB / INSTRUMENTS
+    horizontal, // sun + TONAL LAB / INSTRUMENTS, side by side
+    stacked,    // sun above TONAL LAB / INSTRUMENTS
     mark        // the sun on the horizon alone
 };
 void drawTonalLabLogo (juce::Graphics& g, juce::Rectangle<float> area, TonalLabLogo which,

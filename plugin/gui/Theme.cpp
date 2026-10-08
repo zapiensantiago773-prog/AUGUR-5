@@ -138,71 +138,22 @@ void drawLedDot (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour colou
 
 void drawTonalLabLogo (juce::Graphics& g, juce::Rectangle<float> area, TonalLabLogo which, juce::RectanglePlacement placement, float opacity)
 {
-    // Parsed once (message thread), on first use.
-    static const std::unique_ptr<juce::Drawable> horizontal =
-        juce::Drawable::createFromImageData (AugurBinary::tonallablogohorizontallightbg_svg, AugurBinary::tonallablogohorizontallightbg_svgSize);
-    static const std::unique_ptr<juce::Drawable> mark =
-        juce::Drawable::createFromImageData (AugurBinary::tonallabmarkbrandlightbg_svg, AugurBinary::tonallabmarkbrandlightbg_svgSize);
-    if (const auto& d = which == TonalLabLogo::horizontal ? horizontal : mark)
-        d->drawWithin (g, area, placement, opacity);
-}
-
-void drawAugurMark (juce::Graphics& g, juce::Point<float> c, float r, juce::Colour ink, juce::Colour accent)
-{
-    const float stroke = juce::jmax (1.0f, r * 0.06f);
-
-    // The circle of sky the augur read (the templum).
-    g.setColour (ink);
-    g.drawEllipse (c.x - r, c.y - r, r * 2.0f, r * 2.0f, stroke);
-
-    // The horizon, a chord across the lower half.
-    const float hy = c.y + r * 0.2f;
-    const float half = std::sqrt (r * r - (hy - c.y) * (hy - c.y)) * 0.84f;
-    g.fillRoundedRectangle (c.x - half, hy - stroke * 0.5f, half * 2.0f, stroke, stroke * 0.5f);
-
-    // The sun setting on it, in the accent, cut by thin bands like the sunset of the horizon panel.
-    const float sr = r * 0.3f;
-    juce::Path sun;
-    sun.addPieSegment (c.x - sr, hy - sr, sr * 2.0f, sr * 2.0f, -juce::MathConstants<float>::halfPi, juce::MathConstants<float>::halfPi, 0.0f);
-    {
-        // Three bands of the half disc; the two cuts between them stay transparent (any background shows through).
-        juce::Graphics::ScopedSaveState save (g);
-        g.reduceClipRegion (sun);
-        g.setColour (accent);
-        const float cut1 = hy - sr * 0.48f, cut2 = hy - sr * 0.22f;
-        const float w1 = stroke * 0.5f, w2 = stroke * 0.7f;
-        g.fillRect (c.x - sr, hy - sr, sr * 2.0f, (cut1 - w1 * 0.5f) - (hy - sr));
-        g.fillRect (c.x - sr, cut1 + w1 * 0.5f, sr * 2.0f, (cut2 - w2 * 0.5f) - (cut1 + w1 * 0.5f));
-        g.fillRect (c.x - sr, cut2 + w2 * 0.5f, sr * 2.0f, hy - (cut2 + w2 * 0.5f));
-    }
-
-    // Its reflection under the horizon: two short strokes.
-    g.setColour (accent.withAlpha (0.55f));
-    g.fillRoundedRectangle (c.x - r * 0.2f, hy + r * 0.16f, r * 0.4f, stroke * 0.8f, stroke * 0.4f);
-    g.setColour (accent.withAlpha (0.35f));
-    g.fillRoundedRectangle (c.x - r * 0.11f, hy + r * 0.3f, r * 0.22f, stroke * 0.8f, stroke * 0.4f);
-
-    // Two birds crossing the sky: the sign the augur waited for.
-    const auto bird = [&] (juce::Point<float> b, float s) {
-        juce::Path p;
-        p.startNewSubPath (b.x - s, b.y + s * 0.2f);
-        p.quadraticTo (b.x - s * 0.45f, b.y - s * 0.5f, b.x, b.y + s * 0.18f);
-        p.quadraticTo (b.x + s * 0.45f, b.y - s * 0.5f, b.x + s, b.y + s * 0.2f);
-        g.strokePath (p, juce::PathStrokeType (stroke * 1.05f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    // Parsed once (message thread), on first use; vector, so sharp at every window size.
+    static const auto load = [] (const char* data, int size) { return juce::Drawable::createFromImageData (data, static_cast<size_t> (size)); };
+    static const std::unique_ptr<juce::Drawable> logos[] = {
+        load (AugurBinary::tonallablogohorizontallightbg_svg, AugurBinary::tonallablogohorizontallightbg_svgSize),
+        load (AugurBinary::tonallablogostackedlightbg_svg, AugurBinary::tonallablogostackedlightbg_svgSize),
+        load (AugurBinary::tonallabmarkbrandlightbg_svg, AugurBinary::tonallabmarkbrandlightbg_svgSize),
     };
-    g.setColour (ink);
-    bird ({ c.x + r * 0.3f, c.y - r * 0.42f }, r * 0.22f);
-    bird ({ c.x - r * 0.12f, c.y - r * 0.58f }, r * 0.14f);
+    if (const auto& d = logos[static_cast<int> (which)])
+        d->drawWithin (g, area, placement, opacity);
 }
 
 float drawAugurLogo (juce::Graphics& g, float x, float y, float scale, bool withSubtitle)
 {
-    const float r = 24.0f * scale;
-    drawAugurMark (g, { x + r, y + 28.0f * scale }, r);
-
-    // AUGUR in light type, the hyphen as a short accent bar, 5 in the accent; the model number in slate (as MANTIS'
-    // "904" sits after its name).
-    const float tx = x + 2.0f * r + 18.0f * scale;
+    // Type only (as MANTIS' name): AUGUR in light type, the hyphen as a short accent bar, 5 in the accent, the model
+    // number in slate.
+    const float tx = x;
     const float baseline = y + 42.0f * scale;
     const auto word = Fonts::light (38.0f * scale, 0.34f);
     g.setFont (word);

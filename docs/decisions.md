@@ -530,8 +530,12 @@ El comportamiento en uso no cambia: los LFO siguen siendo libres entre notas; so
   - el sol va del naranja al azul, como los dos acentos de AUGUR (terracota y pizarra);
   - la tinta es oscura, para el papel blanco del panel.
   - Según el kit, *dusk* (cálida) es para MANTIS y *night* (fría) para PYTHIA.
-- **Dónde va:**
-  - el logo horizontal (sol + TONAL LAB / INSTRUMENTS) centrado al pie del instrumento, en lugar del texto "A TONAL LAB INSTRUMENT";
+- **Dónde va**, como en MANTIS-37 y PYTHIA 32:
+  - el logo horizontal en la **esquina derecha de la cabecera** (201 × 52 px, separado por una línea fina);
+  - el logo apilado como placa del fabricante en el bloque derecho de la franja de interpretación;
   - en la tarjeta de SETTINGS, junto a la versión.
-  - El producto conserva su símbolo propio (cabecera e icono de la app), como MANTIS y PYTHIA.
+  - La cabecera se reordenó al formato de MANTIS: el preset a la izquierda del centro y las pestañas compactas. El navegador se abre con el nombre del preset, sin botón aparte.
+- **AUGUR deja su símbolo propio** (el atardecer con gaviotas) para verse más serio. Su nombre queda solo en tipografía, como el de MANTIS: AUGUR-5 + 3340 + subtítulo.
+  - El icono de la app y de la carpeta VST3 es ahora el icono de TONAL LAB del kit.
+  - `--logo` exporta solo el nombre.
 - Se dibuja desde el SVG embebido (`drawTonalLabLogo`), nítido a cualquier escala. Verificado en capturas a 1x y 2x.
