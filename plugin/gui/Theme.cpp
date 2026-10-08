@@ -136,6 +136,17 @@ void drawLedDot (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour colou
     }
 }
 
+void drawTonalLabLogo (juce::Graphics& g, juce::Rectangle<float> area, TonalLabLogo which, juce::RectanglePlacement placement, float opacity)
+{
+    // Parsed once (message thread), on first use.
+    static const std::unique_ptr<juce::Drawable> horizontal =
+        juce::Drawable::createFromImageData (AugurBinary::tonallablogohorizontallightbg_svg, AugurBinary::tonallablogohorizontallightbg_svgSize);
+    static const std::unique_ptr<juce::Drawable> mark =
+        juce::Drawable::createFromImageData (AugurBinary::tonallabmarkbrandlightbg_svg, AugurBinary::tonallabmarkbrandlightbg_svgSize);
+    if (const auto& d = which == TonalLabLogo::horizontal ? horizontal : mark)
+        d->drawWithin (g, area, placement, opacity);
+}
+
 void drawAugurMark (juce::Graphics& g, juce::Point<float> c, float r, juce::Colour ink, juce::Colour accent)
 {
     const float stroke = juce::jmax (1.0f, r * 0.06f);

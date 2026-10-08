@@ -521,3 +521,17 @@ El comportamiento en uso no cambia: los LFO siguen siendo libres entre notas; so
   - `packs/SUN ATLAS/<CATEGORÍA>/<nombre>.augur5` más el README.
   - Zip con `python tools/pack/build_zip.py "SUN ATLAS"` → `packs/dist/TONAL LAB - AUGUR-5 SUN ATLAS (1000 presets).zip` (937 KB).
   - Se instala con PRESETS > INSTALL PACK (.ZIP). En el navegador es la colección **SUN ATLAS**.
+
+## D-043 · Marca TONAL LAB en AUGUR-5 (2026-10-08)
+- El kit de logos de TONAL LAB (sol a medio ponerse: la mitad atardecer, la mitad noche, con las ondas del horizonte) está en el proyecto:
+  - los SVG en `plugin/resources/brand/tonal_lab/`, con su LEEME;
+  - los PNG a 4x en `docs/brand/tonal_lab/`.
+- Para AUGUR se eligió la coloración **"brand" sobre fondo claro**:
+  - el sol va del naranja al azul, como los dos acentos de AUGUR (terracota y pizarra);
+  - la tinta es oscura, para el papel blanco del panel.
+  - Según el kit, *dusk* (cálida) es para MANTIS y *night* (fría) para PYTHIA.
+- **Dónde va:**
+  - el logo horizontal (sol + TONAL LAB / INSTRUMENTS) centrado al pie del instrumento, en lugar del texto "A TONAL LAB INSTRUMENT";
+  - en la tarjeta de SETTINGS, junto a la versión.
+  - El producto conserva su símbolo propio (cabecera e icono de la app), como MANTIS y PYTHIA.
+- Se dibuja desde el SVG embebido (`drawTonalLabLogo`), nítido a cualquier escala. Verificado en capturas a 1x y 2x.

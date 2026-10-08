@@ -473,9 +473,12 @@ void SettingsPanel::paint (juce::Graphics& g)
     caption ("OSCILLATOR CIRCUIT", 308.0f);
     caption ("DISPLAY", 424.0f);
     caption ("PRESETS", 502.0f);
-    drawTracked (g, u8 ("AUGUR-5 \xe2\x80\x9c" "3340\xe2\x80\x9d  v") + JucePlugin_VersionString + u8 ("  \xc2\xb7  TONAL LAB"),
-                 { p.getX() + 30.0f, p.getBottom() - 42.0f, p.getWidth() - 60.0f, 18.0f }, Fonts::jost (10.0f, false, 0.15f), colours::caption,
-                 juce::Justification::centredLeft);
+    g.setColour (colours::hairline);
+    g.fillRect (p.getX() + 28.0f, p.getBottom() - 74.0f, p.getWidth() - 56.0f, 1.0f);
+    drawTracked (g, u8 ("AUGUR-5 \xe2\x80\x9c" "3340\xe2\x80\x9d  v") + JucePlugin_VersionString, { p.getX() + 30.0f, p.getBottom() - 54.0f, 250.0f, 18.0f },
+                 Fonts::jost (10.0f, false, 0.15f), colours::caption, juce::Justification::centredLeft);
+    drawTonalLabLogo (g, { p.getRight() - 28.0f - 170.0f, p.getBottom() - 66.0f, 170.0f, 44.0f }, TonalLabLogo::horizontal,
+                      juce::RectanglePlacement::xRight | juce::RectanglePlacement::yMid);
 }
 
 } // namespace augur5::ui

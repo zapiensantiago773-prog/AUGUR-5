@@ -541,8 +541,8 @@ public:
         // Footer
         drawTracked (g, "ANALOG SOUL  /  DIGITAL PRECISION", { 52.0f, 996.0f, 400.0f, 18.0f }, Fonts::jost (8.5f, false, 0.3f), colours::caption,
                      juce::Justification::centredLeft);
-        drawTracked (g, "A  TONAL LAB  INSTRUMENT", { w * 0.5f - 200.0f, 996.0f, 400.0f, 18.0f }, Fonts::michroma (8.5f, 0.3f), colours::accent.withAlpha (0.85f),
-                     juce::Justification::centred);
+        // The maker's logo, centred under the instrument.
+        drawTonalLabLogo (g, { w * 0.5f - 70.0f, 990.0f, 140.0f, 32.0f }, TonalLabLogo::horizontal);
     }
 
 private:

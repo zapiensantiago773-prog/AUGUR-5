@@ -83,6 +83,17 @@ void drawAugurMark (juce::Graphics& g, juce::Point<float> centre, float radius, 
 // Wordmark "AUGUR-5" + "3340" + subtitle, mark on the left; (x, y) = top left; height ~ 70 * scale. Returns its width.
 float drawAugurLogo (juce::Graphics& g, float x, float y, float scale = 1.0f, bool withSubtitle = true);
 
+// The maker's brand (plugin/resources/brand/tonal_lab, from the TONAL LAB logo kit): the light-background "brand"
+// colouring, whose sun runs from dusk orange to night blue like AUGUR's two accents. Drawn from the SVG, so it stays sharp
+// at any window size.
+enum class TonalLabLogo
+{
+    horizontal, // sun + TONAL LAB / INSTRUMENTS
+    mark        // the sun on the horizon alone
+};
+void drawTonalLabLogo (juce::Graphics& g, juce::Rectangle<float> area, TonalLabLogo which,
+                       juce::RectanglePlacement placement = juce::RectanglePlacement::centred, float opacity = 1.0f);
+
 // "IDs" mode: labels show parameter IDs instead of names (automation lookup).
 inline bool showIds = false;
 
