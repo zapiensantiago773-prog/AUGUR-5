@@ -52,7 +52,7 @@ Windows: `cppvsdbg` (lee los PDB de MSVC de forma nativa). macOS: CodeLLDB.
 
   Objetivo (< −100 dB) cumplido. Falta: medir con FM y PWM a audio rate, y el sistema completo con el decimador (tools/analyze_vco.py).
 
-## D-012 · Filtro: ZDF semi-implícito
+## D-012 · Filtro: ZDF semi-implícito (desde D-045: + un paso de Newton)
 Cuatro integradores `tanh(in − out)` con lazo de realimentación resuelto exactamente sobre las ganancias secantes del sample anterior (método Mystran). La versión de 2 iteraciones costaba 3.3 veces más CPU sin diferencia en los tests. La autooscilación empieza en RESONANCE ≈ 0.8 (CEM) y ≈ 0.83 (SSM), con 0.27 y 0.20 rms. Las constantes de los modelos son **provisionales** hasta calibrar contra grabaciones.
 
 ## D-013 · GUI nativa en JUCE, calcada del mockup
@@ -557,3 +557,46 @@ El comportamiento en uso no cambia: los LFO siguen siendo libres entre notas; so
 - **macOS**: el `.pkg` suma la opción *SUN ATLAS preset library*, que el postinstall copia a `~/Library/TONAL LAB/AUGUR-5/Presets` del usuario que instala.
 - La CI construye el `.exe` (Inno Setup vía choco) junto al `.zip` y al `.pkg`.
 - **Anthology Vol.1 no va en los instaladores**: es un producto aparte (D-034) y se instala con INSTALL PACK (.ZIP).
+
+## D-045 · Calidad de sonido: filtro exacto, envolventes en escala y un solo estándar de volumen (2026-10-15)
+Pregunta: ¿por qué MANTIS-37 y PYTHIA 32 "suenan mejor"? Se midió, sin cambiar el carácter del Prophet (AUGUR no copia el sonido Moog de sus hermanos; los usa como vara de medir).
+
+**Medición** (`tools/compare/`): los plucks de los tres atlas tocados con la misma frase (8 notas, 122 BPM, velocity 100), 100 / 90 / 90 presets. Medianas:
+
+| | AUGUR (SUN ATLAS) | MANTIS (HORIZON) | PYTHIA (MOON) |
+|---|---|---|---|
+| Volumen (400 ms más fuertes) | −18.2 dB | −15.7 dB | −15.0 dB |
+| Cresta (pico − volumen) | 17.1 dB | 13.3 dB | 11.6 dB |
+| Golpe del ataque sobre el cuerpo | 14.7 dB | 12.8 dB | 7.1 dB |
+| Caída a −20 dB | 160 ms | 193 ms | 329 ms |
+
+- **Causa principal: las envolventes de los presets.** Cada motor define el "tiempo" distinto: AUGUR = caída de 60 dB (τ = T/6.9), MANTIS = 1 % (−40 dB), PYTHIA = 10–90 % (τ = T/2.2). El generador de SUN ATLAS usó números de la serie (escala 10–90 %), así que en AUGUR todo decay/release era 3.1 veces más corto: plucks cortos, picudos y, nivelados por pico, 3 dB más bajos. Con los tiempos en escala, un pluck clásico pasa de cresta 14.6 → 11.9 dB, golpe 16.2 → 7.9 dB, caída 143 → 263 ms y +3.3 dB de volumen con el mismo pico.
+- **La librería de fábrica** se había nivelado con otra medida (RMS máximo en 50 ms de un acorde): en un pluck esa ventana es el transitorio, y sus plucks quedaban a −25 dB en la escala de los packs (mediana de toda la librería −20.4 dB, rango −30 … −14).
+
+**Motor: el filtro.** El escalera era semi-implícito (ganancias secantes del sample anterior, D-012). En el barrido de un pluck se desvía de la solución exacta de sus propias ecuaciones (Newton convergido en doble, referencia a 768 kHz):
+
+| Caso (96 kHz) | Semi-implícito | + 1 paso de Newton | Newton completo |
+|---|---|---|---|
+| 110 Hz, reso 0.25 | −49.2 dB | −63.5 dB | −63.6 dB |
+| 440 Hz, reso 0.70 | −23.8 dB | −41.5 dB | −41.6 dB |
+| 880 Hz, reso 0.25 | −32.7 dB | −42.3 dB | −42.3 dB |
+
+- **Cambio:** el estimado semi-implícito + **un paso de Newton** sobre las ecuaciones exactas (SIMD, float). Igual a Newton completo (±0.2 dB) en todos los casos; un paso basta porque parte del estimado, no del sample anterior. Aplica a los tres modelos de escalera (REV 3, REV 1, CASCADE).
+- En un pluck resonante cambia la forma de onda en −27 dB, de 500 Hz hacia arriba (el "chirp" del barrido); en uno sin resonancia, −39 dB.
+- Test nuevo: el filtro sigue la solución exacta en un barrido de pluck (3 modelos × 2 notas × 2 niveles × 2 resonancias): **−73 … −108 dB** (exigido < −60; el semi-implícito daba −24).
+- **CPU** (5 voces, 48 kHz, mínimo de 3): ECO 6.3 %, GREAT 11.8 % (antes ≈ 10.5 %), DIVINE 24.7 % (antes ≈ 20.8 %).
+- **D-025 revisado:** con la resonancia sobre la autooscilación, DRIVE a fondo y el corte clavado en 20 kHz, la autooscilación ahora se engancha al armónico 12 de la nota (18 820 Hz) y deja bandas laterales a −49 / −43 dB (2x / 4x). La solución convergida de las mismas ecuaciones da −35 / −32 dB: el −61 dB anterior venía del retraso del solver, que desafinaba la autooscilación (20 388 Hz). El test conserva su propósito (el bug original era −9 dB) con guarda de −36 dB.
+
+**Envolvente SSM2050 (Rev 1/2).** Sequential describe la envolvente de los Prophet Rev 1/2 como "muy plana, casi lineal" y la del Rev 3 (CEM3310) "más curva" (Prophet-5 User's Guide). Solo el ataque está documentado como distinto: con el filtro REV 1 (SSM2040) las dos envolventes cargan hacia 3.0 (casi recta) en vez de 1.5; decay y release siguen RC. Mismo tiempo de ataque (el comparador corta en 1.0). Constante provisional; test nuevo (a mitad de tiempo: 0.55 contra 0.63 del CEM3310).
+
+**Descartado por medición:**
+- Droop de los S/H: el manual dice "hasta 1/2 mV en 7 ms" (un máximo). Bajarlo al típico no cambió el piso no armónico (−54.7 → −54.0 dB a C4): no es la causa.
+- VCA con la topología del CA3280 (ganancia después de la curva): sin cambio medible en los plucks. Queda como está.
+- ADAA en el DRIVE: sigue pendiente (D-024); en GREAT la peor línea con DRIVE a fondo en C7 es −44 dB.
+
+**Herramienta:** `tools/compare/` (README): `compare_host` toca los presets de cualquier VST3 con las frases de la auditoría; `compare.py` compara librerías. `augur_preset_audit --factory-wav` y `--factory-loudness` miden la fábrica en la escala de los packs.
+
+**Versión 1.2.0** (este cambio): el motor (filtro exacto, envolvente SSM2050) y las herramientas. Las librerías quedan para la siguiente sesión, con todo listo:
+- SUN ATLAS: regenerar con `make_sun_atlas.py` (sus tiempos ya van en la escala de AUGUR).
+- Fábrica: `augur_preset_audit --factory-loudness` + `tools/level_presets.py` (−16 dB en la escala de los packs, pico ≤ −1 dBFS; los drums conservan su medida).
+- Anthology: `augur_preset_audit --level-pack <carpeta> --pack-scale` (lo melódico pasa a `loudness="pack"`, −16 dB).

@@ -158,6 +158,23 @@ int snapshot (const juce::String& path, float scale, int tab)
 
 namespace
 {
+// How a factory sound is used in a track: the pack audit's role for its category (Signature sounds by their name).
+juce::String factoryRole (const juce::String& category, const juce::String& name)
+{
+    const auto c = category.toLowerCase();
+    if (c == "pluck" || c == "bass" || c == "lead" || c == "keys" || c == "arp" || c == "pad")
+        return c;
+    if (c == "stab")
+        return "keys"; // chord stabs
+    if (c.contains ("fx"))
+        return "fx";
+    const auto n = name.toLowerCase();
+    for (const char* r : { "pluck", "bass", "lead", "keys", "arp" })
+        if (n.contains (r))
+            return r;
+    return "pad";
+}
+
 struct Measured
 {
     double peakDb = -240.0, loudDb = -240.0;
@@ -208,11 +225,13 @@ Measured measure (juce::AudioProcessor& proc, const juce::String& category)
     return m;
 }
 
-// --level-pack <folder>: validates and loudness-matches every .augur5 preset of an expansion pack.
-// Each file carries its role ("category") and loudness target ("target", dB); amp_level is adjusted
-// over up to four passes (never pushing the peak over -3 dBFS). Fails on unknown parameter ids,
-// non-finite output or silence.
-int levelPack (const juce::File& folder)
+// --level-pack <folder> [--pack-scale]: validates and loudness-matches every .augur5 preset of an expansion pack.
+// Each file carries its role ("category"), its loudness target ("target", dB) and how loudness is measured:
+//  - loudness="pack": the loudest 400 ms of the role's phrase, peak <= -1 dBFS (the scale of the atlases, D-045);
+//  - otherwise the loudest 50 ms of a held chord, peak <= -3 dBFS (one-shot drums).
+// --pack-scale first moves every melodic preset to the pack scale at -16 dB. amp_level is adjusted over up to four
+// passes. Fails on unknown parameter ids, non-finite output or silence.
+int levelPack (const juce::File& folder, bool toPackScale)
 {
     constexpr double sr = 48000.0;
     auto files = folder.findChildFiles (juce::File::findFiles, true, "*.augur5");
@@ -229,7 +248,16 @@ int levelPack (const juce::File& folder)
             continue;
         }
         const auto category = xml->getStringAttribute ("category", "Pad");
+        if (toPackScale && category != "Drums" && xml->getStringAttribute ("loudness") != "pack")
+        {
+            xml->setAttribute ("target", "-16.0");
+            xml->setAttribute ("loudness", "pack");
+            xml->writeTo (file);
+        }
         const double target = xml->getDoubleAttribute ("target", -18.0);
+        const bool packScale = xml->getStringAttribute ("loudness") == "pack";
+        const double ceiling = packScale ? -1.0 : -3.0;
+        const auto role = factoryRole (category, xml->getStringAttribute ("name"));
         auto* paramsXml = xml->getChildByName ("PARAMS");
 
         // Presets written for 1.0 carry its effect ids: rewrite them with the rack's (what loading would do anyway).
@@ -273,12 +301,22 @@ int levelPack (const juce::File& folder)
                         unknown = true;
                     }
             proc->getPresets().loadUser (file);
-            m = measure (*proc, category);
+            if (packScale)
+            {
+                const auto pm = packaudit::analyse (*proc, role, role == "bass" ? 36 : 60, role == "pad" || role == "fx" ? 8.0 : 6.0);
+                m.peakDb = pm.peakDb;
+                m.loudDb = pm.loudDb;
+                m.finite = pm.finite;
+            }
+            else
+            {
+                m = measure (*proc, category);
+            }
             proc->releaseResources();
             if (! m.finite || m.loudDb < -60.0)
                 break;
 
-            const double delta = std::min (target - m.loudDb, -3.0 - m.peakDb);
+            const double delta = std::min (target - m.loudDb, ceiling - m.peakDb);
             if (std::abs (delta) < 0.4)
                 break;
             // Rewrite amp_level in the file.
@@ -509,6 +547,42 @@ int packAudit (const juce::File& folder, const juce::File& wavDir, bool dryFinge
     return 0;
 }
 
+// --factory-wav <dir> [category]: every factory sound (or one category) played as its role in a track (the pack
+// phrases), written as <dir>/<CATEGORY>/<name>.wav for tools/compare.
+// --factory-loudness: the same measurement (loudest 400 ms, as the packs) as a report for tools/level_presets.py.
+// Drums are left out: one-shots keep their own short-term targets (default audit).
+int factoryWav (const juce::File& dir, const juce::String& onlyCategory)
+{
+    constexpr double sr = 48000.0;
+    constexpr int block = 256;
+    std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+    auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+    proc.setPlayConfigDetails (0, 2, sr, block);
+    proc.prepareToPlay (sr, block);
+    auto& presets = proc.getPresets();
+    std::printf ("%-24s %-12s %9s %9s %s\n", "preset", "category", "peak dB", "loud dB", "role");
+    for (int i = 0; i < presets.getNumFactoryPresets(); ++i)
+    {
+        const auto category = presets.getFactoryCategory (i);
+        const auto name = presets.getFactoryName (i);
+        if ((onlyCategory.isNotEmpty() && ! category.equalsIgnoreCase (onlyCategory)) || category == "Drums" || name == "Init")
+            continue;
+        const auto role = factoryRole (category, name);
+        presets.loadFactory (i);
+        proc.prepareToPlay (sr, block); // fresh state: no tails from the previous sound
+        juce::File wav;
+        if (dir != juce::File())
+        {
+            wav = dir.getChildFile (category.toUpperCase()).getChildFile (juce::File::createLegalFileName (name) + ".wav");
+            wav.getParentDirectory().createDirectory();
+        }
+        const auto m = packaudit::analyse (proc, role, role == "bass" ? 36 : 60, role == "pad" || role == "fx" ? 8.0 : 6.0, wav);
+        std::printf ("%-24s %-12s %9.1f %9.1f %s\n", name.toRawUTF8(), category.toRawUTF8(), m.peakDb, m.loudDb, role.toRawUTF8());
+        std::fflush (stdout);
+    }
+    return 0;
+}
+
 // --check-augury-gui: the AUGURY tab driven as a user drives it (its buttons, and the mouse on the morph pad of the real
 // editor), and what that does to the parameters, to the sound and to UNDO.
 int checkAuguryGui()
@@ -691,6 +765,11 @@ int main (int argc, char** argv)
     if (argc >= 2 && std::strcmp (argv[1], "--check-augury") == 0)
         return checkAugury();
     juce::ScopedJuceInitialiser_GUI juceInit;
+    if (argc >= 2 && std::strcmp (argv[1], "--factory-loudness") == 0)
+        return factoryWav ({}, argc >= 3 ? juce::String::fromUTF8 (argv[2]) : juce::String());
+    if (argc >= 3 && std::strcmp (argv[1], "--factory-wav") == 0)
+        return factoryWav (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])),
+                           argc >= 4 ? juce::String::fromUTF8 (argv[3]) : juce::String());
     if (argc >= 2 && std::strcmp (argv[1], "--check-augury-gui") == 0)
         return checkAuguryGui();
     if (argc >= 3 && (std::strcmp (argv[1], "--install-pack") == 0 || std::strcmp (argv[1], "--import-folder") == 0))
@@ -706,7 +785,8 @@ int main (int argc, char** argv)
         return count > 0 ? 0 : 1;
     }
     if (argc >= 3 && std::strcmp (argv[1], "--level-pack") == 0)
-        return levelPack (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])));
+        return levelPack (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])),
+                          argc >= 4 && std::strcmp (argv[3], "--pack-scale") == 0);
     if (argc >= 3 && std::strcmp (argv[1], "--snapshot") == 0)
         return snapshot (juce::String::fromUTF8 (argv[2]), argc >= 4 ? static_cast<float> (std::atof (argv[3])) : 1.0f, argc >= 5 ? std::atoi (argv[4]) : 0);
     if (argc >= 4 && std::strcmp (argv[1], "--soak") == 0)

@@ -371,12 +371,17 @@ void SynthVoice::computeConstants (const ChunkSignals& sig) noexcept
     filter.setShape (p.filterSlope == 1, static_cast<LadderFilter::Mode> (std::clamp (p.filterMode, 0, 2)));
     filter.setHighpass (p.hpfHz);
 
-    const std::array<float, 13> envKey { p.fenvA, p.fenvD, p.fenvS, p.fenvR, p.aenvA, p.aenvD, p.aenvS, p.aenvR, age,
-                                         p.menvA, p.menvD, p.menvS, p.menvR };
+    const std::array<float, 14> envKey { p.fenvA, p.fenvD, p.fenvS, p.fenvR, p.aenvA, p.aenvD, p.aenvS, p.aenvR, age,
+                                         p.menvA, p.menvD, p.menvS, p.menvR, static_cast<float> (p.filterModel) };
     if (! envCacheValid || envKey != envCache)
     {
         envCache = envKey;
         envCacheValid = true;
+        // The Rev 1/2 voice (SSM2040 filter) has SSM2050 envelope generators, the Rev 3 voice CEM3310s.
+        const float target = p.filterModel == static_cast<int> (LadderFilter::Model::Ssm2040) ? RcAdsr::ssm2050AttackTarget
+                                                                                                : RcAdsr::cem3310AttackTarget;
+        filterEnv.setAttackTarget (target);
+        ampEnv.setAttackTarget (target);
         modEnv.setParameters (p.menvA, p.menvD, p.menvS, p.menvR);
         const float envSpread = 0.05f * spread;
         filterEnv.setParameters (p.fenvA * (1.0f + envSpread * fp.envTime[0]), p.fenvD * (1.0f + envSpread * fp.envTime[0]),

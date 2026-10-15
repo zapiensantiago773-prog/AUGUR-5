@@ -1,9 +1,9 @@
 ﻿; AUGUR-5 "3340" - Windows installer (Inno Setup 6).
-;   iscc /DVersion=1.1.0 /DPreset=win-release installer\win\augur5.iss
+;   iscc /DVersion=1.2.0 /DPreset=win-release installer\win\augur5.iss
 ; Components: the VST3 plug-in (the standard shared folder every host scans), the standalone application and the
 ; SUN ATLAS preset library. English and Spanish. The AppId never changes: new versions install over old ones.
 #ifndef Version
-  #define Version "1.1.0"
+  #define Version "1.2.0"
 #endif
 #ifndef Preset
   #define Preset "win-release"

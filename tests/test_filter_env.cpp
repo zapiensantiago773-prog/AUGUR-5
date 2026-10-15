@@ -1,4 +1,4 @@
-﻿#include "TestHelpers.h"
+#include "TestHelpers.h"
 #include "Envelope/RcAdsr.h"
 #include "Filter/LadderFilter.h"
 #include "Util/Random.h"
@@ -49,6 +49,100 @@ TEST_CASE ("Filter self-oscillates near the cutoff at high resonance", "[filter]
     const double freq = augur::test::measureFrequency (out, sr, out.size() / 2);
     CHECK (freq > 800.0);
     CHECK (freq < 1150.0);
+}
+
+namespace
+{
+// The ladder's equations solved to convergence in double precision (Newton), trapezoidal integration: the
+// exact discrete solution the filter must follow.
+struct ExactLadder
+{
+    LadderFilter::LadderConstants c;
+    double fs, maxCutoff, s[4] {}, y[4] {};
+
+    ExactLadder (LadderFilter::Model m, double rate) : c (LadderFilter::ladderConstants (m)), fs (rate),
+                                                       maxCutoff (std::min (20000.0, 0.35 * rate)) {}
+
+    double process (double x, double cutoffHz, double resonance)
+    {
+        const double g = std::tan (3.14159265358979 * std::clamp (cutoffHz, 5.0, maxCutoff) / fs);
+        const double k = std::clamp (resonance, 0.0, 1.1) * c.maxFeedback;
+        const double xin = x * (1.0 + c.passbandComp * 0.5 * k);
+        const double sd = c.stageDrive, id = c.inputDrive;
+        double w[4] { y[0], y[1], y[2], y[3] };
+        for (int it = 0; it < 60; ++it)
+        {
+            const double tIn = std::tanh ((xin - k * w[3]) * id);
+            const double ins[4] { tIn / id, w[0], w[1], w[2] };
+            double f[4], a[4], b[4];
+            for (int i = 0; i < 4; ++i)
+            {
+                const double t = std::tanh ((ins[i] - w[i]) * sd);
+                f[i] = w[i] - s[i] - g * t / sd;
+                a[i] = 1.0 + g * (1.0 - t * t);
+                b[i] = g * (1.0 - t * t);
+            }
+            const double cc = b[0] * (1.0 - tIn * tIn) * k;
+            const double p0 = -f[0] / a[0], q0 = -cc / a[0];
+            const double p1 = (b[1] * p0 - f[1]) / a[1], q1 = b[1] * q0 / a[1];
+            const double p2 = (b[2] * p1 - f[2]) / a[2], q2 = b[2] * q1 / a[2];
+            const double p3 = (b[3] * p2 - f[3]) / a[3], q3 = b[3] * q2 / a[3];
+            const double d3 = p3 / (1.0 - q3);
+            const double d[4] { p0 + q0 * d3, p1 + q1 * d3, p2 + q2 * d3, d3 };
+            double change = 0.0;
+            for (int i = 0; i < 4; ++i)
+            {
+                w[i] += std::clamp (d[i], -1.0, 1.0);
+                change = std::max (change, std::abs (d[i]));
+            }
+            if (change < 1e-13)
+                break;
+        }
+        for (int i = 0; i < 4; ++i)
+        {
+            s[i] = 2.0 * w[i] - s[i];
+            y[i] = w[i];
+        }
+        return w[3];
+    }
+};
+} // namespace
+
+TEST_CASE ("Ladder filter follows the exact solution through a pluck's filter sweep", "[filter]")
+{
+    // A pluck: band-limited saw into a cutoff that falls from ~11 kHz to 180 Hz (tau 40 ms), resonance and level
+    // as the voice drives it. The one-sample lag of a semi-implicit solve alone was -24 dB here (D-045).
+    constexpr double sr = 96000.0;
+    const auto model = GENERATE (LadderFilter::Model::Cem3320, LadderFilter::Model::Ssm2040, LadderFilter::Model::Cascade);
+    const auto f0 = GENERATE (110.0, 440.0);
+    const auto level = GENERATE (0.84, 1.43);
+    const auto reso = GENERATE (0.25, 0.7);
+
+    LadderFilter f;
+    f.prepare (sr);
+    f.setModel (model);
+    f.setShape (false, LadderFilter::Mode::LowPass);
+    ExactLadder exact (model, sr);
+
+    double err = 0.0, sig = 0.0, phase = 0.0;
+    const int harmonics = static_cast<int> (20000.0 / f0);
+    for (int i = 0; i < static_cast<int> (0.3 * sr); ++i)
+    {
+        double saw = 0.0;
+        for (int h = 1; h <= harmonics; ++h)
+            saw += std::sin (2.0 * 3.14159265358979 * h * phase) / h;
+        const double x = level * saw * (2.0 / 3.14159265358979);
+        phase += f0 / sr;
+        phase -= std::floor (phase);
+        const double fc = 180.0 * std::exp2 (5.95 * std::exp (-(i / sr) / 0.040));
+        const double ref = exact.process (x, fc, reso);
+        const double y = f.process (static_cast<float> (x), static_cast<float> (fc), static_cast<float> (reso));
+        err += (y - ref) * (y - ref);
+        sig += ref * ref;
+    }
+    const double errDb = 10.0 * std::log10 (err / sig);
+    INFO ("model " << static_cast<int> (model) << " f0 " << f0 << " level " << level << " reso " << reso << ": " << errDb << " dB");
+    CHECK (errDb < -60.0);
 }
 
 TEST_CASE ("CEM3320 loses bass as resonance rises, SSM2040 keeps more of it", "[filter]")
@@ -107,6 +201,33 @@ TEST_CASE ("RC envelope: attack reaches full level at the set time, release fall
         ++n;
     }
     CHECK_THAT (n / sr, Catch::Matchers::WithinRel (0.3, 0.01));
+}
+
+TEST_CASE ("SSM2050 envelope: same attack time, almost straight attack (Rev 1/2)", "[envelope]")
+{
+    constexpr double sr = 48000.0;
+    const auto run = [] (float target, int samples) {
+        RcAdsr env;
+        env.prepare (sr);
+        env.setAttackTarget (target);
+        env.setParameters (0.1f, 0.5f, 0.5f, 0.3f);
+        env.noteOn();
+        int n = 0;
+        float level = 0.0f;
+        while (env.getStage() == RcAdsr::Stage::Attack && n < samples)
+        {
+            level = env.next();
+            ++n;
+        }
+        return std::pair<int, float> (n, level);
+    };
+    // The comparator still ends the attack at the set time.
+    CHECK_THAT (run (RcAdsr::ssm2050AttackTarget, 100000).first / sr, Catch::Matchers::WithinRel (0.1, 0.01));
+    // Halfway in time: close to half level (CEM3310: above 0.6).
+    const float mid = run (RcAdsr::ssm2050AttackTarget, static_cast<int> (0.05 * sr)).second;
+    CHECK (mid > 0.5f);
+    CHECK (mid < 0.58f);
+    CHECK (run (RcAdsr::cem3310AttackTarget, static_cast<int> (0.05 * sr)).second > 0.6f);
 }
 
 TEST_CASE ("SIMD 4-lane filter matches the scalar filter", "[filter][simd]")

@@ -172,7 +172,7 @@ private:
     bool constantsDirty = true;
     std::array<float, 3> driftNow {};
     bool needOscB = true;
-    std::array<float, 13> envCache {};
+    std::array<float, 14> envCache {};
     bool envCacheValid = false;
     std::array<float, 8> dcCache { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f };
 

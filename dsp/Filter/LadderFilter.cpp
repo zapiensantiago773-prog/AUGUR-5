@@ -10,13 +10,7 @@ namespace augur
 
 namespace
 {
-struct ModelConstants
-{
-    float maxFeedback;     // loop gain at resonance = 1 (4 = linear self-oscillation threshold)
-    float stageDrive;      // pre-gain inside each stage nonlinearity (lower = cleaner stages)
-    float inputDrive;      // pre-gain of the input/feedback summing nonlinearity
-    float passbandComp;    // 0 = no compensation (full bass loss), 1 = fully compensated
-};
+using ModelConstants = LadderFilter::LadderConstants;
 
 // Provisional constants, to be calibrated against recordings (see docs/decisions.md).
 constexpr ModelConstants cem3320 { 5.0f, 1.0f, 0.55f, 0.0f };
@@ -37,6 +31,11 @@ const ModelConstants& constantsFor (LadderFilter::Model m) noexcept
 constexpr float svfDrive = 0.5f;
 constexpr float biteSaturation = 1.4f;
 } // namespace
+
+LadderFilter::LadderConstants LadderFilter::ladderConstants (Model m) noexcept
+{
+    return constantsFor (m);
+}
 
 void LadderFilter::prepare (double newSampleRate) noexcept
 {
@@ -185,13 +184,53 @@ simd::F4 LadderFilter::ladder4 (Lanes& l, simd::F4 x, simd::F4 g, simd::F4 r) co
     }
     const F4 y4 = (A * aIn * xin + B) / (splat (1.0f) + A * aIn * k);
 
-    l.u = xin - k * y4;
-    const F4 in = aIn * l.u;
+    // That estimate lags the nonlinearities by one sample, which smears fast sweeps with resonance (a pluck's
+    // filter envelope: -24 dB error at 96 kHz, D-045). One Newton step on the exact equations
+    //   w_i = s_i + g T(in_i - w_i),  T(v) = tanh(d v) / d,  in_0 = Tin(xin - k w_3),  in_i = w_{i-1}
+    // from that estimate lands on the exact solution (within 0.2 dB of a fully converged solve).
+    F4 w[4];
+    {
+        F4 stageIn = aIn * (xin - k * y4);
+        for (size_t i = 0; i < 4; ++i)
+        {
+            w[i] = alpha[i] * stageIn + beta[i];
+            stageIn = w[i];
+        }
+    }
+    const F4 one = splat (1.0f), zero = splat (0.0f);
+    const F4 sd = splat (mc.stageDrive), id = splat (mc.inputDrive);
+    {
+        const F4 tIn = simd::tanh ((xin - k * w[3]) * id);
+        const F4 ins[4] { tIn / id, w[0], w[1], w[2] };
+        F4 f[4], a[4], b[4];
+        for (size_t i = 0; i < 4; ++i)
+        {
+            const F4 t = simd::tanh ((ins[i] - w[i]) * sd);
+            const F4 slope = g * (one - t * t);
+            f[i] = w[i] - l.s[i] - g * t / sd;
+            a[i] = one + slope; // dF_i / dw_i
+            b[i] = slope;       // -dF_i / dw_(i-1)
+        }
+        const F4 c = b[0] * (one - tIn * tIn) * k; // dF_0 / dw_3, through the feedback
+        // Lower bidiagonal system plus the feedback corner: step_i = p_i + q_i * step_3.
+        const F4 p0 = (zero - f[0]) / a[0], q0 = (zero - c) / a[0];
+        const F4 p1 = (b[1] * p0 - f[1]) / a[1], q1 = b[1] * q0 / a[1];
+        const F4 p2 = (b[2] * p1 - f[2]) / a[2], q2 = b[2] * q1 / a[2];
+        const F4 p3 = (b[3] * p2 - f[3]) / a[3], q3 = b[3] * q2 / a[3];
+        const F4 step3 = p3 / (one - q3);
+        w[0] = w[0] + p0 + q0 * step3;
+        w[1] = w[1] + p1 + q1 * step3;
+        w[2] = w[2] + p2 + q2 * step3;
+        w[3] = w[3] + step3;
+    }
+
+    l.u = xin - k * w[3];
+    const F4 in = simd::tanh (l.u * id) / id;
     F4 stageIn = in;
     F4 y[4];
     for (size_t i = 0; i < 4; ++i)
     {
-        y[i] = alpha[i] * stageIn + beta[i];
+        y[i] = w[i];
         l.v[i] = stageIn - y[i];
         l.s[i] = splat (2.0f) * y[i] - l.s[i];
         stageIn = y[i];

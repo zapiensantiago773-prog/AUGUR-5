@@ -1,9 +1,12 @@
 """Level-match the factory presets from an augur_preset_audit report.
 
-Usage:  augur_preset_audit > audit.txt ;  python tools/level_presets.py audit.txt
-Adjusts each preset's amp_level in plugin/Presets.cpp so its short-term loudness (loudest 50 ms RMS)
-hits the category target, while keeping the peak at or below the ceiling. Run, rebuild, re-audit:
-two passes converge (the chain after the level control is nearly linear).
+Melodic sounds (D-045), on the same scale as the SUN ATLAS / MOON ATLAS / HORIZON ATLAS libraries:
+    augur_preset_audit --factory-loudness > loud.txt ;  python tools/level_presets.py loud.txt
+  every sound is played as its role in a track and its loudest 400 ms are brought to -16 dB, peak <= -1 dBFS.
+Drums (one-shots) keep their short-term targets (loudest 50 ms RMS):
+    augur_preset_audit > audit.txt ;  python tools/level_presets.py audit.txt --drums
+Adjusts each preset's amp_level in plugin/Presets.cpp / PresetsExpansion.inc. Run, rebuild, re-measure: two or three
+passes converge (the chain after the level control is nearly linear).
 """
 import pathlib
 import re
@@ -12,11 +15,12 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PRESET_FILES = [ROOT / "plugin" / "Presets.cpp", ROOT / "plugin" / "PresetsExpansion.inc"]
 
-TARGET_DB = -18.0            # melodic sounds
-TARGET_DRUM_BODY_DB = -16.0  # kicks, toms
+TARGET_DB = -16.0            # melodic sounds: loudest 400 ms of their role's phrase (the packs' scale)
+PEAK_CEILING_DB = -1.0
+TARGET_DRUM_BODY_DB = -16.0  # kicks, toms (loudest 50 ms)
 TARGET_SNARE_DB = -20.0
 TARGET_DRUM_TOP_DB = -25.0   # hats, clap, rim, cowbell: 30-60 ms hits sit lower in a mix
-PEAK_CEILING_DB = -3.0
+DRUM_PEAK_CEILING_DB = -3.0
 DRUM_TOPS = {"Closed Hat", "Open Hat", "Noise Clap", "Rim Click", "Metal Cowbell", "Ring Metal Perc", "Noise Shaker"}
 
 
@@ -28,7 +32,7 @@ def target_for(name: str, category: str) -> float:
     return TARGET_DB
 
 
-def main(report_path: str) -> None:
+def main(report_path: str, drums: bool) -> None:
     rows = []
     for line in pathlib.Path(report_path).read_text(encoding="utf-8", errors="ignore").splitlines()[1:]:
         m = re.match(r"(.+?)\s{2,}(\S.*?)\s+(-?\d+\.\d)\s+(-?\d+\.\d)", line)
@@ -38,7 +42,7 @@ def main(report_path: str) -> None:
     sources = {f: f.read_text(encoding="utf-8") for f in PRESET_FILES}
     worst = 0.0
     for name, category, peak, loud in rows:
-        if name == "Init":
+        if name == "Init" or (category == "Drums") != drums:
             continue
         key = '{ "' + name + '", {'
         f = next((f for f, src in sources.items() if key in src), None)
@@ -47,7 +51,7 @@ def main(report_path: str) -> None:
             continue
         source = sources[f]
         delta = target_for(name, category) - loud
-        delta = min(delta, PEAK_CEILING_DB - peak)  # never push the peak over the ceiling
+        delta = min(delta, (DRUM_PEAK_CEILING_DB if drums else PEAK_CEILING_DB) - peak)  # never push the peak over the ceiling
         start = source.index(key)
         end = source.index('}, "', start)
         body = source[start:end]
@@ -66,4 +70,4 @@ def main(report_path: str) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], "--drums" in sys.argv[2:])

@@ -501,9 +501,12 @@ def clamp(key, value):
 
 
 def write(path, name, genre, role, target, p):
+    # Melodic sounds are levelled on the packs' scale (loudest 400 ms of their role's phrase, D-045); drums keep their
+    # short-term targets. augur_preset_audit --level-pack reads both attributes.
+    scale = '' if role == "Drums" else ' loudness="pack"'
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
-             '<AUGUR5_PRESET formatVersion="1" name=%s category=%s target="%.1f" genre=%s pack=%s author="TONAL LAB">' % (
-                 quoteattr(name), quoteattr(role), target, quoteattr(genre), quoteattr(PACK)),
+             '<AUGUR5_PRESET formatVersion="1" name=%s category=%s target="%.1f"%s genre=%s pack=%s author="TONAL LAB">' % (
+                 quoteattr(name), quoteattr(role), target, scale, quoteattr(genre), quoteattr(PACK)),
              "  <PARAMS>"]
     for key in sorted(p):
         v = clamp(key, p[key])
@@ -533,7 +536,7 @@ def main():
                                "Atmos & FX": "atmos", "Arp": "pluck"}[role]]
                     kind = kinds[k % len(kinds)] if role != "Arp" else ("latch" if k == 2 else "arp")
                     p = ROLE_FN[role](rng, g, kind)
-                    target = -18.0
+                    target = -16.0
                     noun = rng.choice(NOUNS[role])
                 p = genre_touch(p, rng, g, role)
                 for _ in range(200):

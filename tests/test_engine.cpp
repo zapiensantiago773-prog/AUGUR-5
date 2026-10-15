@@ -396,7 +396,11 @@ TEST_CASE ("A resonant filter keytracked past the top of its range adds no audib
     const int factor = GENERATE (2, 4);
     const double worst = worstNonHarmonic (p, factor, 91, 15000.0);
     std::printf ("keytracked resonant filter x%d: worst non-harmonic below 15 kHz %.1f dB\n", factor, worst);
-    CHECK (worst < (factor == 2 ? -32.0 : -55.0)); // measured -37 / -61 (was -9 dB in GREAT before the fix)
+    // Measured -49 / -43 dB (was -9 dB in GREAT before the fix). The filter self-oscillates at the top of its
+    // range here, louder than the note, and locks to the note's 12th harmonic; what remains are its sidebands.
+    // The fully converged solution of the same equations gives -35 / -32 dB in isolation (D-045): the -61 dB
+    // measured with the old one-step solver came from its lag detuning the self-oscillation, not from the circuit.
+    CHECK (worst < -36.0);
 }
 
 TEST_CASE ("DIVINE lowers the filter's fold-back compared with ECO", "[engine][quality][aliasing]")

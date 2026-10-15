@@ -159,8 +159,15 @@ def filt(p, cutoff, reso=0.1, env=0.3, model=REV3, key=2, vel=0.0, slope=0, mode
              flt_mode=mode, hpf_cutoff=hpf)
 
 
+# The decay / release times below are written as 10-90 % transitions (the scale the series' generators share); AUGUR's
+# knobs give the time to fall 60 dB (RcAdsr). Same time constant: x ln(1000) / ln(9). Without it every decay was 3.1x
+# too short and the plucks thin, spiky and 3 dB quieter at the same peak (D-045). Attack = time to the peak on both.
+DECAY_TO_AUGUR = math.log(1000.0) / math.log(9.0)
+
+
 def env(p, which, a, d, s, r):
-    p.update({which + "_a": a, which + "_d": d, which + "_s": s, which + "_r": r})
+    p.update({which + "_a": a, which + "_d": round(min(10.0, d * DECAY_TO_AUGUR), 4), which + "_s": s,
+              which + "_r": round(min(10.0, r * DECAY_TO_AUGUR), 4)})
 
 
 def route(p, src, dst, amt):

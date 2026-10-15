@@ -40,6 +40,16 @@ public:
         HighPass
     };
 
+    // The ladder models' circuit constants (CEM3320, SSM2040, CASCADE).
+    struct LadderConstants
+    {
+        float maxFeedback;  // loop gain at resonance = 1 (4 = linear self-oscillation threshold)
+        float stageDrive;   // pre-gain inside each stage nonlinearity (lower = cleaner stages)
+        float inputDrive;   // pre-gain of the input/feedback summing nonlinearity
+        float passbandComp; // 0 = no compensation (full bass loss), 1 = fully compensated
+    };
+    static LadderConstants ladderConstants (Model m) noexcept;
+
     void prepare (double sampleRate) noexcept;
     void reset() noexcept;
 
