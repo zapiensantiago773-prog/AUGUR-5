@@ -11,6 +11,7 @@
         <line choice="vst3"/>
         <line choice="au"/>
         <line choice="app"/>
+        <line choice="pack"/>
     </choices-outline>
     <choice id="vst3" title="VST3 plug-in" description="Ableton Live, Cubase, Bitwig, FL Studio, Reaper, Studio One.">
         <pkg-ref id="com.tonallab.augur5.vst3"/>
@@ -21,7 +22,11 @@
     <choice id="app" title="Standalone application" description="AUGUR-5 without a DAW, in /Applications.">
         <pkg-ref id="com.tonallab.augur5.app"/>
     </choice>
+    <choice id="pack" title="SUN ATLAS preset library" description="1000 presets, installed into your AUGUR-5 preset folder.">
+        <pkg-ref id="com.tonallab.augur5.pack"/>
+    </choice>
     <pkg-ref id="com.tonallab.augur5.vst3" version="@VERSION@">augur5-vst3.pkg</pkg-ref>
+    <pkg-ref id="com.tonallab.augur5.pack" version="@VERSION@">augur5-pack.pkg</pkg-ref>
     <pkg-ref id="com.tonallab.augur5.au" version="@VERSION@">augur5-au.pkg</pkg-ref>
     <pkg-ref id="com.tonallab.augur5.app" version="@VERSION@">augur5-app.pkg</pkg-ref>
 </installer-gui-script>

@@ -1,7 +1,8 @@
 # macOS installer
 
 `installer/mac/build_pkg.sh [mac-release]` (run on a Mac after building the preset, or by CI) creates
-`build/installer/AUGUR-5 <version> (macOS).pkg` with three choices: VST3, AU and the standalone app.
+`build/installer/AUGUR-5 <version> (macOS).pkg` with four choices: VST3, AU, the standalone app and the SUN ATLAS
+preset library (copied into the installing user's `~/Library/TONAL LAB/AUGUR-5/Presets`).
 The binaries are universal (arm64 + x86_64), macOS 11+.
 
 ## Opening an unsigned installer (until TONAL LAB has an Apple Developer ID)

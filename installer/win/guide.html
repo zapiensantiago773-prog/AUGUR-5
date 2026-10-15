@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AUGUR-5 · Guía rápida</title>
+<style>
+  :root { --desk: #e9e6e0; --paper: #ffffff; --border: #d9d4cc; --hair: #e6e2da; --ink: #1b1b1d; --text: #2a2a2d;
+          --dim: #6a665f; --accent: #c8552f; --slate: #3c6684; --field: #f7f5f0; }
+  body { margin: 0; background: var(--desk); color: var(--text); font: 16px/1.6 "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-weight: 300; letter-spacing: .3em; margin: 0; color: var(--ink); }
+  h1 b { color: var(--accent); font-weight: 400; letter-spacing: .05em; }
+  .model { color: var(--slate); letter-spacing: .4em; font-size: 13px; }
+  h2 { color: var(--ink); font-size: 13px; font-weight: 600; letter-spacing: .25em; text-transform: uppercase; margin: 22px 0 10px; }
+  h2::after { content: ""; display: block; width: 18px; height: 2px; border-radius: 1px; background: var(--accent); margin-top: 8px; }
+  section { background: var(--paper); border: 1px solid var(--border); border-radius: 10px; padding: 4px 22px 14px; margin-top: 18px;
+            box-shadow: 0 1px 0 rgba(0,0,0,.05), 0 3px 6px rgba(0,0,0,.035); }
+  code, kbd { background: var(--field); border: 1px solid var(--hair); border-radius: 4px; padding: 1px 6px; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; } td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { color: var(--dim); font-weight: 500; font-size: 13px; }
+  td:first-child { white-space: nowrap; }
+  .dim { color: var(--dim); }
+  .brand { margin: 0 0 28px; }
+  @media (max-width: 560px) { td:first-child { white-space: normal; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 465 120" width="232" height="60" role="img" aria-label="TONAL LAB Instruments"><defs><linearGradient id="hlight-bg-sun" x1="29.00" y1="0" x2="91.00" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#F2913A"/><stop offset="1" stop-color="#7FA8E8"/></linearGradient><linearGradient id="hlight-bg-ln" x1="8.00" y1="0" x2="112.00" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#E07B26"/><stop offset="1" stop-color="#3A6FD8"/></linearGradient></defs><path d="M29.00 62.00 A31.00 31.00 0 0 1 91.00 62.00 Z" fill="url(#hlight-bg-sun)"/><path d="M8.00 66.00 H112.00" stroke="#14161B" stroke-width="2.60" stroke-linecap="round"/><path d="M30.00 77.00 C40.80 74.80 49.20 74.80 60.00 77.00 S79.20 79.20 90.00 77.00" stroke="url(#hlight-bg-ln)" stroke-width="2.40" stroke-linecap="round" fill="none"/><path d="M18.00 88.00 C33.12 85.00 44.88 85.00 60.00 88.00 S86.88 91.00 102.00 88.00" stroke="url(#hlight-bg-ln)" stroke-width="2.60" stroke-linecap="round" fill="none"/><path d="M8.00 99.00 C26.72 95.40 41.28 95.40 60.00 99.00 S93.28 102.60 112.00 99.00" stroke="url(#hlight-bg-ln)" stroke-width="2.80" stroke-linecap="round" fill="none"/><path transform="translate(140.00 34.00)" d="M0.00 0.00 L27.20 0.00 M13.60 0.00 L13.60 34.00 M54.40 0.00 A17.00 17.00 0 0 1 54.40 34.00 A17.00 17.00 0 0 1 54.40 0.00 M81.60 34.00 L81.60 0.00 L108.80 34.00 L108.80 0.00 M119.00 34.00 L134.30 0.00 L149.60 34.00 M125.80 22.44 L142.80 22.44 M159.80 0.00 L159.80 34.00 L180.88 34.00 M219.98 0.00 L219.98 34.00 L241.06 34.00 M251.26 34.00 L266.56 0.00 L281.86 34.00 M258.06 22.44 L275.06 22.44 M292.06 17.00 L307.70 17.00 A8.50 8.50 0 0 1 307.70 34.00 L292.06 34.00 L292.06 0.00 L306.34 0.00 A8.50 8.50 0 0 1 306.34 17.00" fill="none" stroke="#14161B" stroke-width="3.10" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(140.00 82.00)" d="M0.00 0.00 L0.00 9.00 M24.88 9.00 L24.88 0.00 L32.08 9.00 L32.08 0.00 M63.26 1.62 A2.25 2.25 0 0 0 61.01 0.00 L59.21 0.00 A2.25 2.25 0 0 0 59.21 4.50 L61.01 4.50 A2.25 2.25 0 0 1 61.01 9.00 L59.21 9.00 A2.25 2.25 0 0 1 56.96 7.38 M88.15 0.00 L95.35 0.00 M91.75 0.00 L91.75 9.00 M120.23 9.00 L120.23 0.00 L124.19 0.00 A2.25 2.25 0 0 1 124.19 4.50 L120.23 4.50 M123.65 4.50 L126.71 9.00 M151.59 0.00 L151.59 5.76 A3.24 3.24 0 0 0 158.07 5.76 L158.07 0.00 M182.95 9.00 L182.95 0.00 L187.09 5.58 L191.23 0.00 L191.23 9.00 M221.87 0.00 L216.11 0.00 L216.11 9.00 L221.87 9.00 M216.11 4.50 L220.97 4.50 M246.76 9.00 L246.76 0.00 L253.96 9.00 L253.96 0.00 M278.84 0.00 L286.04 0.00 M282.44 0.00 L282.44 9.00 M317.22 1.62 A2.25 2.25 0 0 0 314.97 0.00 L313.17 0.00 A2.25 2.25 0 0 0 313.17 4.50 L314.97 4.50 A2.25 2.25 0 0 1 314.97 9.00 L313.17 9.00 A2.25 2.25 0 0 1 310.92 7.38" fill="none" stroke="#5E636B" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <h1>AUGUR <b>5</b></h1>
+  <div class="model">3340 · TONAL LAB</div>
+  <p class="dim">Sintetizador polifónico de 5 voces de modelado analógico: 2 VCO por voz (CEM3340 / SSM2030), mixer con ruido,
+     filtro de 4 polos, dos envolventes y poly-mod. Guía rápida.</p>
+
+  <section>
+    <h2>Formatos</h2>
+    <table>
+      <tr><th>Formato</th><th>DAWs</th></tr>
+      <tr><td>VST3</td><td>Ableton Live, Cubase, FL Studio, Reaper, Bitwig, Studio One, Cakewalk, Reason 12+</td></tr>
+      <tr><td>AU (macOS)</td><td>Logic Pro, GarageBand, MainStage</td></tr>
+      <tr><td>Standalone</td><td>Sin DAW: elige audio y MIDI en <b>Options › Audio/MIDI Settings</b>.</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Pestañas</h2>
+    <table>
+      <tr><td><b>MAIN</b></td><td>Osciladores A y B, mixer (con ruido), filtro de 4 polos, poly-mod, LFO (con la rueda de modulación),
+          las dos envolventes, el amplificador y las voces: unison, legato, glide, afinación, detune y <i>ANALOG AGE</i>.</td></tr>
+      <tr><td><b>MOD</b></td><td>Matriz de modulación, LFO 2 y envolvente de modulación. <b>ROUTING</b> muestra cada ruta activa;
+          las que el motor no puede aplicar aparecen en gris.</td></tr>
+      <tr><td><b>ARP</b></td><td>Arpegiador, patrón y teclado en pantalla.</td></tr>
+      <tr><td><b>VOICE</b></td><td>Sub-oscilador, ring mod y FM B › A; pendiente (24 / 12 dB) y modo (LP / BP / HP) del filtro y HPF;
+          circuito del oscilador, calidad, POLY / DUO y rango de pitch bend; calibración de cada voz.</td></tr>
+      <tr><td><b>FX</b></td><td>FUZZ y un rack de 8 efectos: DRIVE, CHORUS, PHASER, FLANGER, DELAY, TAPE ECHO, REVERB y BUS COMP.
+          Arrastra los módulos para cambiar el orden.</td></tr>
+      <tr><td><b>AUGURY</b></td><td>Morph entre cuatro sonidos y el oráculo OMEN (abajo).</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>AUGURY: morph y OMEN</h2>
+    <p>Guarda un sonido en cada esquina con <b>CAPTURE</b> (A arriba a la izquierda, B arriba a la derecha, C abajo a la izquierda,
+       D abajo a la derecha). Después arrastra el ave sobre el campo: AUGUR-5 mezcla los cuatro sonidos según la posición.
+       Cada esquina reproduce su sonido exacto; los controles de selección (formas de onda, modos) siguen a la esquina más cercana.
+       Un arrastre completo se deshace con un solo <b>UNDO</b>.</p>
+    <p><b>RECALL</b> vuelve al sonido de una esquina, <b>CLEAR</b> la vacía. <b>CAST THE OMEN</b> crea una variación del sonido actual:
+       <i>AMOUNT</i> dice cuánto cambia y <i>LOCKED GROUPS</i> protege las secciones que no quieres tocar. Las esquinas se guardan con
+       el proyecto del DAW.</p>
+  </section>
+
+  <section>
+    <h2>Presets</h2>
+    <p>Haz clic en el nombre del preset para abrir el <b>navegador</b>: a la izquierda eliges la colección
+       (FACTORY con 170 sonidos, <b>SUN ATLAS</b> con 1000, USER) y la categoría; a la derecha está la lista, con buscador.
+       Un clic escucha el preset, doble clic o <kbd>Enter</kbd> lo carga, <kbd>Esc</kbd> cierra. Las flechas junto al nombre recorren
+       los presets.</p>
+    <p>Las librerías y tus presets viven en <code>%APPDATA%\TONAL LAB\AUGUR-5\Presets</code> (en macOS,
+       <code>~/Library/TONAL LAB/AUGUR-5/Presets</code>) y se conservan al actualizar. Los packs <code>.zip</code> se instalan desde
+       el engrane ⚙ › <b>INSTALL PACK (.ZIP)</b>.</p>
+  </section>
+
+  <section>
+    <h2>Consejos</h2>
+    <ul>
+      <li>Doble clic en una perilla la regresa a su valor por defecto; <kbd>Shift</kbd> + arrastrar = ajuste fino.</li>
+      <li>En el engrane ⚙ eliges el tamaño de la ventana (60–125 %) o <i>Fit to screen</i>, la calidad (ECO / GREAT / DIVINE) y el
+          render offline en DIVINE, y el circuito del oscilador: <b>REV 3 · CEM3340</b> o <b>REV 1 · SSM2030</b>.</li>
+      <li><b>SHOW PARAMETER IDS</b> muestra el nombre de cada parámetro para automatizar desde el DAW.</li>
+      <li><b>UNDO</b> y <b>REDO</b> están en la cabecera, junto a las pestañas.</li>
+    </ul>
+  </section>
+
+  <p class="dim" style="margin-top:40px">AUGUR-5 © TONAL LAB Instruments. VST es una marca de Steinberg Media Technologies GmbH.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,44 @@
+AUGUR-5 "3340" - END USER LICENSE AGREEMENT
+TONAL LAB
+
+By installing or using AUGUR-5 ("the Software") you agree to these terms. If you do not agree, do not
+install or use the Software.
+
+1. LICENSE. TONAL LAB grants you a non-exclusive, non-transferable license to install and use the Software
+   on computers you own or control, for personal and commercial music production.
+
+2. YOUR MUSIC IS YOURS. Audio you create with the Software, including sounds made with the included presets,
+   belongs to you and may be used in commercial releases without royalties or credit.
+
+3. RESTRICTIONS. You may not rent, resell, sublicense or redistribute the Software or its presets as a
+   product (for example as a preset pack or sample library), nor reverse engineer it except where the law
+   allows it.
+
+4. THIRD-PARTY COMPONENTS. The Software uses JUCE, the VST3 SDK (VST is a trademark of Steinberg Media
+   Technologies GmbH) and fonts under the SIL Open Font License. Their notices are installed with the
+   Software.
+
+5. NO WARRANTY. The Software is provided "as is", without warranty of any kind. TONAL LAB is not liable for
+   any damages arising from its use, to the extent permitted by law.
+
+6. TRADEMARKS. AUGUR-5 is a product of TONAL LAB. All other product names mentioned in the documentation
+   belong to their owners and are used only to describe compatibility.
+
+------------------------------------------------------------------------------------------------------------
+ESPANOL - CONTRATO DE LICENCIA DE USUARIO FINAL
+
+Al instalar o usar AUGUR-5 ("el Software") aceptas estos terminos. Si no los aceptas, no lo instales.
+
+1. LICENCIA. TONAL LAB te otorga una licencia no exclusiva e intransferible para instalar y usar el Software
+   en computadoras de tu propiedad o bajo tu control, para produccion musical personal y comercial.
+2. TU MUSICA ES TUYA. El audio que crees con el Software, incluidos los presets incluidos, te pertenece y
+   puede usarse en lanzamientos comerciales sin regalias ni creditos.
+3. RESTRICCIONES. No puedes rentar, revender, sublicenciar ni redistribuir el Software o sus presets como
+   producto (por ejemplo como pack de presets o libreria de samples), ni aplicar ingenieria inversa salvo
+   donde la ley lo permita.
+4. COMPONENTES DE TERCEROS. JUCE, VST3 SDK y fuentes con licencia SIL OFL; sus avisos se instalan junto con
+   el Software.
+5. SIN GARANTIA. El Software se entrega "tal cual". TONAL LAB no es responsable por danos derivados de su uso,
+   en la medida en que la ley lo permita.
+6. MARCAS. AUGUR-5 es un producto de TONAL LAB. Los demas nombres de productos pertenecen a sus duenos y se
+   mencionan solo para describir compatibilidad.

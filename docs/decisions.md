@@ -539,3 +539,21 @@ El comportamiento en uso no cambia: los LFO siguen siendo libres entre notas; so
   - El icono de la app y de la carpeta VST3 es ahora el icono de TONAL LAB del kit.
   - `--logo` exporta solo el nombre.
 - Se dibuja desde el SVG embebido (`drawTonalLabLogo`), nítido a cualquier escala. Verificado en capturas a 1x y 2x.
+
+## D-044 · AUGURY verificado de punta a punta e instalador de Windows (2026-10-15)
+- **Morph verificado como lo usa el usuario** (`augur_preset_audit --check-augury-gui`): el editor real en la pestaña AUGURY, sus botones y el mouse sobre el pad.
+  - Se encuentran el pad y los 4 × CAPTURE / RECALL / CLEAR y CAST THE OMEN en el árbol de componentes.
+  - CAPTURE A = "Warm Horizon", CAPTURE D = "Savanna Horn Lead". En la esquina A y en la D los parámetros son **exactamente** los del sonido, y el audio también (huella tímbrica < 0.001, nivel ± 0.01 dB).
+  - Recorrido A → D (t = 0, .25, .5, .75, 1): el cutoff baja de forma monótona (0.593 → 0.525) y en el centro es la media exacta. El centro suena distinto a las dos esquinas (distancia 1.66 a A y 6.41 a D): es mezcla, no conmutación. Los controles discretos siguen a la esquina más cercana; en el empate del centro gana A.
+  - Todo el recorrido es finito y está por debajo de 0 dBFS.
+  - Un arrastre completo = **un solo UNDO**; REDO devuelve la mezcla.
+  - RECALL, OMEN (cambia el sonido y numera la semilla) y CLEAR funcionan; con una sola esquina, mover el ave no cambia nada.
+  - Para esto el pad tiene un `componentID` ("augury-pad") y la herramienta de auditoría compila con `JUCE_MODAL_LOOPS_PERMITTED=1` (necesita el bucle de mensajes para el UNDO del APVTS).
+- **Instalador de Windows** (`installer/win/augur5.iss`, Inno Setup 6), como el de MANTIS-37: `AUGUR-5 <versión> Setup (Windows x64).exe`.
+  - Inglés y español; licencia (EULA), léeme, avisos de terceros (JUCE, VST3 SDK, fuentes OFL) y guía rápida en HTML.
+  - Componentes: VST3 → `C:\Program Files\Common Files\VST3`, Standalone → `Program Files\TONAL LAB\AUGUR-5`, **SUN ATLAS** → `%APPDATA%\TONAL LAB\AUGUR-5\Presets\SUN ATLAS`.
+  - Al desinstalar se borra el plug-in y se conservan los presets del usuario. El AppId (`780FC564-…`) no cambia nunca.
+  - Arte (`installer/win/art/make_art.ps1`): papel claro de AUGUR, nombre en tipografía y el logo apilado de TONAL LAB; el icono es el de la app.
+- **macOS**: el `.pkg` suma la opción *SUN ATLAS preset library*, que el postinstall copia a `~/Library/TONAL LAB/AUGUR-5/Presets` del usuario que instala.
+- La CI construye el `.exe` (Inno Setup vía choco) junto al `.zip` y al `.pkg`.
+- **Anthology Vol.1 no va en los instaladores**: es un producto aparte (D-034) y se instala con INSTALL PACK (.ZIP).

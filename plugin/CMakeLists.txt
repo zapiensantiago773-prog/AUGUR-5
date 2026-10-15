@@ -118,6 +118,7 @@ target_sources(augur_preset_audit PRIVATE
 target_compile_definitions(augur_preset_audit PRIVATE
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
+    JUCE_MODAL_LOOPS_PERMITTED=1
     JucePlugin_Name="AUGUR-5"
     JucePlugin_VersionString="${PROJECT_VERSION}"
 )

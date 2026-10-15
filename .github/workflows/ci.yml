@@ -77,6 +77,14 @@ jobs:
         if: runner.os == 'macOS'
         run: bash installer/mac/build_pkg.sh ${{ matrix.preset }}
 
+      - name: Windows installer (Inno Setup)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          $version = (Select-String -Path CMakeLists.txt -Pattern 'project\(AUGUR5 VERSION ([0-9.]+)').Matches[0].Groups[1].Value
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DVersion=$version" "/DPreset=${{ matrix.preset }}" installer\win\augur5.iss
+
       - name: Windows package (.zip)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -93,6 +101,7 @@ jobs:
           path: |
             build/installer/*.pkg
             build/installer/*.zip
+            build/installer/*.exe
           if-no-files-found: error
 
       - name: Publish release (version tags)
@@ -102,10 +111,11 @@ jobs:
           files: |
             build/installer/*.pkg
             build/installer/*.zip
+            build/installer/*.exe
           body: |
             AUGUR-5 "3340" by TONAL LAB.
             macOS: open the .pkg (universal, macOS 11+). First time: System Settings > Privacy & Security > Open Anyway.
-            Windows: unzip and copy AUGUR-5.vst3 to C:\Program Files\Common Files\VST3.
+            Windows: run the Setup .exe (or unzip and copy AUGUR-5.vst3 to C:\Program Files\Common Files\VST3).
 
       - name: Upload plugin binaries
         uses: actions/upload-artifact@v4

@@ -166,6 +166,7 @@ private:
 AuguryPage::AuguryPage (AuguryModel& m, std::function<juce::String()> name) : model (m), soundName (std::move (name))
 {
     pad = std::make_unique<MorphPad> (model);
+    pad->setComponentID ("augury-pad"); // found by augur_preset_audit --check-augury-gui
     addAndMakeVisible (*pad);
     pad->setBounds (68, 56, 728, 570);
 

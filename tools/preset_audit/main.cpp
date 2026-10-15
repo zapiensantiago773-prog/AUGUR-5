@@ -509,6 +509,166 @@ int packAudit (const juce::File& folder, const juce::File& wavDir, bool dryFinge
     return 0;
 }
 
+// --check-augury-gui: the AUGURY tab driven as a user drives it (its buttons, and the mouse on the morph pad of the real
+// editor), and what that does to the parameters, to the sound and to UNDO.
+int checkAuguryGui()
+{
+    constexpr double sr = 48000.0;
+    int failures = 0;
+    const auto expect = [&failures] (bool ok, const juce::String& what) {
+        std::printf ("%-78s %s\n", what.toRawUTF8(), ok ? "ok" : "FAIL");
+        failures += ok ? 0 : 1;
+    };
+    // Lets the APVTS move parameter changes into its state tree (with the undo manager), as the message loop does in a host.
+    const auto pump = [] { juce::MessageManager::getInstance()->runDispatchLoopUntil (80); };
+
+    std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+    auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+    proc.setPlayConfigDetails (0, 2, sr, 256);
+    proc.prepareToPlay (sr, 256);
+    auto* editor = dynamic_cast<Augur5Editor*> (proc.createEditorIfNeeded());
+    if (editor == nullptr)
+        return 2;
+    editor->setScale (1.0f);
+    editor->showTab (5);
+
+    // The pad and the buttons, found in the editor like a user finds them on screen.
+    juce::Component* pad = nullptr;
+    std::vector<juce::Button*> capture, recall, clear;
+    juce::Button* omen = nullptr;
+    std::function<void (juce::Component&)> walk = [&] (juce::Component& c) {
+        if (c.getComponentID() == "augury-pad")
+            pad = &c;
+        if (auto* b = dynamic_cast<juce::Button*> (&c))
+        {
+            const auto t = b->getButtonText();
+            if (t == "CAPTURE") capture.push_back (b);
+            if (t == "RECALL") recall.push_back (b);
+            if (t == "CLEAR") clear.push_back (b);
+            if (t.startsWith ("CAST THE OMEN")) omen = b;
+        }
+        for (auto* child : c.getChildren())
+            walk (*child);
+    };
+    walk (*editor);
+    // (no window here, so "on screen" = visible all the way up to the editor, with a real size)
+    const auto visibleInEditor = [editor] (juce::Component* c) {
+        for (; c != nullptr && c != editor; c = c->getParentComponent())
+            if (! c->isVisible())
+                return false;
+        return c == editor;
+    };
+    expect (pad != nullptr && visibleInEditor (pad) && pad->getWidth() > 400 && pad->getHeight() > 400,
+            "the morph pad is on screen in the AUGURY tab");
+    expect (capture.size() == 4 && recall.size() == 4 && clear.size() == 4 && omen != nullptr, "4 corners with CAPTURE / RECALL / CLEAR, and CAST THE OMEN");
+    if (failures > 0)
+        return 1;
+
+    auto& presets = proc.getPresets();
+    const auto values = [&proc] {
+        std::vector<float> v;
+        for (auto* p : proc.AudioProcessor::getParameters())
+            v.push_back (p->getValue());
+        return v;
+    };
+    const auto cutoff = [&proc] { return proc.getParameters().getParameter (augur5::params::flt_cutoff)->getValue(); };
+    const auto measure = [&proc] {
+        proc.prepareToPlay (sr, 256); // fresh state: every measurement starts from the same point
+        return packaudit::analyse (proc, "pad", 57, 3.0);
+    };
+    const auto distance = [] (const packaudit::Metrics& a, const packaudit::Metrics& b) {
+        double acc = 0.0;
+        for (size_t i = 0; i < a.fingerprint.size() && i < b.fingerprint.size(); ++i)
+            acc += (a.fingerprint[i] - b.fingerprint[i]) * (a.fingerprint[i] - b.fingerprint[i]);
+        return std::sqrt (acc / static_cast<double> (std::max<size_t> (1, a.fingerprint.size())));
+    };
+
+    // Two contrasting sounds into corners A and D with the CAPTURE buttons.
+    presets.loadFactory (presets.findFactory ("Warm Horizon"));
+    pump();
+    const auto valuesA = values();
+    const float cutA = cutoff();
+    const auto soundA = measure();
+    capture[0]->onClick();
+    presets.loadFactory (presets.findFactory ("Savanna Horn Lead"));
+    pump();
+    const auto valuesD = values();
+    const float cutD = cutoff();
+    const auto soundD = measure();
+    capture[3]->onClick();
+    expect (recall[0]->isEnabled() && recall[3]->isEnabled() && ! recall[1]->isEnabled() && ! recall[2]->isEnabled(),
+            "CAPTURE filled corners A and D (their RECALL buttons are enabled)");
+
+    // Fly the bird from A to D across the pad, then back to the middle, and let go.
+    const auto field = pad->getLocalBounds().toFloat().reduced (44.0f);
+    const auto at = [field] (float x, float y) { return juce::Point<float> (field.getX() + x * field.getWidth(), field.getY() + y * field.getHeight()); };
+    auto source = juce::Desktop::getInstance().getMainMouseSource();
+    const auto event = [&] (juce::Point<float> p, juce::Point<float> down, bool dragged) {
+        const auto now = juce::Time::getCurrentTime();
+        return juce::MouseEvent (source, p, {}, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, pad, pad, now, down, now, 1, dragged);
+    };
+    const auto start = at (0.0f, 0.0f);
+    editor->mouseDown (event (start, start, false)); // the editor makes every gesture one undo step
+    pad->mouseDown (event (start, start, false));
+    expect (values() == valuesA, "bird on corner A: every parameter is exactly sound A");
+    std::vector<float> cuts;
+    std::vector<packaudit::Metrics> sounds;
+    for (const float t : { 0.0f, 0.25f, 0.5f, 0.75f, 1.0f })
+    {
+        pad->mouseDrag (event (at (t, t), start, true));
+        cuts.push_back (cutoff());
+        sounds.push_back (measure());
+    }
+    expect (values() == valuesD, "bird on corner D: every parameter is exactly sound D");
+    bool monotonic = true;
+    for (size_t i = 1; i < cuts.size(); ++i)
+        monotonic = monotonic && (cutD >= cutA ? cuts[i] >= cuts[i - 1] : cuts[i] <= cuts[i - 1]);
+    expect (monotonic && cutA != cutD, "on the way from A to D the cutoff moves steadily from A's to D's");
+    expect (std::abs (cuts[2] - 0.5f * (cutA + cutD)) < 1.0e-4f, "in the middle the cutoff is the mean of the corners (normalised)");
+    expect (distance (sounds[0], soundA) < 1.0e-3 && std::abs (sounds[0].loudDb - soundA.loudDb) < 0.01, "what plays at corner A is sound A");
+    expect (distance (sounds[4], soundD) < 1.0e-3 && std::abs (sounds[4].loudDb - soundD.loudDb) < 0.01, "what plays at corner D is sound D");
+    const double dMidA = distance (sounds[2], soundA), dMidD = distance (sounds[2], soundD);
+    expect (dMidA > 0.5 && dMidD > 0.5, "the middle sounds different from both corners (a blend, not a switch)");
+    std::printf ("    timbre distance  A..D %.2f   middle..A %.2f   middle..D %.2f   level A %.1f / middle %.1f / D %.1f dB\n",
+                 distance (soundA, soundD), dMidA, dMidD, soundA.loudDb, sounds[2].loudDb, soundD.loudDb);
+    for (size_t i = 0; i < sounds.size(); ++i)
+        std::printf ("    t = %.2f   cutoff %.3f   brightness %5.0f Hz   level %6.1f dB\n", 0.25 * static_cast<double> (i), cuts[i],
+                     sounds[i].centroid, sounds[i].loudDb);
+    expect (std::all_of (sounds.begin(), sounds.end(), [] (const packaudit::Metrics& m) { return m.finite && m.peakDb < 0.0; }),
+            "every point of the flight is finite and below 0 dBFS");
+    pad->mouseDrag (event (at (0.5f, 0.5f), start, true));
+    const auto middle = values();
+    pad->mouseUp (event (at (0.5f, 0.5f), start, true));
+    pump();
+
+    // UNDO: the whole flight is one step back, to the sound that was playing before it.
+    proc.getUndoManager().undo();
+    pump();
+    expect (values() == valuesD, "UNDO takes the whole flight back in one step");
+    proc.getUndoManager().redo();
+    pump();
+    expect (values() == middle, "REDO brings the blend back");
+
+    // RECALL, OMEN, CLEAR.
+    recall[0]->onClick();
+    expect (values() == valuesA && proc.getAugury().getPosition() == juce::Point<float> (0.0f, 0.0f), "RECALL A plays sound A and puts the bird there");
+    const auto beforeOmen = values();
+    omen->onClick();
+    expect (values() != beforeOmen && proc.getAugury().getLastSeed() > 0, "CAST THE OMEN changes the sound and numbers the omen");
+    clear[3]->onClick();
+    expect (! proc.getAugury().isFilled (3) && ! recall[3]->isEnabled(), "CLEAR D empties the corner (RECALL D disabled)");
+    const auto beforeLone = values();
+    pad->mouseDown (event (at (1.0f, 1.0f), at (1.0f, 1.0f), false));
+    pad->mouseDrag (event (at (0.7f, 0.3f), at (1.0f, 1.0f), true));
+    pad->mouseUp (event (at (0.7f, 0.3f), at (1.0f, 1.0f), true));
+    expect (values() == beforeLone, "with a single corner left, flying the bird changes nothing");
+
+    base->editorBeingDeleted (editor);
+    delete editor;
+    std::printf ("%s\n", failures == 0 ? "AUGURY (GUI): all checks passed" : "AUGURY (GUI): FAILURES");
+    return failures == 0 ? 0 : 1;
+}
+
 int main (int argc, char** argv)
 {
     if (argc >= 2 && std::strcmp (argv[1], "--params") == 0)
@@ -531,6 +691,8 @@ int main (int argc, char** argv)
     if (argc >= 2 && std::strcmp (argv[1], "--check-augury") == 0)
         return checkAugury();
     juce::ScopedJuceInitialiser_GUI juceInit;
+    if (argc >= 2 && std::strcmp (argv[1], "--check-augury-gui") == 0)
+        return checkAuguryGui();
     if (argc >= 3 && (std::strcmp (argv[1], "--install-pack") == 0 || std::strcmp (argv[1], "--import-folder") == 0))
     {
         // Same code paths as the browser's "Install expansion pack" / "Add presets folder".
