@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Riddim Keys" category="Keys" target="-18.0"
-               genre="Drum &amp; Bass" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Riddim Keys" category="Keys" target="-16.0"
+               genre="Drum &amp; Bass" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.001000000047497451"/>
     <P id="aenv_d" value="1.664800047874451"/>
@@ -25,7 +26,7 @@
     <P id="osc2_saw" value="0.0"/>
     <P id="osc2_tri" value="1.0"/>
     <P id="osc_xmod" value="0.09309999644756317"/>
-    <P id="amp_level" value="-8.600000381469727"/>
+    <P id="amp_level" value="-5.0"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="0.0"/>
     <P id="fx_chorus_mix" value="0.2160003930330276"/>

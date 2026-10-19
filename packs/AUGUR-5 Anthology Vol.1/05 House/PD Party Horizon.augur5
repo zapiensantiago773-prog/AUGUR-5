@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Party Horizon" category="Pad" target="-18.0"
-               genre="House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Party Horizon" category="Pad" target="-16.0"
+               genre="House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.7480999827384949"/>
     <P id="aenv_d" value="1.5"/>
@@ -31,6 +32,6 @@
     <P id="fx_chorus_mode" value="2.0"/>
     <P id="fx_chorus_mix" value="0.3743340969085693"/>
     <P id="fx_chorus_hiss" value="0.05000000074505806"/>
-    <P id="amp_level" value="-7.2"/>
+    <P id="amp_level" value="-5.2"/>
   </PARAMS>
 </AUGUR5_PRESET>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <AUGUR5_PRESET formatVersion="1" name="Wander Field" category="Atmos &amp; FX"
-               target="-18.0" genre="Progressive House" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               target="-16.0" genre="Progressive House" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="2.779500007629395"/>
     <P id="aenv_d" value="2.0"/>
@@ -33,7 +33,7 @@
     <P id="mm6_src" value="8.0"/>
     <P id="osc2_fine" value="8.308799743652344"/>
     <P id="voice_spread" value="0.8999999761581421"/>
-    <P id="amp_level" value="-1.5"/>
+    <P id="amp_level" value="2.5"/>
     <P id="fx_echo_on" value="1.0"/>
     <P id="fx_echo_mode" value="3.0"/>
     <P id="fx_echo_time" value="128.2760772705078"/>

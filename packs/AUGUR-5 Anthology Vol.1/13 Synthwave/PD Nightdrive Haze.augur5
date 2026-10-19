@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Nightdrive Haze" category="Pad" target="-18.0"
-               genre="Synthwave" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Nightdrive Haze" category="Pad" target="-16.0"
+               genre="Synthwave" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="1.651800036430359"/>
     <P id="aenv_d" value="1.5"/>
@@ -36,6 +37,6 @@
     <P id="fx_reverb_size" value="1.371299982070923"/>
     <P id="fx_reverb_decay" value="6.459199905395508"/>
     <P id="fx_reverb_mix" value="0.2530729174613953"/>
-    <P id="amp_level" value="-6.9"/>
+    <P id="amp_level" value="-5.7"/>
   </PARAMS>
 </AUGUR5_PRESET>

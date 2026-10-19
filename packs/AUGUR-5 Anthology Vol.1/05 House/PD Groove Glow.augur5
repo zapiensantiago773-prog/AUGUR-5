@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Groove Glow" category="Pad" target="-18.0"
-               genre="House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Groove Glow" category="Pad" target="-16.0"
+               genre="House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="1.538599967956543"/>
     <P id="aenv_d" value="1.5"/>
@@ -21,7 +22,7 @@
     <P id="mm4_src" value="4.0"/>
     <P id="osc2_fine" value="7.950699806213379"/>
     <P id="voice_spread" value="0.7784000039100647"/>
-    <P id="amp_level" value="-6.3"/>
+    <P id="amp_level" value="-5.1"/>
     <P id="fx_reverb_on" value="1.0"/>
     <P id="fx_reverb_type" value="2.0"/>
     <P id="fx_reverb_size" value="1.213500022888184"/>

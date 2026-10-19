@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <AUGUR5_PRESET formatVersion="1" name="Hazy Portal" category="Atmos &amp; FX"
-               target="-18.0" genre="Downtempo &amp; Lo-Fi" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               target="-16.0" genre="Downtempo &amp; Lo-Fi" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="2.934499979019165"/>
     <P id="aenv_d" value="2.0"/>
@@ -36,7 +36,7 @@
     <P id="osc2_fine" value="9.844200134277344"/>
     <P id="osc2_freq" value="7.0"/>
     <P id="voice_spread" value="0.8999999761581421"/>
-    <P id="amp_level" value="2.599999904632568"/>
+    <P id="amp_level" value="5.0"/>
     <P id="fx_reverb_on" value="1.0"/>
     <P id="fx_reverb_type" value="2.0"/>
     <P id="fx_reverb_size" value="1.5"/>

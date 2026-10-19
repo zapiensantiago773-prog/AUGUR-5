@@ -174,7 +174,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (percent (P::lfo_amount, "LFO Amount", 0.5f));
     layout.add (std::make_unique<APF> (pid (P::lfo_delay), "LFO Delay", Range (0.0f, 5.0f, 0.0f, 0.4f), 0.0f,
                                        juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatSeconds)));
-    layout.add (std::make_unique<APC> (pid (P::lfo_wave), "LFO Wave", juce::StringArray { "TRI", "SAW", "SQR", "S&H" }, 0));
+    layout.add (std::make_unique<APC> (pid (P::lfo_wave), "LFO Wave",
+                                       juce::StringArray { "TRI", "SAW", "SQR", "S&H", "SAW+TRI", "SAW+SQR", "TRI+SQR", "SAW+TRI+SQR" }, 0));
     layout.add (toggle (P::lfo_sync, "LFO Sync", false));
 
     // Poly Mod
@@ -403,6 +404,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     }
     layout.add (std::make_unique<API> (pid (P::pb_down), "Pitch Bend Down", 0, 24, 2, semis));
 
+    // 1.4: the Prophet-5's WHEEL-MOD.
+    layout.add (percent (P::wm_mix, "Wheel-Mod Source Mix", 0.0f));
+    layout.add (percent (P::wm_amount, "Wheel-Mod Initial Amount", 0.0f));
+    layout.add (toggle (P::wm_freq_a, "Wheel-Mod Freq A", false));
+    layout.add (toggle (P::wm_freq_b, "Wheel-Mod Freq B", false));
+    layout.add (toggle (P::wm_pw_a, "Wheel-Mod PW A", false));
+    layout.add (toggle (P::wm_pw_b, "Wheel-Mod PW B", false));
+    layout.add (toggle (P::wm_filter, "Wheel-Mod Filter", false));
+
     return layout;
 }
 
@@ -418,6 +428,7 @@ struct ParameterBinding::Raw
     A level, ampVel, atAmount;
     A fA, fD, fS, fR, aA, aD, aS, aR;
     A lfoRate, lfoAmount, lfoDelay, lfoWave, lfoSync, lfoDiv, lfo2Div;
+    A wmMix, wmAmount, wmFreqA, wmFreqB, wmPwA, wmPwB, wmFilter;
     A pmOn, pmFenv, pmOsc2, pmFreqA, pmPwA, pmFilter;
     std::array<A, 8> mmSrc, mmDst, mmAmt;
     A mixRing, mixSub, subOct, xmod, lfo2Rate, lfo2Wave, lfo2Sync, lfo2Retrig, mA, mD, mS, mR;
@@ -487,6 +498,8 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     r.aA = get (P::aenv_a); r.aD = get (P::aenv_d); r.aS = get (P::aenv_s); r.aR = get (P::aenv_r);
     r.lfoRate = get (P::lfo_rate); r.lfoAmount = get (P::lfo_amount); r.lfoDelay = get (P::lfo_delay);
     r.lfoWave = get (P::lfo_wave); r.lfoSync = get (P::lfo_sync); r.lfoDiv = get (P::lfo_div); r.lfo2Div = get (P::lfo2_div);
+    r.wmMix = get (P::wm_mix); r.wmAmount = get (P::wm_amount); r.wmFreqA = get (P::wm_freq_a); r.wmFreqB = get (P::wm_freq_b);
+    r.wmPwA = get (P::wm_pw_a); r.wmPwB = get (P::wm_pw_b); r.wmFilter = get (P::wm_filter);
     r.pmOn = get (P::pm_on); r.pmFenv = get (P::pm_fenv_amt); r.pmOsc2 = get (P::pm_osc2_amt);
     r.pmFreqA = get (P::pm_dst_freqa); r.pmPwA = get (P::pm_dst_pwa); r.pmFilter = get (P::pm_dst_filter);
     for (int i = 0; i < P::kNumMatrixSlots; ++i)
@@ -577,6 +590,8 @@ void ParameterBinding::fill (augur::SynthParams& p) noexcept
     p.aenvA = f (r.aA); p.aenvD = f (r.aD); p.aenvS = f (r.aS); p.aenvR = f (r.aR);
     p.lfoRate = f (r.lfoRate); p.lfoAmount = f (r.lfoAmount); p.lfoDelay = f (r.lfoDelay);
     p.lfoWave = i (r.lfoWave); p.lfoSync = b (r.lfoSync); p.lfoDivision = i (r.lfoDiv); p.lfo2Division = i (r.lfo2Div);
+    p.wmMix = f (r.wmMix); p.wmAmount = f (r.wmAmount); p.wmFreqA = b (r.wmFreqA); p.wmFreqB = b (r.wmFreqB);
+    p.wmPwA = b (r.wmPwA); p.wmPwB = b (r.wmPwB); p.wmFilter = b (r.wmFilter);
     p.pmOn = b (r.pmOn); p.pmFilterEnv = f (r.pmFenv); p.pmOsc2 = f (r.pmOsc2);
     p.pmFreqA = b (r.pmFreqA); p.pmPwA = b (r.pmPwA); p.pmFilter = b (r.pmFilter);
     for (size_t k = 0; k < r.mmSrc.size(); ++k)

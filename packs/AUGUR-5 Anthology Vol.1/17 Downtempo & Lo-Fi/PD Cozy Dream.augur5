@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Cozy Dream" category="Pad" target="-18.0"
+<AUGUR5_PRESET formatVersion="1" name="Cozy Dream" category="Pad" target="-16.0"
                genre="Downtempo &amp; Lo-Fi" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="1.822000026702881"/>
     <P id="aenv_d" value="1.5"/>
@@ -28,7 +28,7 @@
     <P id="mm4_src" value="4.0"/>
     <P id="osc2_fine" value="7.848800182342529"/>
     <P id="voice_spread" value="0.88919997215271"/>
-    <P id="amp_level" value="-9.5"/>
+    <P id="amp_level" value="-10.2"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="2.0"/>
     <P id="fx_chorus_mix" value="0.3743340969085693"/>

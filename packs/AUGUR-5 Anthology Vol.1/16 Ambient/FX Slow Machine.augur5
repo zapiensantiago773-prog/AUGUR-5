@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <AUGUR5_PRESET formatVersion="1" name="Slow Machine" category="Atmos &amp; FX"
-               target="-18.0" genre="Ambient" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               target="-16.0" genre="Ambient" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="2.649300098419189"/>
     <P id="aenv_d" value="2.0"/>

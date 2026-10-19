@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Broken Signal" category="Lead" target="-18.0"
-               genre="IDM" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Broken Signal" category="Lead" target="-16.0"
+               genre="IDM" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.01759999990463257"/>
     <P id="aenv_d" value="0.5"/>
@@ -39,7 +40,7 @@
     <P id="osc2_tri" value="1.0"/>
     <P id="osc_xmod" value="0.3603000044822693"/>
     <P id="voice_count" value="1.0"/>
-    <P id="amp_level" value="-4.1"/>
+    <P id="amp_level" value="-1.4"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="2.0"/>
     <P id="fx_chorus_mix" value="0.312351793050766"/>

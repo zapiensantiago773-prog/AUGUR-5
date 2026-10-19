@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <AUGUR5_PRESET formatVersion="1" name="Roller Ghost" category="Atmos &amp; FX"
-               target="-18.0" genre="Drum &amp; Bass" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               target="-16.0" genre="Drum &amp; Bass" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="2.173199892044067"/>
     <P id="aenv_d" value="2.0"/>
@@ -34,7 +34,7 @@
     <P id="mm6_src" value="8.0"/>
     <P id="osc2_fine" value="6.110599994659424"/>
     <P id="voice_spread" value="0.8999999761581421"/>
-    <P id="amp_level" value="-1.0"/>
+    <P id="amp_level" value="3.3"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="1.0"/>
     <P id="fx_chorus_mix" value="0.3722960948944092"/>

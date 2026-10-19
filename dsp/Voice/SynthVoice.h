@@ -190,7 +190,7 @@ private:
     float resonanceTrim = 1.0f;
     float vcaTrim = 1.0f;
     float bleed = 0.0f;
-    float glideCoeff = 1.0f;
+    float glideSlew = 0.0f; // semitones per sample at full OTA current (0 = no glide)
     float keytrack = 1.0f;
     float panL = 0.7071f, panR = 0.7071f, panLTarget = 0.7071f, panRTarget = 0.7071f; // chunk start / end
     std::array<ActiveSlot, 8> slots {};

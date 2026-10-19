@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <AUGUR5_PRESET formatVersion="1" name="Neon Moss Plinks">
-  <META role="pluck" note="60" pack="SUN ATLAS" category="PLUCK" family="IDM" kind="kalimba" author="TONAL LAB"/>
+  <META role="pluck" note="60" pack="SUN ATLAS" category="PLUCK" family="IDM"
+        kind="kalimba" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="0.65227"/>
-    <P id="aenv_r" value="0.51023"/>
+    <P id="aenv_d" value="2.0507"/>
+    <P id="aenv_r" value="1.6041"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="4.96"/>
+    <P id="amp_level" value="2.3"/>
     <P id="amp_velocity" value="0.45909"/>
     <P id="analog_age" value="0.6606"/>
     <P id="at_amount" value="0.22971"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.15"/>
-    <P id="fenv_r" value="0.2"/>
+    <P id="fenv_d" value="0.4716"/>
+    <P id="fenv_r" value="0.6288"/>
     <P id="fenv_s" value="0"/>
     <P id="flt_cutoff" value="3027.8"/>
     <P id="flt_env_amt" value="0.3"/>
@@ -26,7 +28,7 @@
     <P id="fx_echo_bass" value="0"/>
     <P id="fx_echo_flutter" value="0.35576"/>
     <P id="fx_echo_intensity" value="0.36071"/>
-    <P id="fx_echo_mix" value="0.17035"/>
+    <P id="fx_echo_mix" value="0.20041"/>
     <P id="fx_echo_mode" value="1"/>
     <P id="fx_echo_on" value="1"/>
     <P id="fx_echo_sat" value="0.35"/>
@@ -45,8 +47,8 @@
     <P id="lfo2_wave" value="6"/>
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>
-    <P id="mix_osc1" value="0.3375"/>
-    <P id="mix_osc2" value="1"/>
+    <P id="mix_osc1" value="0.25"/>
+    <P id="mix_osc2" value="0.75"/>
     <P id="mix_ring" value="0"/>
     <P id="mix_sub" value="0"/>
     <P id="mm1_amt" value="0.27839"/>

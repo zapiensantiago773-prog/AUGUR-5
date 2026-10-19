@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Bounce Voicing" category="Stab" target="-18.0"
-               genre="Tech House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Bounce Voicing" category="Stab" target="-16.0"
+               genre="Tech House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.001000000047497451"/>
     <P id="aenv_d" value="0.3251999914646149"/>
@@ -26,7 +27,7 @@
     <P id="mm4_dst" value="4.0"/>
     <P id="mm4_src" value="4.0"/>
     <P id="osc2_fine" value="7.375400066375732"/>
-    <P id="amp_level" value="0.2"/>
+    <P id="amp_level" value="3.5"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="1.0"/>
     <P id="fx_chorus_mix" value="0.2418164312839508"/>

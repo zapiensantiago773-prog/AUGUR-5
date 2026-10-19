@@ -20,6 +20,7 @@ struct ChunkSignals
     double sampleRate = 96000.0; // internal (oversampled) rate
 
     Buffer lfo {};               // shared LFO, already scaled by LFO AMOUNT
+    Buffer wmodLin {}, wmodSq {}; // WHEEL-MOD source at its depth, and at depth^2 (the pitch / cutoff taper)
     Buffer osc1Pw {}, osc2Pw {};
     Buffer saw1 {}, pulse1 {}, saw2 {}, tri2 {}, pulse2 {}; // smoothed waveform switches
     Buffer mix1 {}, mix2 {}, mixNoise {}, drive {};

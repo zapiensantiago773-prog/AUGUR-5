@@ -3,18 +3,18 @@
   <META role="bass" note="36" pack="SUN ATLAS" category="BASS" family="HYPNO" kind="fm" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="0.3945"/>
-    <P id="aenv_r" value="0.1"/>
-    <P id="aenv_s" value="0.1806"/>
-    <P id="amp_level" value="2.78"/>
-    <P id="amp_velocity" value="0.32524"/>
-    <P id="analog_age" value="0.34256"/>
-    <P id="at_amount" value="0.011905"/>
+    <P id="aenv_d" value="0.9947"/>
+    <P id="aenv_r" value="0.3144"/>
+    <P id="aenv_s" value="0.39643"/>
+    <P id="amp_level" value="0.27"/>
+    <P id="amp_velocity" value="0.33741"/>
+    <P id="analog_age" value="0.29738"/>
+    <P id="at_amount" value="0.035004"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.15"/>
-    <P id="fenv_r" value="0.1"/>
+    <P id="fenv_d" value="0.4716"/>
+    <P id="fenv_r" value="0.3144"/>
     <P id="fenv_s" value="0"/>
-    <P id="flt_cutoff" value="1457.2"/>
+    <P id="flt_cutoff" value="1255.8"/>
     <P id="flt_env_amt" value="0.2"/>
     <P id="flt_keytrack" value="2"/>
     <P id="flt_mode" value="0"/>
@@ -23,21 +23,28 @@
     <P id="flt_slope" value="0"/>
     <P id="flt_velocity" value="0"/>
     <P id="glide" value="0"/>
-    <P id="hpf_cutoff" value="24.31"/>
+    <P id="hpf_cutoff" value="29.045"/>
     <P id="legato" value="1"/>
+    <P id="lfo_amount" value="1"/>
+    <P id="lfo_delay" value="0"/>
+    <P id="lfo_rate" value="0.079558"/>
+    <P id="lfo_wave" value="0"/>
     <P id="menv_a" value="0.001"/>
-    <P id="menv_d" value="0.10131"/>
-    <P id="menv_r" value="0.1"/>
+    <P id="menv_d" value="0.4644"/>
+    <P id="menv_r" value="0.3144"/>
     <P id="menv_s" value="0"/>
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>
     <P id="mix_osc1" value="0.7"/>
     <P id="mix_osc2" value="0"/>
     <P id="mix_ring" value="0"/>
-    <P id="mix_sub" value="0.32484"/>
-    <P id="mm1_amt" value="0.73874"/>
+    <P id="mix_sub" value="0.33912"/>
+    <P id="mm1_amt" value="0.70347"/>
     <P id="mm1_dst" value="8"/>
     <P id="mm1_src" value="8"/>
+    <P id="mm2_amt" value="0.047254"/>
+    <P id="mm2_dst" value="4"/>
+    <P id="mm2_src" value="3"/>
     <P id="osc1_fine" value="0"/>
     <P id="osc1_freq" value="0"/>
     <P id="osc1_oct" value="2"/>
@@ -54,12 +61,12 @@
     <P id="osc2_pw" value="50"/>
     <P id="osc2_saw" value="0"/>
     <P id="osc2_tri" value="1"/>
-    <P id="osc_model" value="0"/>
+    <P id="osc_model" value="1"/>
     <P id="osc_xmod" value="0"/>
     <P id="sub_oct" value="0"/>
     <P id="unison" value="0"/>
     <P id="voice_count" value="1"/>
-    <P id="voice_detune" value="0.26972"/>
+    <P id="voice_detune" value="0.24865"/>
     <P id="voice_mode" value="0"/>
     <P id="voice_spread" value="0"/>
   </PARAMS>

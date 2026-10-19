@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Tape Hymn" category="Lead" target="-18.0"
-               genre="Dub Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Tape Hymn" category="Lead" target="-16.0"
+               genre="Dub Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.01319999992847443"/>
     <P id="aenv_d" value="0.5"/>
@@ -27,7 +28,7 @@
     <P id="osc2_fine" value="13.76609992980957"/>
     <P id="osc2_freq" value="5.0"/>
     <P id="voice_count" value="1.0"/>
-    <P id="amp_level" value="1.3"/>
+    <P id="amp_level" value="2.6"/>
     <P id="fx_echo_on" value="1.0"/>
     <P id="fx_echo_mode" value="10.0"/>
     <P id="fx_echo_time" value="159.6246185302734"/>

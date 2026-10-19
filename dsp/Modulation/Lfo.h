@@ -7,8 +7,9 @@
 namespace augur
 {
 
-// Free-running LFO (triangle, saw, square, sample & hold). Square and S&H steps go through a
-// ~2 ms one-pole so hard modulation never clicks, like the slew of the original CV buffers.
+// Free-running LFO (triangle, saw, square, sample & hold, and the Prophet's combinations of the first three).
+// Square and S&H steps go through a ~2 ms one-pole so hard modulation never clicks, like the slew of the
+// original CV buffers.
 class Lfo
 {
 public:
@@ -33,15 +34,56 @@ public:
     void setPhase (double p) noexcept { phase = p - std::floor (p); }
     double getPhase() const noexcept { return phase; }
 
+    // LFO WAVE as stored (0..7): the four single waves, then the Prophet's combinations of SAW / TRI / SQUARE.
+    static constexpr int numWaveSettings = 8;
+    static constexpr int waveMask (int setting) noexcept
+    {
+        constexpr int masks[numWaveSettings] { tri, saw, sqr, sh, saw | tri, saw | sqr, tri | sqr, saw | tri | sqr };
+        return masks[setting < 0 ? 0 : (setting >= numWaveSettings ? numWaveSettings - 1 : setting)];
+    }
+    static constexpr int tri = 1, saw = 2, sqr = 4, sh = 8;
+
+    struct Shapes
+    {
+        float centred; // the selected waves summed, each centred on zero (the matrix's LFO source)
+        float prophet; // the same with the Prophet-5's polarities: triangle bipolar, saw and square 0..1 (WHEEL-MOD)
+    };
+
+    // One sample of every selected wave. A single wave gives exactly what process() gives.
+    Shapes processShapes (double rateHz, int setting) noexcept
+    {
+        const int mask = waveMask (setting);
+        if (mask == sh)
+        {
+            const float v = process (rateHz, Wave::SampleHold);
+            return { v, v };
+        }
+        advance (rateHz);
+        const float ph = static_cast<float> (phase);
+        Shapes out { 0.0f, 0.0f };
+        if ((mask & tri) != 0)
+        {
+            const float t = 1.0f - 4.0f * std::abs (ph - 0.5f);
+            out.centred += t;
+            out.prophet += t;
+        }
+        if ((mask & saw) != 0)
+        {
+            out.centred += 2.0f * ph - 1.0f;
+            out.prophet += ph;
+        }
+        if ((mask & sqr) != 0)
+        {
+            const float q = slew (ph < 0.5f ? 1.0f : -1.0f);
+            out.centred += q;
+            out.prophet += 0.5f * (q + 1.0f);
+        }
+        return out;
+    }
+
     float process (double rateHz, Wave wave) noexcept
     {
-        phase += rateHz / sampleRate;
-        if (phase >= 1.0)
-        {
-            phase -= std::floor (phase);
-            held = rng.nextBipolar();
-        }
-
+        advance (rateHz);
         const float ph = static_cast<float> (phase);
         switch (wave)
         {
@@ -54,6 +96,16 @@ public:
     }
 
 private:
+    void advance (double rateHz) noexcept
+    {
+        phase += rateHz / sampleRate;
+        if (phase >= 1.0)
+        {
+            phase -= std::floor (phase);
+            held = rng.nextBipolar();
+        }
+    }
+
     float slew (float target) noexcept
     {
         smoothed += (target - smoothed) * slewCoeff;

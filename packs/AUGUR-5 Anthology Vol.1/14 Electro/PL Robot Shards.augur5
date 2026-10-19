@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Robot Shards" category="Pluck" target="-18.0"
-               genre="Electro" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Robot Shards" category="Pluck" target="-16.0"
+               genre="Electro" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.001000000047497451"/>
     <P id="aenv_d" value="0.6010000109672546"/>
@@ -29,7 +30,7 @@
     <P id="mm4_src" value="4.0"/>
     <P id="osc2_fine" value="4.30210018157959"/>
     <P id="voice_spread" value="0.699999988079071"/>
-    <P id="amp_level" value="-6.599999904632568"/>
+    <P id="amp_level" value="-1.3"/>
     <P id="fx_reverb_on" value="1.0"/>
     <P id="fx_reverb_type" value="0.0"/>
     <P id="fx_reverb_size" value="1.229599952697754"/>

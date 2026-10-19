@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Aurora Slice" category="Stab" target="-18.0"
-               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Aurora Slice" category="Stab" target="-16.0"
+               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.001000000047497451"/>
     <P id="aenv_d" value="0.4426999986171722"/>
@@ -31,7 +32,7 @@
     <P id="mm4_dst" value="4.0"/>
     <P id="mm4_src" value="4.0"/>
     <P id="osc2_fine" value="6.935900211334229"/>
-    <P id="amp_level" value="2.200000047683716"/>
+    <P id="amp_level" value="6.0"/>
     <P id="fx_phaser_on" value="1.0"/>
     <P id="fx_phaser_stages" value="1.0"/>
     <P id="fx_phaser_rate" value="0.3215999901294708"/>

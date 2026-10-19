@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Circuit Blade" category="Lead" target="-18.0"
-               genre="Electro" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Circuit Blade" category="Lead" target="-16.0"
+               genre="Electro" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.01520000025629997"/>
     <P id="aenv_d" value="0.5"/>
@@ -33,7 +34,7 @@
     <P id="osc2_tri" value="1.0"/>
     <P id="osc_xmod" value="0.2662999927997589"/>
     <P id="voice_count" value="1.0"/>
-    <P id="amp_level" value="-6.0"/>
+    <P id="amp_level" value="-4.0"/>
     <P id="fx_echo_on" value="1.0"/>
     <P id="fx_echo_mode" value="3.0"/>
     <P id="fx_echo_time" value="146.4480895996094"/>

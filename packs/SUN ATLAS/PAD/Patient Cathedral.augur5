@@ -3,16 +3,16 @@
   <META role="pad" note="57" pack="SUN ATLAS" category="PAD" family="NEO" kind="sync_swell" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="1.4228"/>
-    <P id="aenv_d" value="2.3104"/>
-    <P id="aenv_r" value="4.355"/>
+    <P id="aenv_d" value="7.2636"/>
+    <P id="aenv_r" value="10"/>
     <P id="aenv_s" value="0.84759"/>
-    <P id="amp_level" value="-2.04"/>
+    <P id="amp_level" value="-2.5"/>
     <P id="amp_velocity" value="0.45725"/>
     <P id="analog_age" value="0.31986"/>
     <P id="at_amount" value="0.035251"/>
     <P id="fenv_a" value="2.0705"/>
-    <P id="fenv_d" value="1.7631"/>
-    <P id="fenv_r" value="3.4149"/>
+    <P id="fenv_d" value="5.5428"/>
+    <P id="fenv_r" value="10"/>
     <P id="fenv_s" value="0.5318"/>
     <P id="flt_cutoff" value="1532.5"/>
     <P id="flt_env_amt" value="0.2"/>
@@ -61,8 +61,8 @@
     <P id="hpf_cutoff" value="10"/>
     <P id="legato" value="0"/>
     <P id="menv_a" value="3.1276"/>
-    <P id="menv_d" value="3"/>
-    <P id="menv_r" value="3"/>
+    <P id="menv_d" value="9.4316"/>
+    <P id="menv_r" value="9.4316"/>
     <P id="menv_s" value="0.6"/>
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>

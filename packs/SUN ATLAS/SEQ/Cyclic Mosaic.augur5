@@ -3,48 +3,64 @@
   <META role="seq" note="45" pack="SUN ATLAS" category="SEQ" family="IDM" kind="ratchet" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="0.26711"/>
-    <P id="aenv_r" value="0.1"/>
+    <P id="aenv_d" value="0.8056"/>
+    <P id="aenv_r" value="0.3144"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="5.54"/>
-    <P id="amp_velocity" value="0.45922"/>
-    <P id="analog_age" value="0.52392"/>
-    <P id="arp_gate" value="0.27516"/>
+    <P id="amp_level" value="5.48"/>
+    <P id="amp_velocity" value="0.42523"/>
+    <P id="analog_age" value="0.57892"/>
+    <P id="arp_gate" value="0.29763"/>
     <P id="arp_latch" value="0"/>
-    <P id="arp_mode" value="2"/>
+    <P id="arp_mode" value="0"/>
     <P id="arp_oct" value="2"/>
     <P id="arp_on" value="1"/>
     <P id="arp_rate" value="7"/>
     <P id="arp_swing" value="0"/>
-    <P id="at_amount" value="0.15661"/>
+    <P id="at_amount" value="0.14409"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.14116"/>
-    <P id="fenv_r" value="0.1"/>
+    <P id="fenv_d" value="0.3868"/>
+    <P id="fenv_r" value="0.3144"/>
     <P id="fenv_s" value="0"/>
-    <P id="flt_cutoff" value="647.61"/>
+    <P id="flt_cutoff" value="829.29"/>
     <P id="flt_env_amt" value="0.55"/>
     <P id="flt_keytrack" value="2"/>
     <P id="flt_mode" value="0"/>
     <P id="flt_model" value="0"/>
-    <P id="flt_reso" value="0.28241"/>
+    <P id="flt_reso" value="0.34294"/>
     <P id="flt_slope" value="0"/>
     <P id="flt_velocity" value="0.2"/>
-    <P id="fx_drive_amount" value="22.948"/>
-    <P id="fx_drive_bias" value="0"/>
-    <P id="fx_drive_mix" value="0.19958"/>
-    <P id="fx_drive_model" value="4"/>
-    <P id="fx_drive_on" value="1"/>
-    <P id="fx_drive_tone" value="0.45"/>
+    <P id="fx_chorus_depth" value="1"/>
+    <P id="fx_chorus_hiss" value="0.48012"/>
+    <P id="fx_chorus_mix" value="0.25491"/>
+    <P id="fx_chorus_mode" value="1"/>
+    <P id="fx_chorus_on" value="1"/>
+    <P id="fx_chorus_rate" value="1"/>
+    <P id="fx_chorus_tone" value="0.5"/>
+    <P id="fx_chorus_width" value="1"/>
+    <P id="fx_echo_age" value="0.54697"/>
+    <P id="fx_echo_bass" value="0"/>
+    <P id="fx_echo_flutter" value="0.43841"/>
+    <P id="fx_echo_intensity" value="0.35143"/>
+    <P id="fx_echo_mix" value="0.21849"/>
+    <P id="fx_echo_mode" value="3"/>
+    <P id="fx_echo_on" value="1"/>
+    <P id="fx_echo_sat" value="0.35"/>
+    <P id="fx_echo_spring" value="0.25"/>
+    <P id="fx_echo_sync" value="0"/>
+    <P id="fx_echo_time" value="298.62"/>
+    <P id="fx_echo_treble" value="-4"/>
+    <P id="fx_echo_width" value="0.6"/>
+    <P id="fx_echo_wow" value="0.40155"/>
     <P id="glide" value="0"/>
     <P id="hpf_cutoff" value="10"/>
     <P id="legato" value="0"/>
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>
     <P id="mix_osc1" value="1"/>
-    <P id="mix_osc2" value="0.98415"/>
+    <P id="mix_osc2" value="0.54"/>
     <P id="mix_ring" value="0"/>
     <P id="mix_sub" value="0"/>
-    <P id="mm1_amt" value="-0.35219"/>
+    <P id="mm1_amt" value="-0.39919"/>
     <P id="mm1_dst" value="6"/>
     <P id="mm1_src" value="11"/>
     <P id="osc1_fine" value="0"/>
@@ -68,8 +84,8 @@
     <P id="sub_oct" value="0"/>
     <P id="unison" value="0"/>
     <P id="voice_count" value="4"/>
-    <P id="voice_detune" value="0.30389"/>
+    <P id="voice_detune" value="0.34955"/>
     <P id="voice_mode" value="0"/>
-    <P id="voice_spread" value="0.47178"/>
+    <P id="voice_spread" value="0.33895"/>
   </PARAMS>
 </AUGUR5_PRESET>

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Precise Engine" category="Bass" target="-18.0"
-               genre="Minimal" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Precise Engine" category="Bass" target="-16.0"
+               genre="Minimal" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
     <P id="aenv_d" value="0.3179"/>
@@ -36,6 +37,6 @@
     <P id="osc2_saw" value="0"/>
     <P id="osc2_tri" value="1"/>
     <P id="voice_count" value="1"/>
-    <P id="amp_level" value="-3.5"/>
+    <P id="amp_level" value="1.2"/>
   </PARAMS>
 </AUGUR5_PRESET>

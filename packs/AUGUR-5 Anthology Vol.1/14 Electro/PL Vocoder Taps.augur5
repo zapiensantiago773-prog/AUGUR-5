@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Vocoder Taps" category="Pluck" target="-18.0"
-               genre="Electro" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Vocoder Taps" category="Pluck" target="-16.0"
+               genre="Electro" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
     <P id="aenv_d" value="1.2847"/>
@@ -36,6 +37,6 @@
     <P id="osc1_saw" value="0"/>
     <P id="osc2_fine" value="5.1284"/>
     <P id="voice_spread" value="0.7"/>
-    <P id="amp_level" value="-2.9"/>
+    <P id="amp_level" value="3.4"/>
   </PARAMS>
 </AUGUR5_PRESET>

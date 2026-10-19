@@ -1,66 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<AUGUR5_PRESET formatVersion="1" name="Folded Fountain">
-  <META role="arp" note="57" pack="SUN ATLAS" category="ARP" family="IDM" kind="updown" author="TONAL LAB"/>
+<AUGUR5_PRESET formatVersion="1" name="Folded Fountain" fxOrder="1 2 3 4 5 0 6 7">
+  <META role="arp" note="57" pack="SUN ATLAS" category="ARP" family="IDM" kind="order" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="0.2421"/>
-    <P id="aenv_r" value="0.15314"/>
-    <P id="aenv_s" value="0.041421"/>
-    <P id="amp_level" value="4.53"/>
-    <P id="amp_velocity" value="0.44556"/>
-    <P id="analog_age" value="0.62374"/>
-    <P id="arp_gate" value="0.54647"/>
+    <P id="aenv_d" value="1.0197"/>
+    <P id="aenv_r" value="0.8275"/>
+    <P id="aenv_s" value="0.18671"/>
+    <P id="amp_level" value="5.78"/>
+    <P id="amp_velocity" value="0.51529"/>
+    <P id="analog_age" value="0.60042"/>
+    <P id="arp_gate" value="0.56792"/>
     <P id="arp_latch" value="0"/>
-    <P id="arp_mode" value="2"/>
-    <P id="arp_oct" value="3"/>
+    <P id="arp_mode" value="4"/>
+    <P id="arp_oct" value="1"/>
     <P id="arp_on" value="1"/>
-    <P id="arp_rate" value="5"/>
-    <P id="arp_swing" value="0"/>
-    <P id="at_amount" value="0.090104"/>
+    <P id="arp_rate" value="1"/>
+    <P id="arp_swing" value="0.15835"/>
+    <P id="at_amount" value="0.10257"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.1583"/>
-    <P id="fenv_r" value="0.15"/>
-    <P id="fenv_s" value="0.013992"/>
-    <P id="flt_cutoff" value="5187"/>
+    <P id="fenv_d" value="0.7108"/>
+    <P id="fenv_r" value="0.4716"/>
+    <P id="fenv_s" value="0.13962"/>
+    <P id="flt_cutoff" value="5718.4"/>
     <P id="flt_env_amt" value="0.2"/>
     <P id="flt_keytrack" value="2"/>
     <P id="flt_mode" value="0"/>
     <P id="flt_model" value="0"/>
     <P id="flt_reso" value="0.05"/>
     <P id="flt_slope" value="0"/>
-    <P id="flt_velocity" value="0.2643"/>
+    <P id="flt_velocity" value="0.18548"/>
     <P id="fx_chorus_depth" value="1"/>
-    <P id="fx_chorus_hiss" value="0.34416"/>
-    <P id="fx_chorus_mix" value="0.27811"/>
-    <P id="fx_chorus_mode" value="1"/>
+    <P id="fx_chorus_hiss" value="0.48252"/>
+    <P id="fx_chorus_mix" value="0.28558"/>
+    <P id="fx_chorus_mode" value="0"/>
     <P id="fx_chorus_on" value="1"/>
     <P id="fx_chorus_rate" value="1"/>
     <P id="fx_chorus_tone" value="0.5"/>
     <P id="fx_chorus_width" value="1"/>
-    <P id="fx_echo_age" value="0.7095"/>
-    <P id="fx_echo_bass" value="0"/>
-    <P id="fx_echo_flutter" value="0.37835"/>
-    <P id="fx_echo_intensity" value="0.36707"/>
-    <P id="fx_echo_mix" value="0.19135"/>
-    <P id="fx_echo_mode" value="3"/>
-    <P id="fx_echo_on" value="1"/>
-    <P id="fx_echo_sat" value="0.35"/>
-    <P id="fx_echo_spring" value="0.25"/>
-    <P id="fx_echo_sync" value="0"/>
-    <P id="fx_echo_time" value="355.58"/>
-    <P id="fx_echo_treble" value="-4"/>
-    <P id="fx_echo_width" value="0.6"/>
-    <P id="fx_echo_wow" value="0.4103"/>
     <P id="glide" value="0"/>
     <P id="hpf_cutoff" value="250"/>
     <P id="legato" value="0"/>
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>
-    <P id="mix_osc1" value="0.4725"/>
-    <P id="mix_osc2" value="0.8775"/>
+    <P id="mix_osc1" value="0.35"/>
+    <P id="mix_osc2" value="0.65"/>
     <P id="mix_ring" value="0"/>
     <P id="mix_sub" value="0"/>
-    <P id="mm1_amt" value="0.21373"/>
+    <P id="mm1_amt" value="0.17011"/>
     <P id="mm1_dst" value="4"/>
     <P id="mm1_src" value="4"/>
     <P id="osc1_fine" value="0"/>
@@ -84,8 +70,8 @@
     <P id="sub_oct" value="0"/>
     <P id="unison" value="0"/>
     <P id="voice_count" value="6"/>
-    <P id="voice_detune" value="0.42594"/>
+    <P id="voice_detune" value="0.42127"/>
     <P id="voice_mode" value="0"/>
-    <P id="voice_spread" value="0.54315"/>
+    <P id="voice_spread" value="0.44295"/>
   </PARAMS>
 </AUGUR5_PRESET>

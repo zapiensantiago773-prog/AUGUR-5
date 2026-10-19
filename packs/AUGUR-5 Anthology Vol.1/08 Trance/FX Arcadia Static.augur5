@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <AUGUR5_PRESET formatVersion="1" name="Arcadia Static" category="Atmos &amp; FX"
-               target="-18.0" genre="Trance" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               target="-16.0" genre="Trance" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="2.533200025558472"/>
     <P id="aenv_d" value="2.0"/>
@@ -31,7 +31,7 @@
     <P id="osc2_fine" value="5.929599761962891"/>
     <P id="osc2_freq" value="7.0"/>
     <P id="voice_spread" value="0.8999999761581421"/>
-    <P id="amp_level" value="-0.1000000014901161"/>
+    <P id="amp_level" value="2.3"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="1.0"/>
     <P id="fx_chorus_mix" value="0.2886421084403992"/>

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Summer Glow" category="Pad" target="-18.0"
-               genre="Trance" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Summer Glow" category="Pad" target="-16.0"
+               genre="Trance" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="1.547700047492981"/>
     <P id="aenv_d" value="1.5"/>
@@ -36,6 +37,6 @@
     <P id="fx_reverb_size" value="1.439800024032593"/>
     <P id="fx_reverb_decay" value="4.140900135040283"/>
     <P id="fx_reverb_mix" value="0.196562260389328"/>
-    <P id="amp_level" value="-6.7"/>
+    <P id="amp_level" value="-5.0"/>
   </PARAMS>
 </AUGUR5_PRESET>

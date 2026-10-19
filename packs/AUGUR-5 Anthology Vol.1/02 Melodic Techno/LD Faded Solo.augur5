@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Faded Solo" category="Lead" target="-18.0"
-               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Faded Solo" category="Lead" target="-16.0"
+               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.02859999984502792"/>
     <P id="aenv_d" value="0.5"/>
@@ -45,7 +46,7 @@
     <P id="unison" value="1.0"/>
     <P id="voice_count" value="4.0"/>
     <P id="voice_detune" value="0.3194000124931335"/>
-    <P id="amp_level" value="-11.19999980926514"/>
+    <P id="amp_level" value="-4.8"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="0.0"/>
     <P id="fx_chorus_mix" value="0.2160003930330276"/>

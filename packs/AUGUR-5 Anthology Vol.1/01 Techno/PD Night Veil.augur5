@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Night Veil" category="Pad" target="-18.0"
-               genre="Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Night Veil" category="Pad" target="-16.0"
+               genre="Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="1.79830002784729"/>
     <P id="aenv_d" value="1.5"/>
@@ -29,7 +30,7 @@
     <P id="mm4_src" value="4.0"/>
     <P id="osc2_fine" value="8.65310001373291"/>
     <P id="voice_spread" value="0.7412999868392944"/>
-    <P id="amp_level" value="-9.699999809265137"/>
+    <P id="amp_level" value="-9.0"/>
     <P id="fx_reverb_on" value="1.0"/>
     <P id="fx_reverb_type" value="0.0"/>
     <P id="fx_reverb_size" value="1.205299973487854"/>

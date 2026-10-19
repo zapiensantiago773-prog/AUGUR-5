@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Silent Glow" category="Pad" target="-18.0"
-               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Silent Glow" category="Pad" target="-16.0"
+               genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="1.775300025939941"/>
     <P id="aenv_d" value="1.5"/>
@@ -29,7 +30,7 @@
     <P id="voice_detune" value="0.7786999940872192"/>
     <P id="voice_mode" value="1.0"/>
     <P id="voice_spread" value="0.9376999735832214"/>
-    <P id="amp_level" value="-2.900000095367432"/>
+    <P id="amp_level" value="-2.3"/>
     <P id="fx_phaser_on" value="1.0"/>
     <P id="fx_phaser_stages" value="1.0"/>
     <P id="fx_phaser_rate" value="0.08160000294446945"/>

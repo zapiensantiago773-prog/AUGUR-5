@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <AUGUR5_PRESET formatVersion="1" name="Aurora Nebula" category="Atmos &amp; FX"
-               target="-18.0" genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               target="-16.0" genre="Melodic Techno" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="3.316200017929077"/>
     <P id="aenv_d" value="2.0"/>
@@ -35,7 +35,7 @@
     <P id="osc2_fine" value="5.067399978637695"/>
     <P id="osc2_freq" value="7.0"/>
     <P id="voice_spread" value="0.8999999761581421"/>
-    <P id="amp_level" value="2.200000047683716"/>
+    <P id="amp_level" value="0.4"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="2.0"/>
     <P id="fx_chorus_mix" value="0.3091706335544586"/>

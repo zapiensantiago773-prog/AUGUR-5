@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <AUGUR5_PRESET formatVersion="1" name="Mainframe Wind" category="Atmos &amp; FX"
-               target="-18.0" genre="Electro" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               target="-16.0" genre="Electro" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.1000000014901161"/>
     <P id="aenv_d" value="1.0"/>
@@ -33,7 +33,7 @@
     <P id="osc2_lofreq" value="1.0"/>
     <P id="osc_xmod" value="0.5"/>
     <P id="voice_spread" value="0.8999999761581421"/>
-    <P id="amp_level" value="-13.1"/>
+    <P id="amp_level" value="-6.0"/>
     <P id="fx_reverb_on" value="1.0"/>
     <P id="fx_reverb_type" value="2.0"/>
     <P id="fx_reverb_size" value="1.5"/>

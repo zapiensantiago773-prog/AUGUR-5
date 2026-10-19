@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Supersonic Canvas" category="Pad" target="-18.0"
-               genre="Future Bass" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Supersonic Canvas" category="Pad" target="-16.0"
+               genre="Future Bass" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="1.542700052261353"/>
     <P id="aenv_d" value="1.5"/>
@@ -21,7 +22,7 @@
     <P id="mm4_src" value="4.0"/>
     <P id="osc2_fine" value="6.839499950408936"/>
     <P id="voice_spread" value="0.7971000075340271"/>
-    <P id="amp_level" value="-6.6"/>
+    <P id="amp_level" value="-5.9"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="1.0"/>
     <P id="fx_chorus_mix" value="0.2252622246742249"/>

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Fog Ocean" category="Pad" target="-18.0"
-               genre="Dub Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Fog Ocean" category="Pad" target="-16.0"
+               genre="Dub Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="1.340000033378601"/>
     <P id="aenv_d" value="1.5"/>
@@ -21,7 +22,7 @@
     <P id="mm4_src" value="4.0"/>
     <P id="osc2_fine" value="9.276900291442871"/>
     <P id="voice_spread" value="0.8209999799728394"/>
-    <P id="amp_level" value="-8.699999999999999"/>
+    <P id="amp_level" value="-7.5"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="0.0"/>
     <P id="fx_chorus_mix" value="0.2325041890144348"/>

@@ -3,16 +3,16 @@
   <META role="pluck" note="60" pack="SUN ATLAS" category="PLUCK" family="HOUSE" kind="kalimba" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="0.60402"/>
-    <P id="aenv_r" value="0.50971"/>
+    <P id="aenv_d" value="1.899"/>
+    <P id="aenv_r" value="1.6025"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="2.05"/>
+    <P id="amp_level" value="2.44"/>
     <P id="amp_velocity" value="0.48416"/>
     <P id="analog_age" value="0.44432"/>
     <P id="at_amount" value="0.18395"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.15"/>
-    <P id="fenv_r" value="0.2"/>
+    <P id="fenv_d" value="0.4716"/>
+    <P id="fenv_r" value="0.6288"/>
     <P id="fenv_s" value="0"/>
     <P id="flt_cutoff" value="2363.1"/>
     <P id="flt_env_amt" value="0.3"/>
@@ -31,7 +31,7 @@
     <P id="fx_chorus_tone" value="0.5"/>
     <P id="fx_chorus_width" value="1"/>
     <P id="fx_comp_attack" value="3"/>
-    <P id="fx_comp_makeup" value="5"/>
+    <P id="fx_comp_makeup" value="2"/>
     <P id="fx_comp_mix" value="1"/>
     <P id="fx_comp_on" value="1"/>
     <P id="fx_comp_ratio" value="1"/>
@@ -42,7 +42,7 @@
     <P id="fx_reverb_decay" value="1.8113"/>
     <P id="fx_reverb_freeze" value="0"/>
     <P id="fx_reverb_lowcut" value="140"/>
-    <P id="fx_reverb_mix" value="0.18832"/>
+    <P id="fx_reverb_mix" value="0.22156"/>
     <P id="fx_reverb_mod" value="0.4"/>
     <P id="fx_reverb_on" value="1"/>
     <P id="fx_reverb_pitch" value="3"/>
@@ -56,8 +56,8 @@
     <P id="legato" value="0"/>
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>
-    <P id="mix_osc1" value="0.3375"/>
-    <P id="mix_osc2" value="1"/>
+    <P id="mix_osc1" value="0.25"/>
+    <P id="mix_osc2" value="0.75"/>
     <P id="mix_ring" value="0"/>
     <P id="mix_sub" value="0"/>
     <P id="mm1_amt" value="0.20286"/>

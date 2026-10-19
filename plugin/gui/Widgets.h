@@ -143,6 +143,25 @@ private:
     std::unique_ptr<juce::ParameterAttachment> attachment;
 };
 
+// The LFO's wave switches, as on the Prophet-5: SAW, TRI and SQUARE can be on together (LFO WAVE stores the
+// combination), S&H stands alone. One wave always stays on.
+class LfoWaveSwitches final : public juce::Component
+{
+public:
+    LfoWaveSwitches (APVTS& state, const juce::String& paramId, juce::Colour colour);
+    juce::Button& getButton (int i) { return *buttons[static_cast<size_t> (i)]; }
+
+    // LFO WAVE setting <-> set of waves (bit 1 TRI, 2 SAW, 4 SQR, 8 S&H), as dsp/Modulation/Lfo.h.
+    static int maskFor (int setting) noexcept;
+    static int settingFor (int mask) noexcept;
+
+private:
+    void update (float value);
+    std::array<std::unique_ptr<juce::Button>, 4> buttons; // SAW, TRI, SQR, S&H
+    std::unique_ptr<juce::ParameterAttachment> attachment;
+    int current = 0;
+};
+
 // Drop-down bound to a choice (or small integer) parameter.
 class ParamChoiceBox final : public juce::Component
 {

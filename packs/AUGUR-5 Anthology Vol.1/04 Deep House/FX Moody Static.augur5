@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <AUGUR5_PRESET formatVersion="1" name="Moody Static" category="Atmos &amp; FX"
-               target="-18.0" genre="Deep House" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               target="-16.0" genre="Deep House" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="2.082499980926514"/>
     <P id="aenv_d" value="2.0"/>
@@ -24,7 +24,7 @@
     <P id="mm5_src" value="9.0"/>
     <P id="osc2_fine" value="6.775499820709229"/>
     <P id="voice_spread" value="0.8999999761581421"/>
-    <P id="amp_level" value="5.900000095367432"/>
+    <P id="amp_level" value="6.0"/>
     <P id="fx_phaser_on" value="1.0"/>
     <P id="fx_phaser_stages" value="1.0"/>
     <P id="fx_phaser_rate" value="0.300000011920929"/>

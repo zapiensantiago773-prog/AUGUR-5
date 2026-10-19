@@ -188,20 +188,25 @@ public:
         main.toggle (P::pm_dst_pwa, "PW A", 136, 616, 62);
         main.toggle (P::pm_dst_filter, "FILTER", 204, 616, 62);
 
-        // LFO
+        // LFO (SAW / TRI / SQUARE combine, as on the Prophet) and WHEEL-MOD
         {
-            std::vector<std::unique_ptr<juce::Button>> b;
-            for (auto icon : { WaveIcon::Triangle, WaveIcon::Saw, WaveIcon::Square, WaveIcon::SampleHold })
-                b.push_back (std::make_unique<WaveButton> (icon, sage));
-            auto* group = main.add (std::make_unique<ChoiceGroup> (state, P::lfo_wave, std::move (b)), { 310, 472, 202, 28 });
+            auto* waves = main.add (std::make_unique<LfoWaveSwitches> (state, P::lfo_wave, sage), { 310, 472, 166, 28 });
             for (int i = 0; i < 4; ++i)
-                group->getButton (i).setBounds (i * 52, 0, 46, 28);
+                waves->getButton (i).setBounds (i * 42, 0, 38, 28);
         }
-        auto* lfoRate = main.knob (P::lfo_rate, "RATE", 52, 362, 560, sage);
-        main.knob (P::lfo_amount, "AMOUNT", 38, 468, 548, sage);
-        main.knob (P::lfo_delay, "DELAY", 38, 468, 640, sage);
-        main.toggle (P::lfo_sync, "SYNC", 318, 652, 90, sage);
-        syncPairs.push_back ({ lfoRate, main.dropdown (P::lfo_div, 318, 688, 90), P::lfo_sync });
+        auto* lfoRate = main.knob (P::lfo_rate, "RATE", 52, 352, 560, sage);
+        main.knob (P::lfo_amount, "MATRIX AMT", 36, 446, 548, sage);
+        main.knob (P::lfo_delay, "DELAY", 36, 446, 640, sage);
+        main.toggle (P::lfo_sync, "SYNC", 310, 652, 84, sage);
+        syncPairs.push_back ({ lfoRate, main.dropdown (P::lfo_div, 310, 688, 84), P::lfo_sync });
+        main.knob (P::wm_mix, "SOURCE MIX", 34, 540, 528, sage);
+        main.knob (P::wm_amount, "INITIAL", 34, 614, 528, sage);
+        {
+            const char* ids[5] = { P::wm_freq_a, P::wm_freq_b, P::wm_pw_a, P::wm_pw_b, P::wm_filter };
+            const char* labels[5] = { "FREQ A", "FREQ B", "PW A", "PW B", "FILTER" };
+            for (int k = 0; k < 5; ++k)
+                main.toggle (ids[k], labels[k], 512, 580 + 30 * k, 136, sage);
+        }
 
         // Envelopes
         {
@@ -209,7 +214,7 @@ public:
             const char* labels[4] = { "ATTACK", "DECAY", "SUSTAIN", "RELEASE" };
             for (int e = 0; e < 2; ++e)
             {
-                const int x0 = e == 0 ? 552 : 822;
+                const int x0 = e == 0 ? 692 : 962;
                 const auto colour = e == 0 ? colours::accent : slate;
                 envelopes.push_back (main.add (std::make_unique<EnvelopeDisplay> (state, ids[e][0], ids[e][1], ids[e][2], ids[e][3], colour),
                                                { x0 + 14, 506, 230, 94 }));
@@ -219,12 +224,12 @@ public:
         }
 
         // Amplifier
-        main.add (std::make_unique<LevelFader> (state, P::amp_level, "LEVEL"), { 1126, 474, 48, 254 });
-        main.knob (P::amp_velocity, "VEL \xe2\x80\xba AMP", 40, 1240, 524);
-        main.knob (P::flt_velocity, "VEL \xe2\x80\xba FILTER", 40, 1330, 524);
-        main.knob (P::at_amount, "AFTERTOUCH", 40, 1420, 524);
-        main.knob (P::voice_spread, "STEREO SPREAD", 40, 1240, 630, slate);
-        main.knob (P::voice_pan, "PAN", 40, 1330, 630, slate);
+        main.add (std::make_unique<LevelFader> (state, P::amp_level, "LEVEL"), { 1262, 474, 44, 254 });
+        main.knob (P::amp_velocity, "VEL \xe2\x80\xba AMP", 36, 1354, 512);
+        main.knob (P::flt_velocity, "VEL \xe2\x80\xba FILTER", 36, 1354, 598);
+        main.knob (P::at_amount, "AFTERTOUCH", 36, 1354, 684);
+        main.knob (P::voice_spread, "SPREAD", 36, 1442, 512, slate);
+        main.knob (P::voice_pan, "PAN", 36, 1442, 598, slate);
 
         pages[0]->painter = [] (juce::Graphics& g) {
             drawSection (g, { 52, 116, 540, 299 }, "OSCILLATORS", colours::accent);
@@ -242,12 +247,12 @@ public:
             drawCaption (g, "DESTINATIONS", 68.0f, 600.0f);
             drawNote (g, "Per voice and at audio rate: the filter envelope and OSC B move OSC A's pitch, its pulse width and the cutoff.",
                       { 68.0f, 660.0f, 200.0f, 80.0f });
-            drawSection (g, { 294, 428, 230, 320 }, "LFO", colours::sage);
-            drawNote (g, "Routed with the MOD WHEEL and the matrix.", { 310.0f, 716.0f, 204.0f, 30.0f });
-            drawSection (g, { 536, 428, 560, 320 }, "ENVELOPES", colours::accent);
-            drawSubSection (g, { 552, 472, 258, 262 }, "FILTER", colours::accent);
-            drawSubSection (g, { 822, 472, 258, 262 }, "AMPLIFIER", colours::slate);
-            drawSection (g, { 1108, 428, 376, 320 }, "AMPLIFIER", colours::accent);
+            drawSection (g, { 294, 428, 370, 320 }, "LFO", colours::sage);
+            drawSubSection (g, { 496, 472, 152, 262 }, "WHEEL-MOD", colours::sage);
+            drawSection (g, { 676, 428, 560, 320 }, "ENVELOPES", colours::accent);
+            drawSubSection (g, { 692, 472, 258, 262 }, "FILTER", colours::accent);
+            drawSubSection (g, { 962, 472, 258, 262 }, "AMPLIFIER", colours::slate);
+            drawSection (g, { 1248, 428, 236, 320 }, "AMPLIFIER", colours::accent);
         };
 
         // ================================================================ MOD

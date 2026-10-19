@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Dot Bloom" category="Pad" target="-18.0"
-               genre="Minimal" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Dot Bloom" category="Pad" target="-16.0"
+               genre="Minimal" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.7127"/>
     <P id="aenv_d" value="1.5"/>
@@ -24,6 +25,6 @@
     <P id="mm4_src" value="4"/>
     <P id="osc2_fine" value="9.7263"/>
     <P id="voice_spread" value="0.8131"/>
-    <P id="amp_level" value="-15.3"/>
+    <P id="amp_level" value="-12.0"/>
   </PARAMS>
 </AUGUR5_PRESET>

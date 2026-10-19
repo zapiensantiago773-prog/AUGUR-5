@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Cozy Harp" category="Keys" target="-18.0"
+<AUGUR5_PRESET formatVersion="1" name="Cozy Harp" category="Keys" target="-16.0"
                genre="Downtempo &amp; Lo-Fi" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.001000000047497451"/>
     <P id="aenv_d" value="2.597599983215332"/>
@@ -30,7 +30,7 @@
     <P id="osc2_saw" value="0.0"/>
     <P id="osc2_tri" value="1.0"/>
     <P id="osc_xmod" value="0.07999999821186066"/>
-    <P id="amp_level" value="-3.9"/>
+    <P id="amp_level" value="-2.8"/>
     <P id="fx_echo_on" value="1.0"/>
     <P id="fx_echo_mode" value="3.0"/>
     <P id="fx_echo_time" value="130.8260345458984"/>

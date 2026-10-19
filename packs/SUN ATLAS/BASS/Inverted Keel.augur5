@@ -3,16 +3,16 @@
   <META role="bass" note="36" pack="SUN ATLAS" category="BASS" family="IDM" kind="pluck" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="0.25792"/>
-    <P id="aenv_r" value="0.1"/>
+    <P id="aenv_d" value="0.8109"/>
+    <P id="aenv_r" value="0.3144"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="5.85"/>
+    <P id="amp_level" value="5.8"/>
     <P id="amp_velocity" value="0.38155"/>
     <P id="analog_age" value="0.64541"/>
     <P id="at_amount" value="0.14488"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.16128"/>
-    <P id="fenv_r" value="0.1"/>
+    <P id="fenv_d" value="0.5071"/>
+    <P id="fenv_r" value="0.3144"/>
     <P id="fenv_s" value="0"/>
     <P id="flt_cutoff" value="320"/>
     <P id="flt_env_amt" value="0.46619"/>
@@ -34,9 +34,9 @@
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>
     <P id="mix_osc1" value="1"/>
-    <P id="mix_osc2" value="0.63787"/>
+    <P id="mix_osc2" value="0.4725"/>
     <P id="mix_ring" value="0"/>
-    <P id="mix_sub" value="0.77663"/>
+    <P id="mix_sub" value="0.57528"/>
     <P id="mm1_amt" value="0.20067"/>
     <P id="mm1_dst" value="4"/>
     <P id="mm1_src" value="4"/>

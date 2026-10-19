@@ -584,6 +584,71 @@ int factoryWav (const juce::File& dir, const juce::String& onlyCategory)
     return 0;
 }
 
+// --chord-headroom <folder> [--check]: a polysynth sound must not clip when it is played as chords. Every pack preset
+// meant for chords is played as the factory audit plays them (four notes for pads, keys, brass and stabs; a dyad for
+// plucks and arps) and, where the peak passes -1 dBFS, its amp_level comes down by just that much (up to three passes).
+// Leads, basses, sequences, drones, FX and drums are single-note sounds: their pack levelling already covers them.
+// --check only reports. Prints the worst first.
+int chordHeadroom (const juce::File& folder, bool adjust)
+{
+    constexpr double sr = 48000.0, ceiling = -1.0;
+    std::vector<std::pair<double, juce::String>> rows;
+    int lowered = 0;
+    for (const auto& f : folder.findChildFiles (juce::File::findFiles, true, "*.augur5"))
+    {
+        auto xml = juce::XmlDocument::parse (f);
+        if (xml == nullptr)
+            continue;
+        // The role: the pack generator's META, or an expansion pack's category.
+        juce::String role = xml->getStringAttribute ("category").toLowerCase();
+        if (auto* meta = xml->getChildByName ("META"))
+            role = meta->getStringAttribute ("role", role);
+        const bool fourNotes = role == "pad" || role == "keys" || role == "brass" || role == "stab";
+        const bool dyad = role == "pluck" || role == "arp";
+        if (! fourNotes && ! dyad)
+            continue;
+        Measured m;
+        for (int pass = 0; pass < 3; ++pass)
+        {
+            std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+            auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+            proc.setPlayConfigDetails (0, 2, sr, 256);
+            proc.prepareToPlay (sr, 256);
+            proc.getPresets().loadUser (f);
+            m = measure (proc, fourNotes ? "Pad" : "Pluck");
+            if (! adjust || m.peakDb <= ceiling || ! m.finite)
+                break;
+            auto* params = xml->getChildByName ("PARAMS");
+            if (params == nullptr)
+                break;
+            juce::XmlElement* level = nullptr;
+            for (auto* e : params->getChildIterator())
+                if (e->getStringAttribute ("id") == "amp_level")
+                    level = e;
+            if (level == nullptr)
+            {
+                level = params->createNewChildElement ("P");
+                level->setAttribute ("id", "amp_level");
+                level->setAttribute ("value", -6.0);
+            }
+            const double current = level->getDoubleAttribute ("value", -6.0);
+            level->setAttribute ("value", juce::jlimit (-40.0, 6.0, std::floor ((current - (m.peakDb - ceiling) - 0.05) * 10.0) / 10.0));
+            xml->writeTo (f);
+            if (pass == 0)
+                ++lowered;
+        }
+        rows.push_back ({ m.peakDb, f.getRelativePathFrom (folder) });
+    }
+    std::sort (rows.begin(), rows.end(), [] (const auto& a, const auto& b) { return a.first > b.first; });
+    int over = 0;
+    for (const auto& [peak, path] : rows)
+        over += peak > ceiling ? 1 : 0;
+    std::printf ("%d chord presets, %d lowered, %d still above %.0f dBFS as chords\n", static_cast<int> (rows.size()), lowered, over, ceiling);
+    for (size_t i = 0; i < rows.size() && i < 10; ++i)
+        std::printf ("%6.1f  %s\n", rows[i].first, rows[i].second.toRawUTF8());
+    return over == 0 ? 0 : 1;
+}
+
 // --check-migration: a session and a user preset saved before 1.3 (no pb_down / lfo_div / lfo2_div) must load with the
 // values that keep their sound: BEND DOWN = their single bend range, each synced LFO on the division its RATE knob chose.
 int checkMigration()
@@ -828,6 +893,9 @@ int main (int argc, char** argv)
     if (argc >= 2 && std::strcmp (argv[1], "--check-augury") == 0)
         return checkAugury();
     juce::ScopedJuceInitialiser_GUI juceInit;
+    if (argc >= 3 && std::strcmp (argv[1], "--chord-headroom") == 0)
+        return chordHeadroom (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])),
+                              ! (argc >= 4 && std::strcmp (argv[3], "--check") == 0));
     if (argc >= 2 && std::strcmp (argv[1], "--check-migration") == 0)
         return checkMigration();
     if (argc >= 2 && std::strcmp (argv[1], "--factory-loudness") == 0)

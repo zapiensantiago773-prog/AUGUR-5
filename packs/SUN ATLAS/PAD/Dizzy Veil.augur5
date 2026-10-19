@@ -3,16 +3,16 @@
   <META role="pad" note="57" pack="SUN ATLAS" category="PAD" family="HYPNO" kind="dark" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="1.395"/>
-    <P id="aenv_d" value="1.136"/>
-    <P id="aenv_r" value="3.7408"/>
+    <P id="aenv_d" value="3.5713"/>
+    <P id="aenv_r" value="10"/>
     <P id="aenv_s" value="0.83882"/>
-    <P id="amp_level" value="-2.19"/>
+    <P id="amp_level" value="-2.63"/>
     <P id="amp_velocity" value="0.54017"/>
     <P id="analog_age" value="0.57078"/>
     <P id="at_amount" value="0.28022"/>
     <P id="fenv_a" value="1.0457"/>
-    <P id="fenv_d" value="3.7958"/>
-    <P id="fenv_r" value="3.9173"/>
+    <P id="fenv_d" value="10"/>
+    <P id="fenv_r" value="10"/>
     <P id="fenv_s" value="0.58582"/>
     <P id="flt_cutoff" value="690.15"/>
     <P id="flt_env_amt" value="0.20527"/>

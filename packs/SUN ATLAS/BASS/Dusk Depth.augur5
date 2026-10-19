@@ -3,16 +3,16 @@
   <META role="bass" note="36" pack="SUN ATLAS" category="BASS" family="HOUSE" kind="unison" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.002"/>
-    <P id="aenv_d" value="0.6"/>
-    <P id="aenv_r" value="0.13478"/>
+    <P id="aenv_d" value="1.8863"/>
+    <P id="aenv_r" value="0.4237"/>
     <P id="aenv_s" value="0.85"/>
-    <P id="amp_level" value="-2.12"/>
+    <P id="amp_level" value="-2.64"/>
     <P id="amp_velocity" value="0.34996"/>
     <P id="analog_age" value="0.26832"/>
     <P id="at_amount" value="0.075713"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.33942"/>
-    <P id="fenv_r" value="0.1"/>
+    <P id="fenv_d" value="1.0671"/>
+    <P id="fenv_r" value="0.3144"/>
     <P id="fenv_s" value="0.15"/>
     <P id="flt_cutoff" value="416.29"/>
     <P id="flt_env_amt" value="0.4179"/>

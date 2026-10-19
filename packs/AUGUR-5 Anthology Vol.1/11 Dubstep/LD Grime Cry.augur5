@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Grime Cry" category="Lead" target="-18.0"
-               genre="Dubstep" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Grime Cry" category="Lead" target="-16.0"
+               genre="Dubstep" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.0282"/>
     <P id="aenv_d" value="0.5"/>
@@ -30,6 +31,6 @@
     <P id="mm4_src" value="3"/>
     <P id="osc2_fine" value="5.0212"/>
     <P id="voice_count" value="1"/>
-    <P id="amp_level" value="1.3"/>
+    <P id="amp_level" value="3.1"/>
   </PARAMS>
 </AUGUR5_PRESET>

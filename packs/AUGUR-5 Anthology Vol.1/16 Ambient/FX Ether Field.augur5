@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <AUGUR5_PRESET formatVersion="1" name="Ether Field" category="Atmos &amp; FX"
-               target="-18.0" genre="Ambient" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               target="-16.0" genre="Ambient" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="3.268399953842163"/>
     <P id="aenv_d" value="2.0"/>
@@ -31,7 +31,7 @@
     <P id="osc2_fine" value="11.01150035858154"/>
     <P id="osc2_freq" value="7.0"/>
     <P id="voice_spread" value="0.8999999761581421"/>
-    <P id="amp_level" value="0.4"/>
+    <P id="amp_level" value="2.3"/>
     <P id="fx_reverb_on" value="1.0"/>
     <P id="fx_reverb_type" value="2.0"/>
     <P id="fx_reverb_size" value="1.5"/>

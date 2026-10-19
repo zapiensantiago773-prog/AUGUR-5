@@ -6,6 +6,7 @@
 #include "Engine/SynthParams.h"
 #include "Modulation/Arpeggiator.h"
 #include "Modulation/Lfo.h"
+#include "Modulation/WheelModNoise.h"
 #include "Util/Halfband.h"
 #include "Util/HalfbandFir.h"
 #include "Util/Random.h"
@@ -147,7 +148,8 @@ private:
     Lfo lfo;
     LinearSmoother smOsc1Pw, smOsc2Pw, smSaw1, smPulse1, smSaw2, smTri2, smPulse2;
     LinearSmoother smMix1, smMix2, smMixNoise, smDrive, smCutoff, smReso, smEnvAmt, smPmFenv, smPmOsc2, smLfoAmount;
-    LinearSmoother smLevel, smMixRing, smMixSub, smCrossMod;
+    LinearSmoother smLevel, smMixRing, smMixSub, smCrossMod, smWmMix, smWmDepth;
+    WheelModNoise wheelModNoise;
     double lfo2Phase = 0.0; // free-running LFO 2 (voices start from it when not retriggered)
     float fxCoeff = 0.1f;
     bool fuzzActive = false;

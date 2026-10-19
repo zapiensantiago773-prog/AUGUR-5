@@ -24,6 +24,7 @@ add_library(augur_dsp STATIC
     Modulation/Arpeggiator.h
     Modulation/Arpeggiator.cpp
     Modulation/Lfo.h
+    Modulation/WheelModNoise.h
     Effects/Fuzz.h
     Effects/Fuzz.cpp
     Effects/SpringReverb.h

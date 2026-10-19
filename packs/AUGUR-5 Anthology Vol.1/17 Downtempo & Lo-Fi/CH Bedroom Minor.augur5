@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Bedroom Minor" category="Stab" target="-18.0"
+<AUGUR5_PRESET formatVersion="1" name="Bedroom Minor" category="Stab" target="-16.0"
                genre="Downtempo &amp; Lo-Fi" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.001000000047497451"/>
     <P id="aenv_d" value="0.4207000136375427"/>
@@ -24,7 +24,7 @@
     <P id="mm4_src" value="4.0"/>
     <P id="osc2_fine" value="7.501399993896484"/>
     <P id="osc2_freq" value="7.0"/>
-    <P id="amp_level" value="-9.0"/>
+    <P id="amp_level" value="-6.1"/>
     <P id="fx_echo_on" value="1.0"/>
     <P id="fx_echo_mode" value="8.0"/>
     <P id="fx_echo_time" value="131.8601531982422"/>

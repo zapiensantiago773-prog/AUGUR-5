@@ -61,10 +61,16 @@ namespace augur5::params
     inline constexpr auto lfo_rate   = "lfo_rate";   // Hz 0.05..30
     inline constexpr auto lfo_amount = "lfo_amount"; // 0..1
     inline constexpr auto lfo_delay  = "lfo_delay";  // s 0..5
-    inline constexpr auto lfo_wave   = "lfo_wave";   // choice: tri, saw, sqr, s&h
+    inline constexpr auto lfo_wave   = "lfo_wave";   // choice: TRI, SAW, SQR, S&H, then the Prophet's combinations (1.4)
     inline constexpr auto lfo_sync   = "lfo_sync";   // bool: tempo sync
     inline constexpr auto lfo_div    = "lfo_div";    // choice: augur::lfoDivisionNames, used when synced (1.3)
     inline constexpr auto lfo2_div   = "lfo2_div";   // choice: as lfo_div, for LFO 2 (1.3)
+
+    // ---------- WHEEL-MOD (1.4, the Prophet-5's) ----------
+    inline constexpr auto wm_mix    = "wm_mix";    // 0..1: SOURCE MIX, LFO (0) .. noise (1)
+    inline constexpr auto wm_amount = "wm_amount"; // 0..1: INITIAL amount, added to the MOD wheel
+    inline constexpr auto wm_freq_a = "wm_freq_a", wm_freq_b = "wm_freq_b", wm_pw_a = "wm_pw_a", wm_pw_b = "wm_pw_b",
+                          wm_filter = "wm_filter"; // bool: destinations
 
     // ---------- POLY MOD ----------
     inline constexpr auto pm_on         = "pm_on";

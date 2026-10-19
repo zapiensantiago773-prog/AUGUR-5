@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Tunnel Voice" category="Lead" target="-18.0"
-               genre="Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Tunnel Voice" category="Lead" target="-16.0"
+               genre="Techno" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.01460000034421682"/>
     <P id="aenv_d" value="0.5"/>
@@ -27,7 +28,7 @@
     <P id="osc2_fine" value="21.51939964294434"/>
     <P id="osc2_freq" value="7.0"/>
     <P id="voice_count" value="1.0"/>
-    <P id="amp_level" value="-0.300000011920929"/>
+    <P id="amp_level" value="0.5"/>
     <P id="fx_echo_on" value="1.0"/>
     <P id="fx_echo_mode" value="7.0"/>
     <P id="fx_echo_time" value="157.7743835449219"/>

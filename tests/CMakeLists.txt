@@ -6,6 +6,7 @@ add_executable(augur_tests
     test_engine.cpp
     test_arp.cpp
     test_modulation.cpp
+    test_wheelmod.cpp
     test_effects.cpp
     test_rack.cpp
     RackMeasure.h

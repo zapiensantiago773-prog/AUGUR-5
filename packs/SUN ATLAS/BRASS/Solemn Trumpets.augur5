@@ -2,20 +2,20 @@
 <AUGUR5_PRESET formatVersion="1" name="Solemn Trumpets">
   <META role="brass" note="50" pack="SUN ATLAS" category="BRASS" family="CINE" kind="swell" author="TONAL LAB"/>
   <PARAMS>
-    <P id="aenv_a" value="0.76771"/>
-    <P id="aenv_d" value="1"/>
-    <P id="aenv_r" value="1.1074"/>
+    <P id="aenv_a" value="1.3038"/>
+    <P id="aenv_d" value="3.1439"/>
+    <P id="aenv_r" value="4.3706"/>
     <P id="aenv_s" value="0.95"/>
-    <P id="amp_level" value="-4.75"/>
-    <P id="amp_velocity" value="0.34325"/>
-    <P id="analog_age" value="0.35811"/>
-    <P id="at_amount" value="0.061158"/>
-    <P id="fenv_a" value="0.98454"/>
-    <P id="fenv_d" value="1.5"/>
-    <P id="fenv_r" value="1"/>
-    <P id="fenv_s" value="0.50519"/>
-    <P id="flt_cutoff" value="525.06"/>
-    <P id="flt_env_amt" value="0.5103"/>
+    <P id="amp_level" value="-2.46"/>
+    <P id="amp_velocity" value="0.52936"/>
+    <P id="analog_age" value="0.35965"/>
+    <P id="at_amount" value="0.17855"/>
+    <P id="fenv_a" value="1.8403"/>
+    <P id="fenv_d" value="4.7158"/>
+    <P id="fenv_r" value="3.1439"/>
+    <P id="fenv_s" value="0.52686"/>
+    <P id="flt_cutoff" value="573.2"/>
+    <P id="flt_env_amt" value="0.50281"/>
     <P id="flt_keytrack" value="2"/>
     <P id="flt_mode" value="0"/>
     <P id="flt_model" value="0"/>
@@ -23,30 +23,31 @@
     <P id="flt_slope" value="0"/>
     <P id="flt_velocity" value="0"/>
     <P id="fx_reverb_damp" value="0.45"/>
-    <P id="fx_reverb_decay" value="9.9095"/>
+    <P id="fx_reverb_decay" value="9.1412"/>
     <P id="fx_reverb_freeze" value="0"/>
     <P id="fx_reverb_lowcut" value="140"/>
-    <P id="fx_reverb_mix" value="0.36077"/>
+    <P id="fx_reverb_mix" value="0.35014"/>
     <P id="fx_reverb_mod" value="0.4"/>
     <P id="fx_reverb_on" value="1"/>
-    <P id="fx_reverb_pitch" value="4"/>
-    <P id="fx_reverb_predelay" value="15"/>
-    <P id="fx_reverb_shimmer" value="0.47791"/>
-    <P id="fx_reverb_size" value="1.7105"/>
-    <P id="fx_reverb_type" value="3"/>
+    <P id="fx_reverb_pitch" value="3"/>
+    <P id="fx_reverb_predelay" value="66.778"/>
+    <P id="fx_reverb_shimmer" value="0.4"/>
+    <P id="fx_reverb_size" value="1.9384"/>
+    <P id="fx_reverb_type" value="2"/>
     <P id="fx_reverb_width" value="1"/>
     <P id="glide" value="0"/>
     <P id="hpf_cutoff" value="10"/>
     <P id="legato" value="0"/>
+    <P id="lfo_amount" value="1"/>
+    <P id="lfo_rate" value="4.8188"/>
+    <P id="lfo_sync" value="0"/>
+    <P id="lfo_wave" value="0"/>
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>
     <P id="mix_osc1" value="0.75"/>
     <P id="mix_osc2" value="0.6"/>
     <P id="mix_ring" value="0"/>
     <P id="mix_sub" value="0"/>
-    <P id="mm1_amt" value="0.18793"/>
-    <P id="mm1_dst" value="4"/>
-    <P id="mm1_src" value="4"/>
     <P id="osc1_fine" value="0"/>
     <P id="osc1_freq" value="0"/>
     <P id="osc1_oct" value="2"/>
@@ -54,7 +55,7 @@
     <P id="osc1_pw" value="50"/>
     <P id="osc1_saw" value="1"/>
     <P id="osc1_sync" value="0"/>
-    <P id="osc2_fine" value="7.7901"/>
+    <P id="osc2_fine" value="5.5602"/>
     <P id="osc2_freq" value="0"/>
     <P id="osc2_kbd" value="1"/>
     <P id="osc2_lofreq" value="0"/>
@@ -68,8 +69,12 @@
     <P id="sub_oct" value="0"/>
     <P id="unison" value="0"/>
     <P id="voice_count" value="8"/>
-    <P id="voice_detune" value="0.41438"/>
+    <P id="voice_detune" value="0.31708"/>
     <P id="voice_mode" value="0"/>
-    <P id="voice_spread" value="0.52586"/>
+    <P id="voice_spread" value="0.54593"/>
+    <P id="wm_amount" value="0"/>
+    <P id="wm_freq_a" value="1"/>
+    <P id="wm_freq_b" value="1"/>
+    <P id="wm_mix" value="0"/>
   </PARAMS>
 </AUGUR5_PRESET>

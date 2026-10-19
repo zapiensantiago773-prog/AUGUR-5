@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Neon Loop" category="Arp" target="-18.0"
-               genre="Synthwave" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Neon Loop" category="Arp" target="-16.0"
+               genre="Synthwave" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.001000000047497451"/>
     <P id="aenv_d" value="0.2425000071525574"/>
@@ -41,7 +42,7 @@
     <P id="osc2_saw" value="0.0"/>
     <P id="osc2_tri" value="1.0"/>
     <P id="voice_spread" value="0.699999988079071"/>
-    <P id="amp_level" value="2.7"/>
+    <P id="amp_level" value="6.0"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="2.0"/>
     <P id="fx_chorus_mix" value="0.226048544049263"/>

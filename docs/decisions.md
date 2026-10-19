@@ -609,3 +609,46 @@ Pregunta: ¿por qué MANTIS-37 y PYTHIA 32 "suenan mejor"? Se midió, sin cambia
   - Tests: la rueda a fondo sube 2 y baja 12 semitonos exactos (±0.3 %); a 120 BPM el LFO 2 sincronizado mide 4.00 / 2.00 / 1.00 Hz con 1/8, 1/4 y 1/2 (±0.1 Hz); la conversión vieja coincide en todo el rango de RATE.
   - `augur_preset_audit --check-migration` (también en la CI): una sesión y un preset de 1.2 recuperan BEND DOWN y su división.
   - Regresión: los 170 presets de fábrica y los 5 presets de packs con LFO sincronizado miden **idéntico** antes y después (pico, volumen y huella tímbrica).
+
+## D-047 · Versión 1.4.0: WHEEL-MOD del Prophet, ondas de LFO combinables y glide de OTA (2026-10-19)
+Revisión de la configuración contra el Prophet-5 (manual de servicio y User's Guide de Sequential): lo que faltaba era la sección **WHEEL-MOD**, la forma de tocarlo (vibrato, PWM y wah con la rueda), las **ondas del LFO combinables** y el **glide** del circuito.
+
+**LFO.** El User's Guide: "Any of these waveshapes can be enabled simultaneously"; el triángulo es bipolar y la sierra y la cuadrada solo positivas ("the square wave … natural-sounding trills").
+- LFO WAVE suma las combinaciones a su lista (SAW+TRI, SAW+SQR, TRI+SQR, SAW+TRI+SQR) después de las cuatro de siempre: los índices 0–3 no cambian y suenan bit a bit igual (test).
+- En el panel: SAW / TRI / SQR se encienden juntos; S&H va sola (extra de AUGUR); siempre queda una onda.
+- La matriz recibe el LFO centrado y por LFO AMOUNT (ahora "MATRIX AMT"), como hasta 1.3. El WHEEL-MOD recibe las polaridades del Prophet.
+
+**WHEEL-MOD** (manual de servicio 2-3: "The W-MOD signal … consists of pink noise or LFO output as determined by the W-MOD SOURCE MIX CV … The MOD wheel sets this mixture's output level to selected MSUMs"; Rev 4 suma INITIAL AMOUNT).
+- `wm_mix` (SOURCE MIX: LFO … ruido rosa), `wm_amount` (INITIAL, por defecto 0), destinos `wm_freq_a`, `wm_freq_b`, `wm_pw_a`, `wm_pw_b`, `wm_filter` (apagados por defecto: ningún sonido existente cambia).
+- Común a las cinco voces (como los master summers del Prophet); el LFO DELAY de AUGUR lo hace entrar con el LFO.
+- Profundidad = INITIAL + rueda (hasta 1), suavizada 10 ms. Tono y corte con curva cuadrática (vibrato fino al principio de la rueda): a fondo ±12 semitonos y ±6 octavas; PW lineal ±0.45. **Constantes provisionales**: el manual escaneado no da las profundidades.
+- Ruido rosa (`WheelModNoise`): blanco de densidad fija + tres polos a 15 / 150 / 1500 Hz; medido 0.40 rms a 48 / 96 / 192 kHz y −3 dB/oct (100–200 Hz frente a 400–800 Hz: 6 ± 2 dB).
+- Panel: sub-sección WHEEL-MOD dentro de LFO (SOURCE MIX, INITIAL y los cinco destinos); ENVELOPES y AMPLIFIER se reacomodan.
+
+**GLIDE.** Manual 2-5: el glide es un OTA que carga un condensador hacia el UNISON CV; lejos del objetivo su corriente se satura, así que la velocidad es constante, y en su rango lineal (±2 Vt ≈ 52 mV, ~0.6 semitono a 83.3 mV/semitono) se acerca de forma exponencial. Antes era RC (cualquier salto en el mismo tiempo).
+- GLIDE = segundos por octava. Medido con GLIDE 0.3: una octava llega en 0.31 s y un tono entero en 0.06 s (un RC daría ~0.6 de proporción).
+- Cambia los sonidos con glide: en la fábrica solo "Grey Skies Lead" (+0.4 dB en la auditoría). Los demás 169 y los presets de packs con sync miden idéntico.
+
+**Presets** (las herramientas de D-045):
+- SUN ATLAS se regenera con los tiempos de envolvente en la escala de AUGUR y, en LEAD y BRASS, la rueda es vibrato por WHEEL-MOD (FREQ A + B, triángulo 4.8–5.8 Hz) en lugar de abrir el filtro.
+- Fábrica y Anthology se renivelan a −16 dB en la escala de los packs (pico ≤ −1 dBFS; los drums conservan su medida).
+
+**Tests:** 81 (nuevos: ondas y polaridades del LFO, ruido del WHEEL-MOD por frecuencia de muestreo, destinos con INITIAL y rueda, glide de OTA).
+
+**Volumen de un polifónico: también con acordes.** Nivelar por la frase de cada rol (notas sueltas para plucks) dejaba a los plucks de fábrica hasta +3.7 dBFS al tocarlos como acorde (la auditoría de la CI toca díadas y acordes de cuatro notas). En SUN ATLAS, 148 de 1000 pasaban de −1 dBFS. Regla nueva: lo que se toca con acordes no pasa de **−1 dBFS** como acorde (cuatro notas para PAD, KEYS, BRASS y STAB; díada para PLUCK y ARP). Solo se baja el LEVEL lo justo; leads, bajos, secuencias, drones, FX y drums siguen su frase de una nota.
+- Fábrica: `augur_preset_audit > audit.txt` + `tools/level_presets.py audit.txt --headroom` (el mayor recorte, 4.8 dB). La auditoría de la CI vuelve a dar 0 presets fuera de rango.
+- Packs: `augur_preset_audit --chord-headroom <carpeta>` (`--check` solo informa).
+
+**Resultado en las librerías** (frase de pluck, la misma para los tres instrumentos; medianas):
+
+| | SUN ATLAS 1.3 | SUN ATLAS 1.4 | Fábrica 1.4 | MANTIS | PYTHIA |
+|---|---|---|---|---|---|
+| Volumen | −18.2 dB | −17.8 dB | −20.6 dB | −15.7 dB | −15.0 dB |
+| Pico (notas sueltas) | −1.0 dBFS | −3.3 dBFS | −4.8 dBFS | −2.0 dBFS | −3.4 dBFS |
+| Cresta | 17.1 dB | 14.6 dB | 15.1 dB | 13.3 dB | 11.6 dB |
+| Caída a −20 dB | 160 ms | 352 ms | 224 ms | 193 ms | 329 ms |
+| Brillo inicial (roll-off 95 %) | 2.8 kHz | 3.8 kHz | 3.7 kHz | 1.8 kHz | 1.5 kHz |
+
+- Los plucks de SUN ATLAS tienen ahora el cuerpo y la caída de PYTHIA, siguen más brillantes (el carácter del Prophet) y dejan 2 dB de margen para tocarlos como acordes; MANTIS es mono y PYTHIA usa un recortador suave a la salida: de ahí sus 2 dB de más.
+- Toda la fábrica: mediana −16.0 dB (pico máximo −1.0 dBFS), la CI vuelve a 0 fuera de rango con los acordes. Anthology: mediana −16.0 dB en lo melódico; 66 de 272 sonidos de acordes bajados.
+- Zips regenerados en `packs/dist`.

@@ -1,48 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <AUGUR5_PRESET formatVersion="1" name="Breathing Upright">
-  <META role="keys" note="57" pack="SUN ATLAS" category="KEYS" family="NEO" kind="vibes" author="TONAL LAB"/>
+  <META role="keys" note="57" pack="SUN ATLAS" category="KEYS" family="NEO" kind="epiano" author="TONAL LAB"/>
   <PARAMS>
-    <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="1.6831"/>
-    <P id="aenv_r" value="1.0289"/>
-    <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="-1.04"/>
-    <P id="amp_velocity" value="0.4827"/>
-    <P id="analog_age" value="0.32907"/>
-    <P id="at_amount" value="0.0867"/>
-    <P id="flt_cutoff" value="2659.3"/>
-    <P id="flt_env_amt" value="0.1"/>
+    <P id="aenv_a" value="0.002"/>
+    <P id="aenv_d" value="5.0844"/>
+    <P id="aenv_r" value="1.1654"/>
+    <P id="aenv_s" value="0.16643"/>
+    <P id="amp_level" value="-4.63"/>
+    <P id="amp_velocity" value="0.37259"/>
+    <P id="analog_age" value="0.39686"/>
+    <P id="at_amount" value="0.038545"/>
+    <P id="fenv_a" value="0.002"/>
+    <P id="fenv_d" value="2.567"/>
+    <P id="fenv_r" value="1.2575"/>
+    <P id="fenv_s" value="0.2"/>
+    <P id="flt_cutoff" value="1680"/>
+    <P id="flt_env_amt" value="0.32873"/>
     <P id="flt_keytrack" value="2"/>
     <P id="flt_mode" value="0"/>
     <P id="flt_model" value="0"/>
     <P id="flt_reso" value="0.05"/>
     <P id="flt_slope" value="0"/>
-    <P id="flt_velocity" value="0.53719"/>
+    <P id="flt_velocity" value="0.53195"/>
+    <P id="fx_chorus_depth" value="1"/>
+    <P id="fx_chorus_hiss" value="0.1"/>
+    <P id="fx_chorus_mix" value="0.25972"/>
+    <P id="fx_chorus_mode" value="0"/>
+    <P id="fx_chorus_on" value="1"/>
+    <P id="fx_chorus_rate" value="1"/>
+    <P id="fx_chorus_tone" value="0.5"/>
+    <P id="fx_chorus_width" value="1"/>
     <P id="fx_echo_age" value="0.3"/>
     <P id="fx_echo_bass" value="0"/>
     <P id="fx_echo_flutter" value="0.15"/>
     <P id="fx_echo_intensity" value="0.3"/>
-    <P id="fx_echo_mix" value="0.13886"/>
+    <P id="fx_echo_mix" value="0.12648"/>
     <P id="fx_echo_mode" value="2"/>
     <P id="fx_echo_on" value="1"/>
     <P id="fx_echo_sat" value="0.25"/>
     <P id="fx_echo_spring" value="0.25"/>
     <P id="fx_echo_sync" value="0"/>
-    <P id="fx_echo_time" value="372.65"/>
+    <P id="fx_echo_time" value="276.07"/>
     <P id="fx_echo_treble" value="-5"/>
     <P id="fx_echo_width" value="0.6"/>
     <P id="fx_echo_wow" value="0.35"/>
     <P id="fx_reverb_damp" value="0.6"/>
-    <P id="fx_reverb_decay" value="1.9"/>
+    <P id="fx_reverb_decay" value="2.1259"/>
     <P id="fx_reverb_freeze" value="0"/>
     <P id="fx_reverb_lowcut" value="140"/>
-    <P id="fx_reverb_mix" value="0.28622"/>
+    <P id="fx_reverb_mix" value="0.24516"/>
     <P id="fx_reverb_mod" value="0.4"/>
     <P id="fx_reverb_on" value="1"/>
     <P id="fx_reverb_pitch" value="3"/>
     <P id="fx_reverb_predelay" value="15"/>
     <P id="fx_reverb_shimmer" value="0.4"/>
-    <P id="fx_reverb_size" value="1.2543"/>
+    <P id="fx_reverb_size" value="1.2497"/>
     <P id="fx_reverb_type" value="0"/>
     <P id="fx_reverb_width" value="1"/>
     <P id="glide" value="0"/>
@@ -50,22 +62,22 @@
     <P id="legato" value="0"/>
     <P id="lfo_amount" value="1"/>
     <P id="lfo_delay" value="0"/>
-    <P id="lfo_rate" value="5.9631"/>
+    <P id="lfo_rate" value="4.6504"/>
     <P id="lfo_wave" value="0"/>
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>
-    <P id="mix_osc1" value="0.2"/>
-    <P id="mix_osc2" value="0.8"/>
+    <P id="mix_osc1" value="0.35"/>
+    <P id="mix_osc2" value="0.55"/>
     <P id="mix_ring" value="0"/>
     <P id="mix_sub" value="0"/>
-    <P id="mm1_amt" value="-0.22954"/>
+    <P id="mm1_amt" value="-0.16451"/>
     <P id="mm1_dst" value="6"/>
     <P id="mm1_src" value="3"/>
     <P id="osc1_fine" value="0"/>
     <P id="osc1_freq" value="0"/>
     <P id="osc1_oct" value="2"/>
     <P id="osc1_pulse" value="1"/>
-    <P id="osc1_pw" value="50"/>
+    <P id="osc1_pw" value="46.686"/>
     <P id="osc1_saw" value="0"/>
     <P id="osc1_sync" value="0"/>
     <P id="osc2_fine" value="0"/>
@@ -79,11 +91,17 @@
     <P id="osc2_tri" value="1"/>
     <P id="osc_model" value="0"/>
     <P id="osc_xmod" value="0"/>
+    <P id="pm_dst_filter" value="0"/>
+    <P id="pm_dst_freqa" value="1"/>
+    <P id="pm_dst_pwa" value="0"/>
+    <P id="pm_fenv_amt" value="0.064784"/>
+    <P id="pm_on" value="1"/>
+    <P id="pm_osc2_amt" value="0.14603"/>
     <P id="sub_oct" value="0"/>
     <P id="unison" value="0"/>
     <P id="voice_count" value="8"/>
-    <P id="voice_detune" value="0.27924"/>
+    <P id="voice_detune" value="0.19837"/>
     <P id="voice_mode" value="0"/>
-    <P id="voice_spread" value="0.54251"/>
+    <P id="voice_spread" value="0.30261"/>
   </PARAMS>
 </AUGUR5_PRESET>

@@ -3,10 +3,10 @@
   <META role="keys" note="57" pack="SUN ATLAS" category="KEYS" family="IDM" kind="vibes" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="1.6031"/>
-    <P id="aenv_r" value="1.208"/>
+    <P id="aenv_d" value="5.0398"/>
+    <P id="aenv_r" value="3.7978"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="-1.02"/>
+    <P id="amp_level" value="-4.64"/>
     <P id="amp_velocity" value="0.32031"/>
     <P id="analog_age" value="0.62282"/>
     <P id="at_amount" value="0.1428"/>

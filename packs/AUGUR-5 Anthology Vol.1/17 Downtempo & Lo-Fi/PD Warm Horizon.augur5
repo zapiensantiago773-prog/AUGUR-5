@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Warm Horizon" category="Pad" target="-18.0"
+<AUGUR5_PRESET formatVersion="1" name="Warm Horizon" category="Pad" target="-16.0"
                genre="Downtempo &amp; Lo-Fi" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="1.690600037574768"/>
     <P id="aenv_d" value="1.5"/>

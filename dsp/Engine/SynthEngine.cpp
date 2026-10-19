@@ -60,6 +60,7 @@ void SynthEngine::prepare (double hostSampleRate, std::uint64_t unitSeed, int ov
         f.prepare (internalRate);
     lfo.prepare (internalRate, deriveSeed (unitSeed, 7));
     floorNoise.setSeed (deriveSeed (unitSeed, 8));
+    wheelModNoise.prepare (internalRate, deriveSeed (unitSeed, 10));
     rack.prepare (hostSampleRate, deriveSeed (unitSeed, 9));
     fuzz.prepare (internalRate);
 
@@ -556,6 +557,8 @@ void SynthEngine::controlUpdate() noexcept
         initSmoother (smPmFenv, 0.02, params.pmFilterEnv, internalRate);
         initSmoother (smPmOsc2, 0.02, params.pmOsc2, internalRate);
         initSmoother (smLfoAmount, 0.02, params.lfoAmount, internalRate);
+        initSmoother (smWmMix, 0.02, params.wmMix, internalRate);
+        initSmoother (smWmDepth, 0.01, std::clamp (params.wmAmount + modWheel, 0.0f, 1.0f), internalRate);
         initSmoother (smLevel, 0.02, level, hostRate);
         initSmoother (smMixRing, 0.02, params.mixRing, internalRate);
         initSmoother (smMixSub, 0.02, params.mixSub, internalRate);
@@ -643,10 +646,23 @@ void SynthEngine::controlUpdate() noexcept
     // A hint of analog instability on the LFO rate.
     rate *= 1.0 + 0.004 * params.analogAge * static_cast<double> (floorNoise.nextBipolar());
 
-    const auto wave = static_cast<Lfo::Wave> (std::clamp (params.lfoWave, 0, 3));
+    // The matrix gets the LFO centred and scaled by LFO AMOUNT. WHEEL-MOD (common to all voices, as on the Prophet's
+    // master summers) gets the LFO with the Prophet's polarities mixed with pink noise by SOURCE MIX, at a depth of
+    // INITIAL + MOD wheel; the voices switch it to FREQ A / FREQ B / PW A / PW B / FILTER.
+    const int waveSetting = std::clamp (params.lfoWave, 0, Lfo::numWaveSettings - 1);
     smLfoAmount.setTarget (params.lfoAmount);
+    smWmMix.setTarget (params.wmMix);
+    smWmDepth.setTarget (std::clamp (params.wmAmount + modWheel, 0.0f, 1.0f));
     for (size_t i = 0; i < static_cast<size_t> (n); ++i)
-        sig.lfo[i] = lfo.process (rate, wave) * smLfoAmount.next();
+    {
+        const auto shapes = lfo.processShapes (rate, waveSetting);
+        sig.lfo[i] = shapes.centred * smLfoAmount.next();
+        const float mix = smWmMix.next();
+        const float source = shapes.prophet * (1.0f - mix) + wheelModNoise.next() * mix;
+        const float depth = smWmDepth.next();
+        sig.wmodLin[i] = source * depth;
+        sig.wmodSq[i] = source * depth * depth;
+    }
 
     for (auto& v : voices)
         v.updateControl (sig);

@@ -194,6 +194,17 @@ def vibrato(p, r, cents=(8, 16), rate=(4.8, 5.8), delay=(0.25, 0.7)):
     route(p, LFO, F2, pitch_amt(c))
 
 
+def wheel_vibrato(p, r):
+    """The Prophet's way for leads and brass: the MOD wheel brings in vibrato through WHEEL-MOD (FREQ A + FREQ B from
+    a triangle LFO, INITIAL 0). When the shared LFO already has another job, the wheel opens the filter instead."""
+    if "lfo_rate" in p and p.get("lfo_wave", TRI1) != TRI1:
+        route(p, WHEEL, CUT, r.uniform(0.15, 0.28))
+        return
+    if "lfo_rate" not in p:
+        p.update(lfo_rate=r.uniform(4.8, 5.8), lfo_wave=TRI1, lfo_amount=1.0, lfo_sync=0)
+    p.update(wm_freq_a=1, wm_freq_b=1, wm_amount=0.0, wm_mix=0.0)
+
+
 def drift(p, r, cents=(4, 10)):
     """Slow per-voice pitch drift: LFO 2 (smooth random, free) a few cents on both oscillators."""
     if "lfo2_wave" in p:
@@ -279,10 +290,14 @@ def mono_low_end(p):
 
 
 # ============================================================================================== archetypes
+WHEEL_VIBRATO = {"LEAD", "BRASS"}  # categories where the MOD wheel is vibrato (WHEEL-MOD), as on the Prophet
+
+
 def base(r, cat):
     p = dict(analog_age=r.uniform(0.25, 0.5), voice_detune=r.uniform(0.2, 0.45), voice_spread=r.uniform(0.4, 0.8),
              amp_velocity=r.uniform(0.3, 0.55), osc_model=1 if r.random() < 0.3 else 0, at_amount=r.uniform(0.0, 0.3))
-    route(p, WHEEL, CUT, r.uniform(0.15, 0.28))  # the mod wheel opens the filter by about 1 to 1.7 octaves
+    if cat not in WHEEL_VIBRATO:
+        route(p, WHEEL, CUT, r.uniform(0.15, 0.28))  # the mod wheel opens the filter by about 1 to 1.7 octaves
     return p
 
 
@@ -1231,6 +1246,8 @@ def design(seed, per_slot):
                 p = base(r, cat)
                 p.update(fn(r, kind))
                 p = family_traits(p, family, cat, r)
+                if cat in WHEEL_VIBRATO:
+                    wheel_vibrato(p, r)
                 cands.append({"cat": cat, "family": family, "kind": kind, "p": p, "id": len(cands)})
     return cands
 
@@ -1542,7 +1559,8 @@ README = """SUN ATLAS - the AUGUR-5 bank (TONAL LAB)
 Every sound was played through the instrument the way its category is used and set to the same loudness
 (-16 dB short-term, peaks under -1 dBFS), so you can browse without touching the volume.
 
-Mod wheel opens the filter on almost every sound; aftertouch adds brightness where it suits.
+Mod wheel: vibrato on leads and brass (WHEEL-MOD, as on the Prophet); on the other sounds it opens the filter.
+Aftertouch adds brightness where it suits.
 ARP and SEQ sounds run the arpeggiator: hold a chord (ARP) or a single key (SEQ); they follow the host tempo.
 
 Install: in AUGUR-5, PRESETS > INSTALL PACK (.ZIP), or unzip anywhere and use ADD PRESETS FOLDER.

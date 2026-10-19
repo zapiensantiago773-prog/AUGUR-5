@@ -3,10 +3,10 @@
   <META role="keys" note="57" pack="SUN ATLAS" category="KEYS" family="COLOR" kind="poly_keys" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.002"/>
-    <P id="aenv_d" value="1"/>
-    <P id="aenv_r" value="0.41505"/>
+    <P id="aenv_d" value="3.1439"/>
+    <P id="aenv_r" value="1.3048"/>
     <P id="aenv_s" value="0.40967"/>
-    <P id="amp_level" value="-1.42"/>
+    <P id="amp_level" value="-3.44"/>
     <P id="amp_velocity" value="0.45965"/>
     <P id="analog_age" value="0.35086"/>
     <P id="at_amount" value="0.037221"/>
@@ -17,8 +17,8 @@
     <P id="delay_pingpong" value="1"/>
     <P id="delay_sync" value="1"/>
     <P id="fenv_a" value="0.002"/>
-    <P id="fenv_d" value="0.66662"/>
-    <P id="fenv_r" value="0.4"/>
+    <P id="fenv_d" value="2.0958"/>
+    <P id="fenv_r" value="1.2575"/>
     <P id="fenv_s" value="0.26141"/>
     <P id="flt_cutoff" value="1216.9"/>
     <P id="flt_env_amt" value="0.38826"/>

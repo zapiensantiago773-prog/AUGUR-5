@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Warm Horn" category="Lead" target="-18.0"
+<AUGUR5_PRESET formatVersion="1" name="Warm Horn" category="Lead" target="-16.0"
                genre="Downtempo &amp; Lo-Fi" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.01559999957680702"/>
     <P id="aenv_d" value="0.5"/>
@@ -33,7 +33,7 @@
     <P id="osc2_pulse" value="1.0"/>
     <P id="osc2_saw" value="0.0"/>
     <P id="voice_count" value="1.0"/>
-    <P id="amp_level" value="-7.5"/>
+    <P id="amp_level" value="-5.0"/>
     <P id="fx_echo_on" value="1.0"/>
     <P id="fx_echo_mode" value="7.0"/>
     <P id="fx_echo_time" value="106.8180313110352"/>

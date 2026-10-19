@@ -113,6 +113,10 @@ struct SynthParams
     bool lfoSync = false;
     int lfoDivision = 10; // lfoDivisionBeats index when synced (1/4)
 
+    // WHEEL-MOD (Prophet-5): LFO / pink noise (SOURCE MIX) at INITIAL + MOD wheel depth, switched to its destinations.
+    float wmMix = 0.0f, wmAmount = 0.0f;
+    bool wmFreqA = false, wmFreqB = false, wmPwA = false, wmPwB = false, wmFilter = false;
+
     // LFO 2 (per voice) and modulation envelope
     float lfo2Rate = 2.0f; // Hz (free running)
     int lfo2Wave = 0;      // sine, tri, saw up, saw down, square, S&H, smooth random
@@ -143,7 +147,7 @@ struct SynthParams
     rack::FxParams fx;
 
     // Global
-    float masterTuneCents = 0.0f, glide = 0.0f;
+    float masterTuneCents = 0.0f, glide = 0.0f; // GLIDE: seconds for an octave (OTA slew, D-047)
     bool unison = false, legato = false;
     int pitchBendRange = 2; // semitones with the wheel up
     int pitchBendDown = 2;  // semitones with the wheel down

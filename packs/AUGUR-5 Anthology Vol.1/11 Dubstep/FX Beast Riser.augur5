@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <AUGUR5_PRESET formatVersion="1" name="Beast Riser" category="Atmos &amp; FX"
-               target="-18.0" genre="Dubstep" pack="AUGUR-5 Anthology Vol.1"
-               author="TONAL LAB">
+               target="-16.0" genre="Dubstep" pack="AUGUR-5 Anthology Vol.1"
+               author="TONAL LAB" loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="3.532999992370605"/>
     <P id="aenv_d" value="2.0"/>
@@ -34,7 +34,7 @@
     <P id="mm6_src" value="8.0"/>
     <P id="osc2_fine" value="8.515000343322754"/>
     <P id="voice_spread" value="0.8999999761581421"/>
-    <P id="amp_level" value="3.3"/>
+    <P id="amp_level" value="5.3"/>
     <P id="fx_reverb_on" value="1.0"/>
     <P id="fx_reverb_type" value="2.0"/>
     <P id="fx_reverb_size" value="1.5"/>

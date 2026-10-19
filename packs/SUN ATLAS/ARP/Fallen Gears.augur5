@@ -1,45 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <AUGUR5_PRESET formatVersion="1" name="Fallen Gears">
-  <META role="arp" note="57" pack="SUN ATLAS" category="ARP" family="CINE" kind="up16" author="TONAL LAB"/>
+  <META role="arp" note="57" pack="SUN ATLAS" category="ARP" family="CINE" kind="random" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="0.2406"/>
-    <P id="aenv_r" value="0.18827"/>
-    <P id="aenv_s" value="0.19855"/>
-    <P id="amp_level" value="5.77"/>
-    <P id="amp_velocity" value="0.4323"/>
-    <P id="analog_age" value="0.27287"/>
-    <P id="arp_gate" value="0.42466"/>
+    <P id="aenv_d" value="1.0494"/>
+    <P id="aenv_r" value="0.5661"/>
+    <P id="aenv_s" value="0.050368"/>
+    <P id="amp_level" value="4.42"/>
+    <P id="amp_velocity" value="0.38788"/>
+    <P id="analog_age" value="0.29784"/>
+    <P id="arp_gate" value="0.26533"/>
     <P id="arp_latch" value="0"/>
-    <P id="arp_mode" value="0"/>
+    <P id="arp_mode" value="3"/>
     <P id="arp_oct" value="3"/>
     <P id="arp_on" value="1"/>
     <P id="arp_rate" value="5"/>
     <P id="arp_swing" value="0"/>
-    <P id="at_amount" value="0.24097"/>
+    <P id="at_amount" value="0.088721"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.15444"/>
-    <P id="fenv_r" value="0.15"/>
-    <P id="fenv_s" value="0.0062309"/>
-    <P id="flt_cutoff" value="5598.1"/>
+    <P id="fenv_d" value="0.423"/>
+    <P id="fenv_r" value="0.4716"/>
+    <P id="fenv_s" value="0.11362"/>
+    <P id="flt_cutoff" value="6207.2"/>
     <P id="flt_env_amt" value="0.2"/>
     <P id="flt_keytrack" value="2"/>
     <P id="flt_mode" value="0"/>
     <P id="flt_model" value="0"/>
     <P id="flt_reso" value="0.05"/>
     <P id="flt_slope" value="0"/>
-    <P id="flt_velocity" value="0.19759"/>
+    <P id="flt_velocity" value="0.25479"/>
     <P id="fx_reverb_damp" value="0.45"/>
-    <P id="fx_reverb_decay" value="3.8924"/>
+    <P id="fx_reverb_decay" value="4.7825"/>
     <P id="fx_reverb_freeze" value="0"/>
     <P id="fx_reverb_lowcut" value="140"/>
-    <P id="fx_reverb_mix" value="0.27874"/>
+    <P id="fx_reverb_mix" value="0.24877"/>
     <P id="fx_reverb_mod" value="0.4"/>
     <P id="fx_reverb_on" value="1"/>
     <P id="fx_reverb_pitch" value="3"/>
     <P id="fx_reverb_predelay" value="15"/>
     <P id="fx_reverb_shimmer" value="0.4"/>
-    <P id="fx_reverb_size" value="1.2841"/>
+    <P id="fx_reverb_size" value="1.5102"/>
     <P id="fx_reverb_type" value="2"/>
     <P id="fx_reverb_width" value="1"/>
     <P id="glide" value="0"/>
@@ -51,7 +51,7 @@
     <P id="mix_osc2" value="0.65"/>
     <P id="mix_ring" value="0"/>
     <P id="mix_sub" value="0"/>
-    <P id="mm1_amt" value="0.2554"/>
+    <P id="mm1_amt" value="0.18294"/>
     <P id="mm1_dst" value="4"/>
     <P id="mm1_src" value="4"/>
     <P id="osc1_fine" value="0"/>
@@ -75,8 +75,8 @@
     <P id="sub_oct" value="0"/>
     <P id="unison" value="0"/>
     <P id="voice_count" value="6"/>
-    <P id="voice_detune" value="0.18431"/>
+    <P id="voice_detune" value="0.166"/>
     <P id="voice_mode" value="0"/>
-    <P id="voice_spread" value="0.70115"/>
+    <P id="voice_spread" value="0.45795"/>
   </PARAMS>
 </AUGUR5_PRESET>

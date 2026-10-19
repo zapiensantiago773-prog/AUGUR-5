@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Dreamy Glow" category="Pad" target="-18.0"
-               genre="Future Bass" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Dreamy Glow" category="Pad" target="-16.0"
+               genre="Future Bass" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="1.27649998664856"/>
     <P id="aenv_d" value="1.5"/>
@@ -29,7 +30,7 @@
     <P id="voice_detune" value="0.6966000199317932"/>
     <P id="voice_mode" value="1.0"/>
     <P id="voice_spread" value="0.9545000195503235"/>
-    <P id="amp_level" value="-0.9"/>
+    <P id="amp_level" value="0.7"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="1.0"/>
     <P id="fx_chorus_mix" value="0.3417956531047821"/>

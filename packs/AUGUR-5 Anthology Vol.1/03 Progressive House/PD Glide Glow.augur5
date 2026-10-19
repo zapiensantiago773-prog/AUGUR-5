@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Glide Glow" category="Pad" target="-18.0"
-               genre="Progressive House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Glide Glow" category="Pad" target="-16.0"
+               genre="Progressive House" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="1.5247"/>
     <P id="aenv_d" value="1.5"/>
@@ -21,6 +22,6 @@
     <P id="mm4_src" value="4"/>
     <P id="osc2_fine" value="8.2434"/>
     <P id="voice_spread" value="0.9113"/>
-    <P id="amp_level" value="-7.8"/>
+    <P id="amp_level" value="-5.4"/>
   </PARAMS>
 </AUGUR5_PRESET>

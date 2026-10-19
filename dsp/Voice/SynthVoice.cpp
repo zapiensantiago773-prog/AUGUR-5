@@ -18,6 +18,14 @@ constexpr float envCutoffRange = 7.0f;         // octaves at ENV AMT = 1
 constexpr float polyModPitchRange = 48.0f;     // semitones per unit of poly-mod CV
 constexpr float polyModCutoffRange = 5.0f;     // octaves per unit of poly-mod CV
 constexpr float pwModRange = 0.45f;
+// WHEEL-MOD full depth (INITIAL + MOD wheel = 1), on a squared taper for pitch and cutoff so vibrato is fine near the
+// bottom of the wheel. Provisional (the service manual gives no depths): a full octave of siren, 6 octaves of cutoff.
+constexpr float wheelModPitchRange = 12.0f;  // semitones
+constexpr float wheelModCutoffRange = 6.0f;  // octaves
+// GLIDE: the Prophet's glide is an OTA slewing the UNISON CV (service manual 2-5). Far from the target the OTA's
+// output current saturates: a constant rate (GLIDE = seconds per octave); within its linear range (+-2 Vt ~ 52 mV,
+// ~0.6 semitone on 83.3 mV/semitone) the approach becomes exponential.
+constexpr float glideLinearSemitones = 0.6f;
 constexpr double shRefreshSeconds = 0.006;     // DAC/S&H loop (service manual 2-12)
 constexpr float shDroopSemitones = 0.5e-3f / 0.0833f; // 0.5 mV droop per refresh on 83.3 mV/semitone
 
@@ -390,9 +398,8 @@ void SynthVoice::computeConstants (const ChunkSignals& sig) noexcept
                               p.aenvS, p.aenvR * (1.0f + envSpread * fp.envTime[1]));
     }
 
-    // Glide: RC portamento, GLIDE = time to cover ~95% of the interval.
-    glideCoeff = p.glide <= 0.0005f ? 1.0f
-                                    : static_cast<float> (1.0 - std::exp (-3.0 / (static_cast<double> (p.glide) * sampleRate)));
+    // Glide: OTA slew, 12 semitones per GLIDE seconds while far from the target (see glideLinearSemitones).
+    glideSlew = p.glide <= 0.0005f ? 0.0f : static_cast<float> (12.0 / (static_cast<double> (p.glide) * sampleRate));
     keytrack = p.keytrack == 0 ? 0.0f : (p.keytrack == 1 ? 0.5f : 1.0f);
     lfoDelayInc = p.lfoDelay <= 0.001f ? 1.0f : static_cast<float> (1.0 / (static_cast<double> (p.lfoDelay) * sampleRate));
 
@@ -473,7 +480,14 @@ void SynthVoice::tickFront (const ChunkSignals& sig, size_t i, Front& front) noe
     const float invChunk = tickInvChunk;
     {
 
-        pitch += (pitchTarget - pitch) * glideCoeff;
+        if (glideSlew <= 0.0f)
+            pitch = pitchTarget;
+        else
+        {
+            const float gap = pitchTarget - pitch;
+            const float step = glideSlew * fastmath::tanh (gap * (1.0f / glideLinearSemitones));
+            pitch = std::abs (step) >= std::abs (gap) ? pitchTarget : pitch + step;
+        }
         const float fenv = filterEnv.next();
         const float aenv = ampEnv.next();
         const float menv = modEnv.next();
@@ -519,14 +533,17 @@ void SynthVoice::tickFront (const ChunkSignals& sig, size_t i, Front& front) noe
         const float notePitch = pitch + unisonOffset;
 
         // OSC B first: it is the sync master and the poly-mod source.
+        // WHEEL-MOD (shared signal; the LFO DELAY fades it in with the LFO).
+        const float wmLin = sig.wmodLin[i] * lfoDelayGain, wmSq = sig.wmodSq[i] * lfoDelayGain;
+
         const float pitchB = (kbdB ? notePitch : 60.0f) + cvOffset[1] + analogTune[1] + common + cvExtra[1]
-                             + dst[static_cast<size_t> (ModDest::Osc2Freq)];
+                             + dst[static_cast<size_t> (ModDest::Osc2Freq)] + (p.wmFreqB ? wmSq * wheelModPitchRange : 0.0f);
         float resetB = -1.0f;
         float mB = 0.0f;
         lastOscB = 0.0f;
         if (needOscB)
         {
-            const float pwB = std::clamp (sig.osc2Pw[i] + dst[static_cast<size_t> (ModDest::Osc2Pw)], 0.0f, 1.0f);
+            const float pwB = std::clamp (sig.osc2Pw[i] + dst[static_cast<size_t> (ModDest::Osc2Pw)] + (p.wmPwB ? wmLin * pwModRange : 0.0f), 0.0f, 1.0f);
             const VcoOutputs b = rev3 ? cem[1].process (pitchB, pwB, -1.0f) : ssm[1].process (pitchB, pwB, -1.0f);
             resetB = rev3 ? cem[1].lastResetD() : ssm[1].lastResetD();
 
@@ -552,8 +569,11 @@ void SynthVoice::tickFront (const ChunkSignals& sig, size_t i, Front& front) noe
         }
 
         const float pitchA = notePitch + cvOffset[0] + analogTune[0] + common + cvExtra[0] + fmSemis
-                             + dst[static_cast<size_t> (ModDest::Osc1Freq)] + (p.pmFreqA ? pm * polyModPitchRange : 0.0f);
-        const float pwA = std::clamp (sig.osc1Pw[i] + dst[static_cast<size_t> (ModDest::Osc1Pw)] + (p.pmPwA ? pm * pwModRange : 0.0f), 0.0f, 1.0f);
+                             + dst[static_cast<size_t> (ModDest::Osc1Freq)] + (p.pmFreqA ? pm * polyModPitchRange : 0.0f)
+                             + (p.wmFreqA ? wmSq * wheelModPitchRange : 0.0f);
+        const float pwA = std::clamp (sig.osc1Pw[i] + dst[static_cast<size_t> (ModDest::Osc1Pw)] + (p.pmPwA ? pm * pwModRange : 0.0f)
+                                          + (p.wmPwA ? wmLin * pwModRange : 0.0f),
+                                      0.0f, 1.0f);
         const float syncD = sync ? resetB : -1.0f;
         const VcoOutputs a = rev3 ? cem[0].process (pitchA, pwA, syncD) : ssm[0].process (pitchA, pwA, syncD);
         const float mA = ota::mix (a.saw, 0.0f, a.pulse, sig.saw1[i], 0.0f, sig.pulse1[i]) - dcA - dcTrimA;
@@ -590,7 +610,8 @@ void SynthVoice::tickFront (const ChunkSignals& sig, size_t i, Front& front) noe
         front.bus = bus;
         front.cutoffOct = sig.cutoffOct[i] + cutoffOffset + sig.envAmount[i] * fenv * envCutoffRange
                                 + keytrack * (notePitch - 60.0f) * (1.0f / 12.0f) + filterVelOct + atOct
-                                + dst[static_cast<size_t> (ModDest::FilterCutoff)] + (p.pmFilter ? pm * polyModCutoffRange : 0.0f);
+                                + dst[static_cast<size_t> (ModDest::FilterCutoff)] + (p.pmFilter ? pm * polyModCutoffRange : 0.0f)
+                                + (p.wmFilter ? wmSq * wheelModCutoffRange : 0.0f);
         front.resonance = (sig.resonance[i] + dst[static_cast<size_t> (ModDest::Resonance)]) * resonanceTrim;
         front.gain = aenv * velGain * std::max (0.0f, 1.0f + dst[static_cast<size_t> (ModDest::AmpLevel)]) * vcaTrim;
 

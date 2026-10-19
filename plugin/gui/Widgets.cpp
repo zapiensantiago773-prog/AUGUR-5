@@ -233,6 +233,56 @@ void ChoiceGroup::update (float value)
         buttons[i]->setToggleState (static_cast<int> (i) == index, juce::dontSendNotification);
 }
 
+namespace
+{
+constexpr int lfoMasks[8] { 1, 2, 4, 8, 3, 6, 5, 7 };   // TRI, SAW, SQR, S&H, SAW+TRI, SAW+SQR, TRI+SQR, SAW+TRI+SQR
+constexpr int lfoButtonBits[4] { 2, 1, 4, 8 };           // SAW, TRI, SQR, S&H
+} // namespace
+
+int LfoWaveSwitches::maskFor (int setting) noexcept { return lfoMasks[juce::jlimit (0, 7, setting)]; }
+
+int LfoWaveSwitches::settingFor (int mask) noexcept
+{
+    for (int i = 0; i < 8; ++i)
+        if (lfoMasks[i] == mask)
+            return i;
+    return 0;
+}
+
+LfoWaveSwitches::LfoWaveSwitches (APVTS& state, const juce::String& paramId, juce::Colour colour)
+{
+    const WaveIcon icons[4] { WaveIcon::Saw, WaveIcon::Triangle, WaveIcon::Square, WaveIcon::SampleHold };
+    for (size_t i = 0; i < 4; ++i)
+    {
+        buttons[i] = std::make_unique<WaveButton> (icons[i], colour);
+        addAndMakeVisible (*buttons[i]);
+        buttons[i]->onClick = [this, i] {
+            const int bit = lfoButtonBits[i], mask = maskFor (current);
+            int next = bit;
+            if (bit != 8 && mask != 8)
+                next = (mask ^ bit) == 0 ? mask : (mask ^ bit);
+            if (attachment != nullptr)
+                attachment->setValueAsCompleteGesture (static_cast<float> (settingFor (next)));
+        };
+    }
+    if (auto* p = state.getParameter (paramId))
+    {
+        attachment = std::make_unique<juce::ParameterAttachment> (*p, [this] (float v) { update (v); }, state.undoManager);
+        attachment->sendInitialUpdate();
+        const juce::String tips[4] { "SAW (0..+1)", "TRIANGLE (bipolar)", "SQUARE (0..+1)", "SAMPLE & HOLD" };
+        for (size_t i = 0; i < 4; ++i)
+            buttons[i]->setTooltip (tips[i] + (i < 3 ? juce::String (": combine with the others, as on the Prophet-5") : juce::String()));
+    }
+}
+
+void LfoWaveSwitches::update (float value)
+{
+    current = juce::roundToInt (value);
+    const int mask = maskFor (current);
+    for (size_t i = 0; i < 4; ++i)
+        buttons[i]->setToggleState ((mask & lfoButtonBits[i]) != 0, juce::dontSendNotification);
+}
+
 ParamChoiceBox::ParamChoiceBox (APVTS& state, const juce::String& paramId)
 {
     auto* p = state.getParameter (paramId);

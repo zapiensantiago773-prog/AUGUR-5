@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Mantra Horizon" category="Pad" target="-18.0"
-               genre="Psytrance" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Mantra Horizon" category="Pad" target="-16.0"
+               genre="Psytrance" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.8278999924659729"/>
     <P id="aenv_d" value="1.5"/>
@@ -37,7 +38,7 @@
     <P id="osc1_saw" value="0.0"/>
     <P id="osc2_fine" value="11.08740043640137"/>
     <P id="voice_spread" value="0.944599986076355"/>
-    <P id="amp_level" value="-10.1"/>
+    <P id="amp_level" value="-6.9"/>
     <P id="fx_chorus_on" value="1.0"/>
     <P id="fx_chorus_mode" value="0.0"/>
     <P id="fx_chorus_mix" value="0.3339529633522034"/>

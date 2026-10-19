@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <AUGUR5_PRESET formatVersion="1" name="Glass Ripples">
-  <META role="pluck" note="60" pack="SUN ATLAS" category="PLUCK" family="COLOR" kind="kalimba" author="TONAL LAB"/>
+  <META role="pluck" note="60" pack="SUN ATLAS" category="PLUCK" family="COLOR"
+        kind="kalimba" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="0.51152"/>
-    <P id="aenv_r" value="0.6442"/>
+    <P id="aenv_d" value="1.6081"/>
+    <P id="aenv_r" value="2.0253"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="4.55"/>
+    <P id="amp_level" value="3.3"/>
     <P id="amp_velocity" value="0.52382"/>
     <P id="analog_age" value="0.39349"/>
     <P id="at_amount" value="0.12203"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.15"/>
-    <P id="fenv_r" value="0.2"/>
+    <P id="fenv_d" value="0.4716"/>
+    <P id="fenv_r" value="0.6288"/>
     <P id="fenv_s" value="0"/>
     <P id="flt_cutoff" value="2124.6"/>
     <P id="flt_env_amt" value="0.3"/>
@@ -33,7 +35,7 @@
     <P id="fx_flanger_depth" value="0.7"/>
     <P id="fx_flanger_feedback" value="0.42744"/>
     <P id="fx_flanger_manual" value="2"/>
-    <P id="fx_flanger_mix" value="0.33146"/>
+    <P id="fx_flanger_mix" value="0.38996"/>
     <P id="fx_flanger_on" value="1"/>
     <P id="fx_flanger_rate" value="0.08519"/>
     <P id="fx_flanger_spread" value="90"/>
@@ -42,7 +44,7 @@
     <P id="fx_reverb_decay" value="6.7256"/>
     <P id="fx_reverb_freeze" value="0"/>
     <P id="fx_reverb_lowcut" value="140"/>
-    <P id="fx_reverb_mix" value="0.25955"/>
+    <P id="fx_reverb_mix" value="0.30535"/>
     <P id="fx_reverb_mod" value="0.4"/>
     <P id="fx_reverb_on" value="1"/>
     <P id="fx_reverb_pitch" value="3"/>
@@ -56,8 +58,8 @@
     <P id="legato" value="0"/>
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>
-    <P id="mix_osc1" value="0.3375"/>
-    <P id="mix_osc2" value="1"/>
+    <P id="mix_osc1" value="0.25"/>
+    <P id="mix_osc2" value="0.75"/>
     <P id="mix_ring" value="0"/>
     <P id="mix_sub" value="0"/>
     <P id="mm1_amt" value="0.19811"/>

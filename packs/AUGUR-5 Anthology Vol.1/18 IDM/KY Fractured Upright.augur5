@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AUGUR5_PRESET formatVersion="1" name="Fractured Upright" category="Keys" target="-18.0"
-               genre="IDM" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB">
+<AUGUR5_PRESET formatVersion="1" name="Fractured Upright" category="Keys" target="-16.0"
+               genre="IDM" pack="AUGUR-5 Anthology Vol.1" author="TONAL LAB"
+               loudness="pack">
   <PARAMS>
     <P id="aenv_a" value="0.001000000047497451"/>
     <P id="aenv_d" value="2.0"/>
@@ -25,7 +26,7 @@
     <P id="osc2_freq" value="17.0"/>
     <P id="osc2_saw" value="0.0"/>
     <P id="osc2_tri" value="1.0"/>
-    <P id="amp_level" value="-1.0"/>
+    <P id="amp_level" value="2.6"/>
     <P id="fx_reverb_on" value="1.0"/>
     <P id="fx_reverb_type" value="0.0"/>
     <P id="fx_reverb_size" value="1.0"/>

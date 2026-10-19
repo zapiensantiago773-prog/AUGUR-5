@@ -3,16 +3,16 @@
   <META role="pluck" note="60" pack="SUN ATLAS" category="PLUCK" family="HOUSE" kind="harp" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="1.369"/>
-    <P id="aenv_r" value="1.1037"/>
+    <P id="aenv_d" value="4.3041"/>
+    <P id="aenv_r" value="3.4698"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="5.26"/>
+    <P id="amp_level" value="1.4"/>
     <P id="amp_velocity" value="0.34188"/>
     <P id="analog_age" value="0.27192"/>
     <P id="at_amount" value="0.2251"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.28796"/>
-    <P id="fenv_r" value="0.4"/>
+    <P id="fenv_d" value="0.9053"/>
+    <P id="fenv_r" value="1.2575"/>
     <P id="fenv_s" value="0.1"/>
     <P id="flt_cutoff" value="1835.4"/>
     <P id="flt_env_amt" value="0.4"/>

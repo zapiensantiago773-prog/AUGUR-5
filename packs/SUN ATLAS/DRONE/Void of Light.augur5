@@ -3,16 +3,16 @@
   <META role="drone" note="45" pack="SUN ATLAS" category="DRONE" family="IDM" kind="noise_drone" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="2.3172"/>
-    <P id="aenv_d" value="2"/>
-    <P id="aenv_r" value="3.5724"/>
+    <P id="aenv_d" value="6.2877"/>
+    <P id="aenv_r" value="10"/>
     <P id="aenv_s" value="1"/>
-    <P id="amp_level" value="6"/>
+    <P id="amp_level" value="5.77"/>
     <P id="amp_velocity" value="0.36597"/>
     <P id="analog_age" value="0.56005"/>
     <P id="at_amount" value="0.071136"/>
     <P id="fenv_a" value="2.4205"/>
-    <P id="fenv_d" value="3"/>
-    <P id="fenv_r" value="3"/>
+    <P id="fenv_d" value="9.4316"/>
+    <P id="fenv_r" value="9.4316"/>
     <P id="fenv_s" value="0.7"/>
     <P id="flt_cutoff" value="863.78"/>
     <P id="flt_env_amt" value="0.15"/>

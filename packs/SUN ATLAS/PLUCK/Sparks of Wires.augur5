@@ -3,16 +3,16 @@
   <META role="pluck" note="60" pack="SUN ATLAS" category="PLUCK" family="NEO" kind="kalimba" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="0.73384"/>
-    <P id="aenv_r" value="0.45485"/>
+    <P id="aenv_d" value="2.3071"/>
+    <P id="aenv_r" value="1.43"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="4.63"/>
+    <P id="amp_level" value="4.39"/>
     <P id="amp_velocity" value="0.5446"/>
     <P id="analog_age" value="0.3081"/>
     <P id="at_amount" value="0.26663"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.15"/>
-    <P id="fenv_r" value="0.2"/>
+    <P id="fenv_d" value="0.4716"/>
+    <P id="fenv_r" value="0.6288"/>
     <P id="fenv_s" value="0"/>
     <P id="flt_cutoff" value="2292.2"/>
     <P id="flt_env_amt" value="0.3"/>
@@ -26,7 +26,7 @@
     <P id="fx_reverb_decay" value="2.5176"/>
     <P id="fx_reverb_freeze" value="0"/>
     <P id="fx_reverb_lowcut" value="140"/>
-    <P id="fx_reverb_mix" value="0.15424"/>
+    <P id="fx_reverb_mix" value="0.21348"/>
     <P id="fx_reverb_mod" value="0.4"/>
     <P id="fx_reverb_on" value="1"/>
     <P id="fx_reverb_pitch" value="3"/>
@@ -40,8 +40,8 @@
     <P id="legato" value="0"/>
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>
-    <P id="mix_osc1" value="0.45563"/>
-    <P id="mix_osc2" value="1"/>
+    <P id="mix_osc1" value="0.25"/>
+    <P id="mix_osc2" value="0.75"/>
     <P id="mix_ring" value="0"/>
     <P id="mix_sub" value="0"/>
     <P id="mm1_amt" value="0.19332"/>

@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <AUGUR5_PRESET formatVersion="1" name="Pastel Glints">
-  <META role="pluck" note="60" pack="SUN ATLAS" category="PLUCK" family="COLOR" kind="kalimba" author="TONAL LAB"/>
+  <META role="pluck" note="60" pack="SUN ATLAS" category="PLUCK" family="COLOR"
+        kind="kalimba" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="0.46341"/>
-    <P id="aenv_r" value="0.46191"/>
+    <P id="aenv_d" value="1.4569"/>
+    <P id="aenv_r" value="1.4522"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="5.12"/>
+    <P id="amp_level" value="2.8"/>
     <P id="amp_velocity" value="0.50931"/>
     <P id="analog_age" value="0.49164"/>
     <P id="at_amount" value="0.11213"/>
     <P id="fenv_a" value="0.001"/>
-    <P id="fenv_d" value="0.15"/>
-    <P id="fenv_r" value="0.2"/>
+    <P id="fenv_d" value="0.4716"/>
+    <P id="fenv_r" value="0.6288"/>
     <P id="fenv_s" value="0"/>
     <P id="flt_cutoff" value="3020.9"/>
     <P id="flt_env_amt" value="0.3"/>

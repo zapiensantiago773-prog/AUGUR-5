@@ -3,24 +3,24 @@
   <META role="fx" note="60" pack="SUN ATLAS" category="FX" family="CINE" kind="zap" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
-    <P id="aenv_d" value="0.33101"/>
-    <P id="aenv_r" value="0.2"/>
+    <P id="aenv_d" value="0.8876"/>
+    <P id="aenv_r" value="0.6288"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="6"/>
-    <P id="amp_velocity" value="0.40201"/>
-    <P id="analog_age" value="0.25218"/>
-    <P id="at_amount" value="0.23581"/>
+    <P id="amp_level" value="4.96"/>
+    <P id="amp_velocity" value="0.5077"/>
+    <P id="analog_age" value="0.3366"/>
+    <P id="at_amount" value="0.089601"/>
     <P id="delay_div" value="6"/>
     <P id="delay_fb" value="0.45"/>
-    <P id="delay_mix" value="0.18424"/>
+    <P id="delay_mix" value="0.255"/>
     <P id="delay_on" value="1"/>
     <P id="delay_pingpong" value="1"/>
     <P id="delay_sync" value="1"/>
     <P id="fenv_a" value="0.005"/>
-    <P id="fenv_d" value="1"/>
-    <P id="fenv_r" value="1"/>
+    <P id="fenv_d" value="3.1439"/>
+    <P id="fenv_r" value="3.1439"/>
     <P id="fenv_s" value="0.6"/>
-    <P id="flt_cutoff" value="3201.3"/>
+    <P id="flt_cutoff" value="3478.8"/>
     <P id="flt_env_amt" value="0.1"/>
     <P id="flt_keytrack" value="2"/>
     <P id="flt_mode" value="0"/>
@@ -29,35 +29,35 @@
     <P id="flt_slope" value="0"/>
     <P id="flt_velocity" value="0"/>
     <P id="fx_reverb_damp" value="0.45"/>
-    <P id="fx_reverb_decay" value="9.3242"/>
+    <P id="fx_reverb_decay" value="7.9723"/>
     <P id="fx_reverb_freeze" value="0"/>
     <P id="fx_reverb_lowcut" value="140"/>
-    <P id="fx_reverb_mix" value="0.23869"/>
+    <P id="fx_reverb_mix" value="0.3374"/>
     <P id="fx_reverb_mod" value="0.4"/>
     <P id="fx_reverb_on" value="1"/>
-    <P id="fx_reverb_pitch" value="4"/>
-    <P id="fx_reverb_predelay" value="15"/>
-    <P id="fx_reverb_shimmer" value="0.47707"/>
-    <P id="fx_reverb_size" value="1.49"/>
-    <P id="fx_reverb_type" value="3"/>
+    <P id="fx_reverb_pitch" value="3"/>
+    <P id="fx_reverb_predelay" value="56.926"/>
+    <P id="fx_reverb_shimmer" value="0.4"/>
+    <P id="fx_reverb_size" value="1.8039"/>
+    <P id="fx_reverb_type" value="2"/>
     <P id="fx_reverb_width" value="1"/>
     <P id="glide" value="0"/>
     <P id="hpf_cutoff" value="10"/>
     <P id="legato" value="0"/>
     <P id="menv_a" value="0.001"/>
-    <P id="menv_d" value="0.11165"/>
-    <P id="menv_r" value="0.1"/>
+    <P id="menv_d" value="0.5538"/>
+    <P id="menv_r" value="0.3144"/>
     <P id="menv_s" value="0"/>
     <P id="mix_drive" value="0.12"/>
     <P id="mix_noise" value="0"/>
-    <P id="mix_osc1" value="1"/>
-    <P id="mix_osc2" value="1"/>
+    <P id="mix_osc1" value="0.945"/>
+    <P id="mix_osc2" value="0.675"/>
     <P id="mix_ring" value="0"/>
     <P id="mix_sub" value="0"/>
-    <P id="mm1_amt" value="0.92613"/>
+    <P id="mm1_amt" value="0.94794"/>
     <P id="mm1_dst" value="0"/>
     <P id="mm1_src" value="8"/>
-    <P id="mm2_amt" value="0.95171"/>
+    <P id="mm2_amt" value="0.88375"/>
     <P id="mm2_dst" value="1"/>
     <P id="mm2_src" value="8"/>
     <P id="osc1_fine" value="0"/>
@@ -81,8 +81,8 @@
     <P id="sub_oct" value="0"/>
     <P id="unison" value="0"/>
     <P id="voice_count" value="4"/>
-    <P id="voice_detune" value="0.32674"/>
+    <P id="voice_detune" value="0.33435"/>
     <P id="voice_mode" value="0"/>
-    <P id="voice_spread" value="0.52313"/>
+    <P id="voice_spread" value="0.60957"/>
   </PARAMS>
 </AUGUR5_PRESET>

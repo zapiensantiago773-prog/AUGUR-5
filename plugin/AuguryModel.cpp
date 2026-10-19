@@ -41,7 +41,7 @@ int AuguryModel::groupOf (const juce::String& id)
         return filter;
     if (id.startsWith ("fenv_") || id.startsWith ("aenv_") || id.startsWith ("menv_"))
         return envelopes;
-    if (id.startsWith ("lfo") || id.startsWith ("pm_") || id.startsWith ("mm") || id == P::at_amount)
+    if (id.startsWith ("lfo") || id.startsWith ("wm_") || id.startsWith ("pm_") || id.startsWith ("mm") || id == P::at_amount)
         return modulation;
     if (id.startsWith ("fx_") || id.startsWith ("fuzz_") || id.startsWith ("delay_"))
         return effects;

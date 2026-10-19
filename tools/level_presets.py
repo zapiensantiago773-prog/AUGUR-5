@@ -5,6 +5,10 @@ Melodic sounds (D-045), on the same scale as the SUN ATLAS / MOON ATLAS / HORIZO
   every sound is played as its role in a track and its loudest 400 ms are brought to -16 dB, peak <= -1 dBFS.
 Drums (one-shots) keep their short-term targets (loudest 50 ms RMS):
     augur_preset_audit > audit.txt ;  python tools/level_presets.py audit.txt --drums
+Then chord headroom: a polysynth sound must not clip when played as chords. The default audit plays every sound as
+chords (four notes for pads, keys and stabs, a dyad for the rest, one note for leads and basses); this only lowers
+the melodic sounds whose peak there passes -1 dBFS:
+    augur_preset_audit > audit.txt ;  python tools/level_presets.py audit.txt --headroom
 Adjusts each preset's amp_level in plugin/Presets.cpp / PresetsExpansion.inc. Run, rebuild, re-measure: two or three
 passes converge (the chain after the level control is nearly linear).
 """
@@ -32,7 +36,7 @@ def target_for(name: str, category: str) -> float:
     return TARGET_DB
 
 
-def main(report_path: str, drums: bool) -> None:
+def main(report_path: str, drums: bool, headroom: bool) -> None:
     rows = []
     for line in pathlib.Path(report_path).read_text(encoding="utf-8", errors="ignore").splitlines()[1:]:
         m = re.match(r"(.+?)\s{2,}(\S.*?)\s+(-?\d+\.\d)\s+(-?\d+\.\d)", line)
@@ -44,20 +48,25 @@ def main(report_path: str, drums: bool) -> None:
     for name, category, peak, loud in rows:
         if name == "Init" or (category == "Drums") != drums:
             continue
+        if headroom and peak <= PEAK_CEILING_DB:
+            continue
         key = '{ "' + name + '", {'
         f = next((f for f, src in sources.items() if key in src), None)
         if f is None:
             print("not found:", name)
             continue
         source = sources[f]
-        delta = target_for(name, category) - loud
-        delta = min(delta, (DRUM_PEAK_CEILING_DB if drums else PEAK_CEILING_DB) - peak)  # never push the peak over the ceiling
+        if headroom:
+            delta = PEAK_CEILING_DB - peak - 0.05  # only down, just under the ceiling
+        else:
+            delta = target_for(name, category) - loud
+            delta = min(delta, (DRUM_PEAK_CEILING_DB if drums else PEAK_CEILING_DB) - peak)  # never push the peak over the ceiling
         start = source.index(key)
         end = source.index('}, "', start)
         body = source[start:end]
         m = re.search(r'\{ "amp_level", (-?[0-9.]+)f \}', body)
         current = float(m.group(1)) if m else -6.0
-        new = round(max(-40.0, min(6.0, current + delta)), 1)
+        new = max(-40.0, min(6.0, (current + delta) // 0.1 * 0.1 if headroom else round(current + delta, 1)))
         setting = '{ "amp_level", %.1ff }' % new
         body = body.replace(m.group(0), setting) if m else body[: body.rindex("}") + 1] + ", " + setting + body[body.rindex("}") + 1 :]
         sources[f] = source[:start] + body + source[end:]
@@ -70,4 +79,4 @@ def main(report_path: str, drums: bool) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], "--drums" in sys.argv[2:])
+    main(sys.argv[1], "--drums" in sys.argv[2:], "--headroom" in sys.argv[2:])
