@@ -15,7 +15,7 @@ bool isMorphable (const juce::String& id)
 {
     if (PresetManager::isGlobalSetting (id))
         return false;
-    return ! (id.startsWith ("trim_") || id == P::pb_range || id == P::osc_model || id == P::vintage_cv);
+    return ! (id.startsWith ("trim_") || id == P::pb_range || id == P::pb_down || id == P::osc_model || id == P::vintage_cv);
 }
 
 bool isDiscrete (const juce::RangedAudioParameter* p)

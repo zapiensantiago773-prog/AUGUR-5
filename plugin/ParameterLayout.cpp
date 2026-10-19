@@ -218,7 +218,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     // Additional
     layout.add (std::make_unique<APC> (pid (P::osc_model), "VCO Model", juce::StringArray { "REV 3 (CEM3340)", "REV 1 (SSM2030)" }, 0));
-    layout.add (std::make_unique<API> (pid (P::pb_range), "Pitch Bend Range", 0, 24, 2, semis));
+    layout.add (std::make_unique<API> (pid (P::pb_range), "Pitch Bend Up", 0, 24, 2, semis));
     layout.add (toggle (P::vintage_cv, "Vintage 7-bit Knobs", false));
 
     // Effects (expansion)
@@ -393,6 +393,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
                                        juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatPercent)));
     layout.add (toggle (P::arp_latch, "Arp Latch", false));
 
+    // 1.3: the LFOs' sync divisions and the pitch wheel's own range downwards.
+    {
+        juce::StringArray divisions;
+        for (auto* n : augur::lfoDivisionNames)
+            divisions.add (n);
+        layout.add (std::make_unique<APC> (pid (P::lfo_div), "LFO Sync Note", divisions, 10));
+        layout.add (std::make_unique<APC> (pid (P::lfo2_div), "LFO 2 Sync Note", divisions, 10));
+    }
+    layout.add (std::make_unique<API> (pid (P::pb_down), "Pitch Bend Down", 0, 24, 2, semis));
+
     return layout;
 }
 
@@ -407,13 +417,13 @@ struct ParameterBinding::Raw
     A cutoff, reso, envAmt, fltModel, keytrack, fltVel;
     A level, ampVel, atAmount;
     A fA, fD, fS, fR, aA, aD, aS, aR;
-    A lfoRate, lfoAmount, lfoDelay, lfoWave, lfoSync;
+    A lfoRate, lfoAmount, lfoDelay, lfoWave, lfoSync, lfoDiv, lfo2Div;
     A pmOn, pmFenv, pmOsc2, pmFreqA, pmPwA, pmFilter;
     std::array<A, 8> mmSrc, mmDst, mmAmt;
     A mixRing, mixSub, subOct, xmod, lfo2Rate, lfo2Wave, lfo2Sync, lfo2Retrig, mA, mD, mS, mR;
     A detune, spread, pan, voices, age;
     A dlOn, dlTime, dlFb, dlMix;
-    A tune, glide, unison, legato, pbRange, vintage;
+    A tune, glide, unison, legato, pbRange, pbDown, vintage;
     A arpOn, arpMode, arpOct, arpRate, arpGate, arpSwing, arpLatch;
     A fltSlope, fltMode, hpf, voiceMode, osc1Oct, osc2Oct, master;
     std::array<A, 8> trimTune, trimCut;
@@ -476,7 +486,7 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     r.fA = get (P::fenv_a); r.fD = get (P::fenv_d); r.fS = get (P::fenv_s); r.fR = get (P::fenv_r);
     r.aA = get (P::aenv_a); r.aD = get (P::aenv_d); r.aS = get (P::aenv_s); r.aR = get (P::aenv_r);
     r.lfoRate = get (P::lfo_rate); r.lfoAmount = get (P::lfo_amount); r.lfoDelay = get (P::lfo_delay);
-    r.lfoWave = get (P::lfo_wave); r.lfoSync = get (P::lfo_sync);
+    r.lfoWave = get (P::lfo_wave); r.lfoSync = get (P::lfo_sync); r.lfoDiv = get (P::lfo_div); r.lfo2Div = get (P::lfo2_div);
     r.pmOn = get (P::pm_on); r.pmFenv = get (P::pm_fenv_amt); r.pmOsc2 = get (P::pm_osc2_amt);
     r.pmFreqA = get (P::pm_dst_freqa); r.pmPwA = get (P::pm_dst_pwa); r.pmFilter = get (P::pm_dst_filter);
     for (int i = 0; i < P::kNumMatrixSlots; ++i)
@@ -489,7 +499,7 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
     r.voices = get (P::voice_count); r.age = get (P::analog_age);
     r.dlOn = get (P::delay_on); r.dlTime = get (P::delay_time); r.dlFb = get (P::delay_fb); r.dlMix = get (P::delay_mix);
     r.tune = get (P::master_tune); r.glide = get (P::glide); r.unison = get (P::unison); r.legato = get (P::legato);
-    r.pbRange = get (P::pb_range);
+    r.pbRange = get (P::pb_range); r.pbDown = get (P::pb_down);
     r.vintage = get (P::vintage_cv);
     r.mixRing = get (P::mix_ring); r.mixSub = get (P::mix_sub); r.subOct = get (P::sub_oct); r.xmod = get (P::osc_xmod);
     r.lfo2Rate = get (P::lfo2_rate); r.lfo2Wave = get (P::lfo2_wave); r.lfo2Sync = get (P::lfo2_sync); r.lfo2Retrig = get (P::lfo2_retrig);
@@ -566,7 +576,7 @@ void ParameterBinding::fill (augur::SynthParams& p) noexcept
     p.fenvA = f (r.fA); p.fenvD = f (r.fD); p.fenvS = f (r.fS); p.fenvR = f (r.fR);
     p.aenvA = f (r.aA); p.aenvD = f (r.aD); p.aenvS = f (r.aS); p.aenvR = f (r.aR);
     p.lfoRate = f (r.lfoRate); p.lfoAmount = f (r.lfoAmount); p.lfoDelay = f (r.lfoDelay);
-    p.lfoWave = i (r.lfoWave); p.lfoSync = b (r.lfoSync);
+    p.lfoWave = i (r.lfoWave); p.lfoSync = b (r.lfoSync); p.lfoDivision = i (r.lfoDiv); p.lfo2Division = i (r.lfo2Div);
     p.pmOn = b (r.pmOn); p.pmFilterEnv = f (r.pmFenv); p.pmOsc2 = f (r.pmOsc2);
     p.pmFreqA = b (r.pmFreqA); p.pmPwA = b (r.pmPwA); p.pmFilter = b (r.pmFilter);
     for (size_t k = 0; k < r.mmSrc.size(); ++k)
@@ -578,7 +588,7 @@ void ParameterBinding::fill (augur::SynthParams& p) noexcept
     p.voiceDetune = f (r.detune); p.voiceSpread = f (r.spread); p.voicePan = f (r.pan);
     p.voiceCount = i (r.voices); p.analogAge = f (r.age);
     p.masterTuneCents = f (r.tune); p.glide = f (r.glide); p.unison = b (r.unison); p.legato = b (r.legato);
-    p.pitchBendRange = i (r.pbRange);
+    p.pitchBendRange = i (r.pbRange); p.pitchBendDown = i (r.pbDown);
     p.mixRing = f (r.mixRing); p.mixSub = f (r.mixSub); p.subOctave = i (r.subOct); p.crossMod = f (r.xmod);
     p.lfo2Rate = f (r.lfo2Rate); p.lfo2Wave = i (r.lfo2Wave); p.lfo2Sync = b (r.lfo2Sync); p.lfo2Retrig = b (r.lfo2Retrig);
     p.menvA = f (r.mA); p.menvD = f (r.mD); p.menvS = f (r.mS); p.menvR = f (r.mR);

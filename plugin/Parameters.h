@@ -63,6 +63,8 @@ namespace augur5::params
     inline constexpr auto lfo_delay  = "lfo_delay";  // s 0..5
     inline constexpr auto lfo_wave   = "lfo_wave";   // choice: tri, saw, sqr, s&h
     inline constexpr auto lfo_sync   = "lfo_sync";   // bool: tempo sync
+    inline constexpr auto lfo_div    = "lfo_div";    // choice: augur::lfoDivisionNames, used when synced (1.3)
+    inline constexpr auto lfo2_div   = "lfo2_div";   // choice: as lfo_div, for LFO 2 (1.3)
 
     // ---------- POLY MOD ----------
     inline constexpr auto pm_on         = "pm_on";
@@ -100,7 +102,8 @@ namespace augur5::params
 
     // ---------- ADDITIONAL (not on the panel; reachable from SETTINGS) ----------
     inline constexpr auto osc_model = "osc_model"; // choice: 0 = REV3 (CEM3340), 1 = REV1 (SSM2030)
-    inline constexpr auto pb_range  = "pb_range";  // semitones 0..24, default 2
+    inline constexpr auto pb_range  = "pb_range";  // semitones 0..24, default 2: BEND UP (was both directions up to 1.2)
+    inline constexpr auto pb_down   = "pb_down";   // semitones 0..24, default 2: BEND DOWN (1.3)
     inline constexpr auto vintage_cv = "vintage_cv"; // bool: Rev 3 7-bit knob digitising (128 steps + hysteresis)
 
     // ---------- OSCILLATOR EXTRAS ----------
@@ -110,7 +113,7 @@ namespace augur5::params
     inline constexpr auto osc_xmod  = "osc_xmod";  // 0..1 linear FM OSC B -> OSC A
 
     // ---------- LFO 2 / MOD ENV ----------
-    inline constexpr auto lfo2_rate   = "lfo2_rate";   // Hz 0.05..30 (division when synced)
+    inline constexpr auto lfo2_rate   = "lfo2_rate";   // Hz 0.05..30 (free running)
     inline constexpr auto lfo2_wave   = "lfo2_wave";   // choice: SINE, TRI, SAW UP, SAW DN, SQR, S&H, SMOOTH
     inline constexpr auto lfo2_sync   = "lfo2_sync";   // bool
     inline constexpr auto lfo2_retrig = "lfo2_retrig"; // bool: restart on every note (poly) / free

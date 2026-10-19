@@ -600,3 +600,12 @@ Pregunta: ¿por qué MANTIS-37 y PYTHIA 32 "suenan mejor"? Se midió, sin cambia
 - SUN ATLAS: regenerar con `make_sun_atlas.py` (sus tiempos ya van en la escala de AUGUR).
 - Fábrica: `augur_preset_audit --factory-loudness` + `tools/level_presets.py` (−16 dB en la escala de los packs, pico ≤ −1 dBFS; los drums conservan su medida).
 - Anthology: `augur_preset_audit --level-pack <carpeta> --pack-scale` (lo melódico pasa a `loudness="pack"`, −16 dB).
+
+## D-046 · Versión 1.3.0: pitch bend arriba/abajo y SYNC NOTE en los LFO (2026-10-19)
+- **Pitch bend con dos rangos.** `pb_range` (ID estable) pasa a ser **BEND UP**; nuevo `pb_down` = **BEND DOWN** (0–24 semitonos). El motor usa uno u otro según el sentido de la rueda (MIDI, rueda en pantalla y automatización). En VOICE: BEND UP (ST) / BEND DOWN (ST). No se morfea en AUGURY (es un ajuste del instrumento, como `pb_range`).
+- **LFO SYNC NOTE.** Hasta 1.2 el SYNC de los LFO elegía una de 16 divisiones según la posición de la perilla RATE, que seguía mostrando Hz: la división no se veía. Ahora cada LFO tiene su selector de nota (`lfo_div`, `lfo2_div`), 20 valores de 1/32T a 8/1, con puntillos y tresillos (`lfoDivisionNames`, por defecto 1/4). Con SYNC activo la perilla RATE se atenúa y el selector se ilumina (y al revés).
+- **Compatibilidad** (`completeOlderSettings`, en presets de fábrica, presets de usuario y sesiones): lo guardado antes de 1.3 carga con BEND DOWN = su rango único y, si su LFO estaba sincronizado, con la división que elegía su RATE (`legacyLfoDivisionFor`).
+- **Verificación:**
+  - Tests: la rueda a fondo sube 2 y baja 12 semitonos exactos (±0.3 %); a 120 BPM el LFO 2 sincronizado mide 4.00 / 2.00 / 1.00 Hz con 1/8, 1/4 y 1/2 (±0.1 Hz); la conversión vieja coincide en todo el rango de RATE.
+  - `augur_preset_audit --check-migration` (también en la CI): una sesión y un preset de 1.2 recuperan BEND DOWN y su división.
+  - Regresión: los 170 presets de fábrica y los 5 presets de packs con LFO sincronizado miden **idéntico** antes y después (pico, volumen y huella tímbrica).

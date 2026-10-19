@@ -18,4 +18,10 @@ void convertLegacyEffects (Settings& settings);
 // True for a parameter id that only existed in 1.0 (converted by convertLegacyEffects).
 bool isLegacyEffectId (const juce::String& id);
 
+// Settings written before 1.3 lack what 1.3 added; this adds it with the values that keep their sound:
+//  - pb_down = pb_range (the pitch wheel had one range for both directions);
+//  - lfo_div / lfo2_div for a synced LFO, from its RATE knob as 1.2 read it (augur::legacyLfoDivisionFor).
+// Settings that already have them pass through unchanged.
+void completeOlderSettings (Settings& settings);
+
 } // namespace augur5

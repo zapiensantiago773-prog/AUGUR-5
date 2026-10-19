@@ -700,6 +700,7 @@ void PresetManager::loadFactory (int index)
     for (const auto& s : preset.settings)
         settings.push_back ({ s.id, s.value });
     convertLegacyEffects (settings); // the bank is written in 1.0's effect ids where it predates the rack
+    completeOlderSettings (settings);
     for (const auto& [id, value] : settings)
         setParam (id, value);
     if (loadFxOrder)
@@ -791,6 +792,7 @@ void PresetManager::loadUser (const juce::File& file)
             if (! isGlobalSetting (e->getStringAttribute ("id")))
                 settings.push_back ({ e->getStringAttribute ("id"), static_cast<float> (e->getDoubleAttribute ("value")) });
         convertLegacyEffects (settings); // presets saved with 1.0
+        completeOlderSettings (settings); // and before 1.3
         for (const auto& [id, value] : settings)
             setParam (id, value);
     }

@@ -2,7 +2,9 @@
 
 #include "Rack/FxRack.h"
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 
 namespace augur
 {
@@ -105,15 +107,17 @@ struct SynthParams
     float aenvA = 0.003f, aenvD = 0.8f, aenvS = 0.8f, aenvR = 0.4f;
 
     // LFO
-    float lfoRate = 4.0f; // Hz, or 0..1 position when synced
+    float lfoRate = 4.0f; // Hz (free running)
     float lfoAmount = 0.5f, lfoDelay = 0.0f;
     int lfoWave = 0;
     bool lfoSync = false;
+    int lfoDivision = 10; // lfoDivisionBeats index when synced (1/4)
 
     // LFO 2 (per voice) and modulation envelope
-    float lfo2Rate = 2.0f; // Hz (position as for LFO 1 when synced)
+    float lfo2Rate = 2.0f; // Hz (free running)
     int lfo2Wave = 0;      // sine, tri, saw up, saw down, square, S&H, smooth random
     bool lfo2Sync = false, lfo2Retrig = true;
+    int lfo2Division = 10;
     float menvA = 0.01f, menvD = 0.5f, menvS = 0.0f, menvR = 0.5f;
 
     // Poly Mod
@@ -141,7 +145,8 @@ struct SynthParams
     // Global
     float masterTuneCents = 0.0f, glide = 0.0f;
     bool unison = false, legato = false;
-    int pitchBendRange = 2;
+    int pitchBendRange = 2; // semitones with the wheel up
+    int pitchBendDown = 2;  // semitones with the wheel down
 
     // Arpeggiator
     bool arpOn = false;
@@ -158,10 +163,27 @@ inline constexpr std::array<const char*, 12> delaySyncNames { "1/32", "1/16T", "
 inline constexpr std::array<double, 8> arpRateBeats { 1.0, 0.75, 0.5, 1.0 / 3.0, 0.375, 0.25, 1.0 / 6.0, 0.125 };
 inline constexpr std::array<const char*, 8> arpRateNames { "1/4", "1/8D", "1/8", "1/8T", "1/16D", "1/16", "1/16T", "1/32" };
 
-// Tempo-synced LFO divisions, in beats (quarter notes) per cycle, slowest first.
-inline constexpr std::array<float, 16> lfoSyncBeats { 32.0f, 16.0f, 8.0f, 6.0f, 4.0f, 3.0f, 2.0f, 1.5f,
-                                                      1.0f, 0.75f, 0.5f, 1.0f / 3.0f, 0.25f, 1.0f / 6.0f, 0.125f, 1.0f / 12.0f };
-inline constexpr std::array<const char*, 16> lfoSyncNames { "8 bars", "4 bars", "2 bars", "3/2", "1 bar", "3/4", "1/2", "3/8",
-                                                            "1/4", "3/16", "1/8", "1/8T", "1/16", "1/16T", "1/32", "1/32T" };
+// Tempo-synced LFO divisions (LFO SYNC NOTE), fastest first: beats (quarter notes) per cycle and their names.
+inline constexpr std::array<float, 20> lfoDivisionBeats { 1.0f / 12.0f, 0.125f, 1.0f / 6.0f, 0.1875f, 0.25f, 1.0f / 3.0f, 0.375f,
+                                                          0.5f, 2.0f / 3.0f, 0.75f, 1.0f, 4.0f / 3.0f, 1.5f, 2.0f, 3.0f, 4.0f,
+                                                          6.0f, 8.0f, 16.0f, 32.0f };
+inline constexpr std::array<const char*, 20> lfoDivisionNames { "1/32T", "1/32", "1/16T", "1/32.", "1/16", "1/8T", "1/16.", "1/8",
+                                                                "1/4T", "1/8.", "1/4", "1/2T", "1/4.", "1/2", "1/2.", "1/1",
+                                                                "1/1.", "2/1", "4/1", "8/1" };
+
+// Up to 1.2 a synced LFO took its division from the RATE knob's position (0.05..30 Hz, log) over 16 values, slowest
+// first. Sessions and presets from then are converted with this, so they keep their division (D-046).
+inline int legacyLfoDivisionFor (float rateHz) noexcept
+{
+    constexpr std::array<float, 16> legacyBeats { 32.0f, 16.0f, 8.0f, 6.0f, 4.0f, 3.0f, 2.0f, 1.5f,
+                                                  1.0f, 0.75f, 0.5f, 1.0f / 3.0f, 0.25f, 1.0f / 6.0f, 0.125f, 1.0f / 12.0f };
+    const double rate = std::clamp (static_cast<double> (rateHz), 0.01, 50.0);
+    const double pos = std::log (std::max (rate, 0.05) / 0.05) / std::log (600.0);
+    const float beats = legacyBeats[static_cast<size_t> (std::clamp (std::lround (pos * 15.0), 0L, 15L))];
+    for (size_t i = 0; i < lfoDivisionBeats.size(); ++i)
+        if (std::abs (lfoDivisionBeats[i] - beats) < 1.0e-6f)
+            return static_cast<int> (i);
+    return 10;
+}
 
 } // namespace augur

@@ -601,8 +601,7 @@ void SynthEngine::controlUpdate() noexcept
         double rate2 = std::clamp (static_cast<double> (params.lfo2Rate), 0.01, 50.0);
         if (params.lfo2Sync)
         {
-            const double pos = std::log (std::max (rate2, 0.05) / 0.05) / std::log (600.0);
-            const double beats = lfoSyncBeats[static_cast<size_t> (std::clamp (std::lround (pos * 15.0), 0L, 15L))];
+            const double beats = lfoDivisionBeats[static_cast<size_t> (std::clamp (params.lfo2Division, 0, static_cast<int> (lfoDivisionBeats.size()) - 1))];
             rate2 = bpm / 60.0 / beats;
             if (playing)
             {
@@ -619,16 +618,14 @@ void SynthEngine::controlUpdate() noexcept
 
     sig.modWheel = modWheel;
     sig.channelPressure = channelPressure;
-    sig.bendSemitones = bend * static_cast<float> (params.pitchBendRange);
+    sig.bendSemitones = bend * static_cast<float> (bend >= 0.0f ? params.pitchBendRange : params.pitchBendDown);
     sig.tuneSemitones = params.masterTuneCents * 0.01f;
 
     // Shared LFO (free-running, or locked to the host's beat position when synced and playing).
     double rate = std::clamp (static_cast<double> (params.lfoRate), 0.01, 50.0);
     if (params.lfoSync)
     {
-        const double pos = std::log (std::max (rate, 0.05) / 0.05) / std::log (600.0);
-        const auto idx = static_cast<size_t> (std::clamp (std::lround (pos * 15.0), 0L, 15L));
-        const double beats = lfoSyncBeats[idx];
+        const double beats = lfoDivisionBeats[static_cast<size_t> (std::clamp (params.lfoDivision, 0, static_cast<int> (lfoDivisionBeats.size()) - 1))];
         rate = bpm / 60.0 / beats;
         if (playing)
         {

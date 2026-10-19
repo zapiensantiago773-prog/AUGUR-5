@@ -6,8 +6,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <memory>
+#include <string>
 #include <vector>
 
 using augur::ModDest;
@@ -344,4 +347,94 @@ TEST_CASE ("Output with every new modulation feature is bit-identical however th
     };
     augur::Random rng (99);
     REQUIRE (render (nullptr) == render (&rng));
+}
+
+TEST_CASE ("Pitch bend has its own range up and down", "[modulation][bend]")
+{
+    auto p = openParams();
+    p.mixOsc1 = 0.8f;
+    p.pitchBendRange = 2;
+    p.pitchBendDown = 12;
+    const double f0 = 440.0 * std::exp2 ((60.0 - 69.0) / 12.0);
+    const auto playBent = [&p] (float wheel) {
+        auto e = std::make_unique<SynthEngine>();
+        e->prepare (48000.0);
+        e->setParams (p);
+        e->setPitchBend (wheel);
+        e->noteOn (60, 0.9f);
+        std::vector<float> l (48000), r (l.size());
+        e->process (l.data(), r.data(), static_cast<int> (l.size()));
+        return augur::test::measureFrequency (l, 48000.0, l.size() / 2);
+    };
+    CHECK_THAT (playBent (1.0f), Catch::Matchers::WithinRel (f0 * std::exp2 (2.0 / 12.0), 0.003));
+    CHECK_THAT (playBent (-1.0f), Catch::Matchers::WithinRel (f0 * std::exp2 (-12.0 / 12.0), 0.003));
+    CHECK_THAT (playBent (0.0f), Catch::Matchers::WithinRel (f0, 0.003));
+}
+
+TEST_CASE ("A synced LFO runs at its note value of the tempo", "[modulation][lfo]")
+{
+    // LFO 2 (sine) -> amp level at 120 BPM: 1/8 = 4 Hz, 1/4 = 2 Hz, 1/2 = 1 Hz.
+    const auto tremoloHz = [] (int division) {
+        auto q = openParams();
+        q.mixOsc1 = 0.8f;
+        q.lfo2Sync = true;
+        q.lfo2Rate = 7.0f; // ignored when synced
+        q.lfo2Division = division;
+        q.lfo2Wave = 0;
+        q.matrix[5] = { ModSource::Lfo2, ModDest::AmpLevel, -1.0f };
+        auto e = std::make_unique<SynthEngine>();
+        e->prepare (48000.0);
+        e->setParams (q);
+        e->setTransport (120.0, false, 0.0);
+        e->noteOn (60, 0.9f);
+        std::vector<float> l (4 * 48000), r (l.size());
+        e->process (l.data(), r.data(), static_cast<int> (l.size()));
+        // Level in 20 ms windows over the last 3 s (50 Hz); the strongest line of its spectrum is the LFO rate.
+        std::vector<double> level;
+        for (size_t w = 48000; w + 960 <= l.size(); w += 960)
+            level.push_back (augur::test::rms (std::vector<float> (l.begin() + static_cast<long> (w), l.begin() + static_cast<long> (w + 960))));
+        double mean = 0.0;
+        for (const double v : level)
+            mean += v / static_cast<double> (level.size());
+        double bestHz = 0.0, best = -1.0;
+        for (double hz = 0.25; hz <= 10.0; hz += 0.01)
+        {
+            double re = 0.0, im = 0.0;
+            for (size_t i = 0; i < level.size(); ++i)
+            {
+                const double ph = 2.0 * 3.14159265358979 * hz * static_cast<double> (i) / 50.0;
+                re += (level[i] - mean) * std::cos (ph);
+                im += (level[i] - mean) * std::sin (ph);
+            }
+            if (re * re + im * im > best)
+            {
+                best = re * re + im * im;
+                bestHz = hz;
+            }
+        }
+        return bestHz;
+    };
+    const auto index = [] (const char* name) {
+        for (size_t i = 0; i < augur::lfoDivisionNames.size(); ++i)
+            if (std::string (augur::lfoDivisionNames[i]) == name)
+                return static_cast<int> (i);
+        return -1;
+    };
+    CHECK_THAT (tremoloHz (index ("1/8")), Catch::Matchers::WithinAbs (4.0, 0.1));
+    CHECK_THAT (tremoloHz (index ("1/4")), Catch::Matchers::WithinAbs (2.0, 0.1));
+    CHECK_THAT (tremoloHz (index ("1/2")), Catch::Matchers::WithinAbs (1.0, 0.1));
+}
+
+TEST_CASE ("Sessions and presets from before 1.3 keep the division their RATE knob chose", "[modulation][lfo]")
+{
+    // 1.2: a synced LFO took one of 16 divisions (slowest first) from the RATE knob's log position.
+    constexpr std::array<float, 16> old { 32.0f, 16.0f, 8.0f, 6.0f, 4.0f, 3.0f, 2.0f, 1.5f, 1.0f, 0.75f, 0.5f, 1.0f / 3.0f, 0.25f, 1.0f / 6.0f, 0.125f, 1.0f / 12.0f };
+    for (double rate = 0.05; rate <= 30.0; rate *= 1.07)
+    {
+        const double pos = std::log (rate / 0.05) / std::log (600.0);
+        const float beats = old[static_cast<size_t> (std::clamp (std::lround (pos * 15.0), 0L, 15L))];
+        const int div = augur::legacyLfoDivisionFor (static_cast<float> (rate));
+        REQUIRE (div >= 0);
+        CHECK_THAT (augur::lfoDivisionBeats[static_cast<size_t> (div)], Catch::Matchers::WithinAbs (beats, 1e-6f));
+    }
 }

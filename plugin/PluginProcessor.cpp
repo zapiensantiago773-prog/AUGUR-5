@@ -307,10 +307,16 @@ void Augur5Processor::setStateInformation (const void* data, int sizeInBytes)
         {
             auto tree = juce::ValueTree::fromXml (*xml);
             // Sessions saved with 1.0 carry its own effects (chorus_*, phaser_*, echo_*, reverb_*): convert them.
-            augur5::Settings legacy;
+            augur5::Settings legacy, saved;
             for (const auto& child : tree)
-                if (child.hasProperty ("id") && augur5::isLegacyEffectId (child["id"].toString()))
-                    legacy.push_back ({ child["id"].toString(), static_cast<float> (child["value"]) });
+                if (child.hasProperty ("id"))
+                {
+                    const augur5::Settings::value_type setting { child["id"].toString(), static_cast<float> (child["value"]) };
+                    (augur5::isLegacyEffectId (setting.first) ? legacy : saved).push_back (setting);
+                }
+            // Sessions saved before 1.3: the settings 1.3 added, with the values that keep their sound.
+            const auto savedCount = saved.size();
+            augur5::completeOlderSettings (saved);
             // Plugin state that is not a parameter: rack order and the AUGURY corners.
             fxOrderFromString (tree.getProperty ("fxOrder").toString());
             augury.fromTree (tree.getChildWithName ("AUGURY"));
@@ -318,6 +324,9 @@ void Augur5Processor::setStateInformation (const void* data, int sizeInBytes)
                 tree.removeChild (old, nullptr);
             uiScaleChosen = static_cast<bool> (tree.getProperty ("uiScaleChosen", false));
             parameters.replaceState (tree);
+            for (auto k = savedCount; k < saved.size(); ++k)
+                if (auto* p = parameters.getParameter (saved[k].first))
+                    p->setValueNotifyingHost (p->convertTo0to1 (saved[k].second));
             if (! legacy.empty())
             {
                 augur5::convertLegacyEffects (legacy);

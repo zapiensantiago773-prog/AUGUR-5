@@ -59,6 +59,7 @@ jobs:
           AUDIT=$(find build/${{ matrix.preset }}/plugin -name 'augur_preset_audit' -type f -perm -u+x 2>/dev/null | head -1)
           [ -z "$AUDIT" ] && AUDIT=$(find build/${{ matrix.preset }}/plugin -name 'augur_preset_audit.exe' | head -1)
           "$AUDIT"
+          "$AUDIT" --check-migration
 
       - name: pluginval (Windows)
         if: runner.os == 'Windows'

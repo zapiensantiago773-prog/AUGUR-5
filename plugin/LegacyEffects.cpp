@@ -1,5 +1,7 @@
 #include "LegacyEffects.h"
 
+#include "Engine/SynthParams.h"
+
 #include <cmath>
 #include <map>
 
@@ -115,6 +117,38 @@ void convertLegacyEffects (Settings& settings)
     }
 
     settings = std::move (kept);
+}
+
+void completeOlderSettings (Settings& settings)
+{
+    const auto find = [&settings] (const char* id, float& value) {
+        for (const auto& [k, v] : settings)
+            if (k == id)
+            {
+                value = v;
+                return true;
+            }
+        return false;
+    };
+    Settings added;
+    float v = 0.0f;
+    if (! find ("pb_down", v) && find ("pb_range", v))
+        added.push_back ({ "pb_down", v });
+    struct Lfo
+    {
+        const char *sync, *rate, *div;
+        float defaultRate;
+    };
+    for (const auto& lfo : { Lfo { "lfo_sync", "lfo_rate", "lfo_div", 4.0f }, Lfo { "lfo2_sync", "lfo2_rate", "lfo2_div", 2.0f } })
+    {
+        float on = 0.0f, rate = lfo.defaultRate;
+        if (! find (lfo.div, v) && find (lfo.sync, on) && on > 0.5f)
+        {
+            find (lfo.rate, rate);
+            added.push_back ({ lfo.div, static_cast<float> (augur::legacyLfoDivisionFor (rate)) });
+        }
+    }
+    settings.insert (settings.end(), added.begin(), added.end());
 }
 
 } // namespace augur5

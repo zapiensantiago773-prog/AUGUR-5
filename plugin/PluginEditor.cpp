@@ -54,7 +54,7 @@ public:
     {
         return add (std::make_unique<ParamToggle> (state, id, u8 (label), colour), { x, y, w, 28 });
     }
-    void dropdown (const juce::String& id, int x, int y, int w) { add (std::make_unique<ParamChoiceBox> (state, id), { x, y, w, 28 }); }
+    ParamChoiceBox* dropdown (const juce::String& id, int x, int y, int w) { return add (std::make_unique<ParamChoiceBox> (state, id), { x, y, w, 28 }); }
     void segments (const juce::String& id, std::vector<const char*> labels, int x, int y, int w, C colour = colours::accent, int gap = 6)
     {
         std::vector<std::unique_ptr<juce::Button>> b;
@@ -197,10 +197,11 @@ public:
             for (int i = 0; i < 4; ++i)
                 group->getButton (i).setBounds (i * 52, 0, 46, 28);
         }
-        main.knob (P::lfo_rate, "RATE", 52, 362, 560, sage);
+        auto* lfoRate = main.knob (P::lfo_rate, "RATE", 52, 362, 560, sage);
         main.knob (P::lfo_amount, "AMOUNT", 38, 468, 548, sage);
         main.knob (P::lfo_delay, "DELAY", 38, 468, 640, sage);
         main.toggle (P::lfo_sync, "SYNC", 318, 652, 90, sage);
+        syncPairs.push_back ({ lfoRate, main.dropdown (P::lfo_div, 318, 688, 90), P::lfo_sync });
 
         // Envelopes
         {
@@ -242,7 +243,7 @@ public:
             drawNote (g, "Per voice and at audio rate: the filter envelope and OSC B move OSC A's pitch, its pulse width and the cutoff.",
                       { 68.0f, 660.0f, 200.0f, 80.0f });
             drawSection (g, { 294, 428, 230, 320 }, "LFO", colours::sage);
-            drawNote (g, "Routed with the MOD WHEEL and the matrix (MOD tab).", { 310.0f, 694.0f, 200.0f, 44.0f });
+            drawNote (g, "Routed with the MOD WHEEL and the matrix.", { 310.0f, 716.0f, 204.0f, 30.0f });
             drawSection (g, { 536, 428, 560, 320 }, "ENVELOPES", colours::accent);
             drawSubSection (g, { 552, 472, 258, 262 }, "FILTER", colours::accent);
             drawSubSection (g, { 822, 472, 258, 262 }, "AMPLIFIER", colours::slate);
@@ -255,7 +256,8 @@ public:
         mod.dropdown (P::lfo2_wave, 940, 176, 150);
         mod.toggle (P::lfo2_sync, "SYNC", 940, 218, 70, sage);
         mod.toggle (P::lfo2_retrig, "RETRIG", 1018, 218, 72, sage);
-        mod.knob (P::lfo2_rate, "RATE", 46, 1150, 204, sage);
+        auto* lfo2Rate = mod.knob (P::lfo2_rate, "RATE", 46, 1150, 204, sage);
+        syncPairs.push_back ({ lfo2Rate, mod.dropdown (P::lfo2_div, 940, 256, 150), P::lfo2_sync });
         views.push_back (mod.add (std::make_unique<LfoShape> (state), { 1196, 158, 272, 132 }));
         envelopes.push_back (mod.add (std::make_unique<EnvelopeDisplay> (state, P::menv_a, P::menv_d, P::menv_s, P::menv_r, plum), { 940, 364, 236, 124 }));
         {
@@ -328,6 +330,7 @@ public:
         voice.toggle (P::offline_quality, "RENDER OFFLINE IN DIVINE", 1032, 270, 436, slate);
         voice.segments (P::voice_mode, { "POLY", "DUO" }, 1032, 330, 87);
         voice.dropdown (P::pb_range, 1230, 330, 110);
+        voice.dropdown (P::pb_down, 1352, 330, 110);
         voice.toggle (P::vintage_cv, "VINTAGE 7-BIT KNOBS", 1032, 370, 436, amber);
         for (int v = 1; v <= P::kNumTrims; ++v)
         {
@@ -351,7 +354,8 @@ public:
             drawCaption (g, "VCO CIRCUIT", 1032.0f, 160.0f);
             drawCaption (g, "SOUND QUALITY  (OVERSAMPLING)", 1032.0f, 216.0f, 300.0f);
             drawCaption (g, "VOICE MODE", 1032.0f, 316.0f);
-            drawCaption (g, "PITCH BEND (SEMITONES)", 1230.0f, 316.0f, 200.0f);
+            drawCaption (g, "BEND UP (ST)", 1230.0f, 316.0f, 116.0f);
+            drawCaption (g, "BEND DOWN (ST)", 1352.0f, 316.0f, 116.0f);
             drawSection (g, { 52, 428, 1432, 320 }, "VOICE CALIBRATION", colours::slate);
             drawTracked (g, "each voice's tuning and cutoff trim, like the trimmers on the voice cards", { 330.0f, 442.0f, 700.0f, 16.0f },
                          Fonts::jost (9.5f, false, 0.05f), colours::caption, juce::Justification::centredLeft);
@@ -452,6 +456,13 @@ public:
 
     void poll()
     {
+        // A synced LFO plays its NOTE; the RATE knob waits (and the other way round).
+        for (const auto& pair : syncPairs)
+        {
+            const bool synced = state.getRawParameterValue (pair.sync)->load() > 0.5f;
+            pair.rate->setAlpha (synced ? 0.35f : 1.0f);
+            pair.note->setAlpha (synced ? 1.0f : 0.45f);
+        }
         for (auto* w : wheels)
             w->poll();
         for (auto* i : indicators)
@@ -557,6 +568,13 @@ private:
     int current = 0;
     std::vector<EnvelopeDisplay*> envelopes;
     std::vector<ParamView*> views;
+    struct SyncPair
+    {
+        juce::Component* rate;
+        juce::Component* note;
+        const char* sync;
+    };
+    std::vector<SyncPair> syncPairs;
     std::vector<Wheel*> wheels;
     std::vector<Indicator*> indicators, trimLeds;
     VoiceActivity* voices = nullptr;

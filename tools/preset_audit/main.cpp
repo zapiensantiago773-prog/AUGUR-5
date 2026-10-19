@@ -5,6 +5,7 @@
 #include "LegacyEffects.h"
 #include "PackAnalysis.h"
 #include "gui/Theme.h"
+#include "Engine/SynthParams.h"
 #include "Parameters.h"
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
@@ -583,6 +584,68 @@ int factoryWav (const juce::File& dir, const juce::String& onlyCategory)
     return 0;
 }
 
+// --check-migration: a session and a user preset saved before 1.3 (no pb_down / lfo_div / lfo2_div) must load with the
+// values that keep their sound: BEND DOWN = their single bend range, each synced LFO on the division its RATE knob chose.
+int checkMigration()
+{
+    constexpr double sr = 48000.0;
+    int failures = 0;
+    const auto expect = [&failures] (bool ok, const juce::String& what) {
+        std::printf ("%-78s %s\n", what.toRawUTF8(), ok ? "ok" : "FAIL");
+        failures += ok ? 0 : 1;
+    };
+    const auto natural = [] (Augur5Processor& p, const char* id) { return p.getParameters().getRawParameterValue (id)->load(); };
+    const int div1 = augur::legacyLfoDivisionFor (8.0f), div2 = augur::legacyLfoDivisionFor (0.3f);
+
+    // A 1.2 session: today's state with the 1.3 settings taken out and the old ones set.
+    {
+        std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+        auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+        proc.setPlayConfigDetails (0, 2, sr, 256);
+        proc.prepareToPlay (sr, 256);
+        auto tree = proc.getParameters().copyState();
+        for (const char* id : { augur5::params::pb_down, augur5::params::lfo_div, augur5::params::lfo2_div })
+            tree.removeChild (tree.getChildWithProperty ("id", id), nullptr);
+        const auto set = [&tree] (const char* id, float v) { tree.getChildWithProperty ("id", id).setProperty ("value", v, nullptr); };
+        set (augur5::params::pb_range, 12.0f);
+        set (augur5::params::lfo_sync, 1.0f);
+        set (augur5::params::lfo_rate, 8.0f);
+        set (augur5::params::lfo2_sync, 1.0f);
+        set (augur5::params::lfo2_rate, 0.3f);
+        juce::MemoryBlock old;
+        if (auto xml = tree.createXml())
+            juce::AudioProcessor::copyXmlToBinary (*xml, old);
+
+        std::unique_ptr<juce::AudioProcessor> other (createPluginFilter());
+        auto& loaded = *dynamic_cast<Augur5Processor*> (other.get());
+        loaded.setPlayConfigDetails (0, 2, sr, 256);
+        loaded.prepareToPlay (sr, 256);
+        loaded.setStateInformation (old.getData(), static_cast<int> (old.getSize()));
+        expect (natural (loaded, augur5::params::pb_range) == 12.0f && natural (loaded, augur5::params::pb_down) == 12.0f,
+                "1.2 session: bend range 12 -> BEND UP 12 and BEND DOWN 12");
+        expect (static_cast<int> (natural (loaded, augur5::params::lfo_div)) == div1, "1.2 session: synced LFO keeps the division of RATE 8 Hz");
+        expect (static_cast<int> (natural (loaded, augur5::params::lfo2_div)) == div2, "1.2 session: synced LFO 2 keeps the division of RATE 0.3 Hz");
+    }
+
+    // A 1.2 user preset file.
+    {
+        const auto file = juce::File::getSpecialLocation (juce::File::tempDirectory).getChildFile ("augur_migration_check.augur5");
+        file.replaceWithText ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<AUGUR5_PRESET formatVersion=\"1\" name=\"Old\">\n  <PARAMS>\n"
+                              "    <P id=\"pb_range\" value=\"7\"/>\n    <P id=\"lfo_sync\" value=\"1\"/>\n    <P id=\"lfo_rate\" value=\"8\"/>\n"
+                              "  </PARAMS>\n</AUGUR5_PRESET>\n");
+        std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+        auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+        proc.setPlayConfigDetails (0, 2, sr, 256);
+        proc.prepareToPlay (sr, 256);
+        proc.getPresets().loadUser (file);
+        file.deleteFile();
+        expect (natural (proc, augur5::params::pb_down) == 7.0f, "1.2 preset: bend range 7 -> BEND DOWN 7");
+        expect (static_cast<int> (natural (proc, augur5::params::lfo_div)) == div1, "1.2 preset: synced LFO keeps the division of RATE 8 Hz");
+    }
+    std::printf ("%s\n", failures == 0 ? "migration: all checks passed" : "migration: FAILURES");
+    return failures == 0 ? 0 : 1;
+}
+
 // --check-augury-gui: the AUGURY tab driven as a user drives it (its buttons, and the mouse on the morph pad of the real
 // editor), and what that does to the parameters, to the sound and to UNDO.
 int checkAuguryGui()
@@ -765,6 +828,8 @@ int main (int argc, char** argv)
     if (argc >= 2 && std::strcmp (argv[1], "--check-augury") == 0)
         return checkAugury();
     juce::ScopedJuceInitialiser_GUI juceInit;
+    if (argc >= 2 && std::strcmp (argv[1], "--check-migration") == 0)
+        return checkMigration();
     if (argc >= 2 && std::strcmp (argv[1], "--factory-loudness") == 0)
         return factoryWav ({}, argc >= 3 ? juce::String::fromUTF8 (argv[2]) : juce::String());
     if (argc >= 3 && std::strcmp (argv[1], "--factory-wav") == 0)
