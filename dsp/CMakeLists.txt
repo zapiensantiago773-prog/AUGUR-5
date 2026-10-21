@@ -26,6 +26,7 @@ add_library(augur_dsp STATIC
     Modulation/Lfo.h
     Modulation/WheelModNoise.h
     Util/MidiValues.h
+    Util/Butterworth8.h
     Effects/Fuzz.h
     Effects/Fuzz.cpp
     Effects/SpringReverb.h

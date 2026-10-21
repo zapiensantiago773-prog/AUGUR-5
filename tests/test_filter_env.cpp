@@ -1,6 +1,7 @@
 #include "TestHelpers.h"
 #include "Envelope/RcAdsr.h"
 #include "Filter/LadderFilter.h"
+#include "Util/Butterworth8.h"
 #include "Util/Random.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -388,4 +389,43 @@ TEST_CASE ("Post-filter high-pass removes the lows and leaves the rest", "[filte
     CHECK_THAT (sineGain (f, sr, 4000.0, 20000.0f, 0.0f) / ref4k, Catch::Matchers::WithinRel (1.0, 0.05));
     f.setHighpass (10.0f); // off
     CHECK_THAT (sineGain (f, sr, 50.0, 20000.0f, 0.0f) / ref50, Catch::Matchers::WithinRel (1.0, 0.01));
+}
+
+TEST_CASE ("24 kHz guard filter: flat in the audible band, steep above, off in ECO", "[filter][aliasing]")
+{
+    // Gain of a steady sine through the filter: its amplitude by projection onto sin / cos after the start settles.
+    const auto gainDb = [] (double rate, double hz) {
+        augur::Butterworth8 f;
+        f.prepare (24000.0, rate);
+        const double w = 2.0 * 3.14159265358979 * hz / rate;
+        double re = 0.0, im = 0.0;
+        int count = 0;
+        for (int i = 0; i < static_cast<int> (rate * 0.4); ++i)
+        {
+            const float y = f.process (static_cast<float> (std::sin (w * i)));
+            if (i >= static_cast<int> (rate * 0.1))
+            {
+                re += y * std::sin (w * i);
+                im += y * std::cos (w * i);
+                ++count;
+            }
+        }
+        return 20.0 * std::log10 (2.0 * std::sqrt (re * re + im * im) / count);
+    };
+    // The exact response of the bilinear Butterworth: 1 / (1 + (tan (w / 2) / tan (wc / 2))^16).
+    const auto expected = [] (double rate, double hz) {
+        const double ratio = std::tan (3.14159265358979 * hz / rate) / std::tan (3.14159265358979 * 24000.0 / rate);
+        return -10.0 * std::log10 (1.0 + std::pow (ratio, 16.0));
+    };
+    for (const double rate : { 96000.0, 192000.0 })
+        for (const double hz : { 1000.0, 15000.0, 20000.0, 24000.0 })
+        {
+            INFO (rate << " Hz rate, " << hz << " Hz: expected " << expected (rate, hz) << " dB");
+            CHECK_THAT (gainDb (rate, hz), Catch::Matchers::WithinAbs (expected (rate, hz), 0.01));
+        }
+    CHECK (gainDb (96000.0, 20000.0) > -0.1);  // the audible band keeps its top octave (-0.06 dB at 20 kHz)
+    CHECK (gainDb (96000.0, 40000.0) < -80.0); // and the ultrasonic content is gone
+    augur::Butterworth8 eco;
+    eco.prepare (24000.0, 48000.0);
+    CHECK_FALSE (eco.isEnabled());
 }

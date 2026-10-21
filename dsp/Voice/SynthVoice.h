@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Util/Butterworth8.h"
 #include "Analog/Autotune.h"
 #include "Analog/Drift.h"
 #include "Analog/Fingerprint.h"
@@ -163,6 +164,7 @@ private:
     std::array<float, 2> droopDepth {};  // semitones of S/H droop per 6 ms refresh
     std::array<float, 2> cvNoise {};     // filtered CV noise state (semitones)
     float cvNoiseCoeff = 0.1f, cvNoiseGain = 0.0f;
+    Butterworth8 driveGuard; // 24 kHz: no ultrasonic content into DRIVE and the filter (D-049)
     double droopInc = 0.0;
 
     // Control-rate bookkeeping: silent voices only advance their drift; their constants are computed when

@@ -81,6 +81,7 @@ void SynthVoice::prepare (double internalRate, double controlRate, std::uint64_t
     lfo2.prepare (internalRate, deriveSeed (seed, 30));
     noteRng.setSeed (deriveSeed (seed, 31));
     filter.prepare (internalRate);
+    driveGuard.prepare (24000.0, internalRate);
 
     droopInc = 1.0 / (shRefreshSeconds * internalRate);
     dcTrimCoeff = static_cast<float> (1.0 - std::exp (-1.0 / (1.0 * internalRate))); // tau = 1 s
@@ -102,6 +103,7 @@ void SynthVoice::reset() noexcept
     ampEnv.reset();
     modEnv.reset();
     filter.reset();
+    driveGuard.reset();
     subRing.reset();
     subState = 1.0f;
     subCount = 0;
@@ -607,7 +609,7 @@ void SynthVoice::tickFront (const ChunkSignals& sig, size_t i, Front& front) noe
         const float driveMod = dst[static_cast<size_t> (ModDest::Drive)];
         if (driveMod != 0.0f) // the engine applies (0.9 + 3 * DRIVE); rescale for this voice's modulated drive
             bus *= (0.9f + 3.0f * std::max (0.0f, sig.drive[i] + driveMod)) / (0.9f + 3.0f * sig.drive[i]);
-        front.bus = bus;
+        front.bus = driveGuard.process (bus);
         front.cutoffOct = sig.cutoffOct[i] + cutoffOffset + sig.envAmount[i] * fenv * envCutoffRange
                                 + keytrack * (notePitch - 60.0f) * (1.0f / 12.0f) + filterVelOct + atOct
                                 + dst[static_cast<size_t> (ModDest::FilterCutoff)] + (p.pmFilter ? pm * polyModCutoffRange : 0.0f)

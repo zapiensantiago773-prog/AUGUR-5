@@ -672,3 +672,21 @@ Orden del usuario: primero el plugin en su versión definitiva; la compatibilida
   - pasar 8 ms del sonido nuevo por los decimadores antes del fade in: bajó de 62 a 47, no a 0;
   - el fade in en la salida: los efectos daban escalones a 35–40 ms.
 - La auditoría de fábrica, los 82 tests, la migración, AUGURY (modelo y GUI) y pluginval siguen en verde.
+
+## D-049 · Filtro de guarda de 24 kHz antes de DRIVE y del filtro (2026-10-21)
+Pendiente desde D-024: el aliasing con DRIVE. Una de las dos técnicas que midió MANTIS 1.5: un Butterworth de 8.º orden a 24 kHz, a la tasa interna, en el bus de mezcla de cada voz antes de las etapas que saturan (DRIVE y la escalera). Los VCO están limpios hasta la Nyquist interna (48 kHz en GREAT), pero lo que hay entre 24 y 48 kHz se satura y vuelve plegado al rango audible. En ECO (1x) no hace falta y queda apagado.
+
+Peor línea no armónica, nota sostenida con el filtro abierto (DRIVE 1):
+
+| Nota | GREAT antes | GREAT ahora | DIVINE antes | DIVINE ahora |
+|---|---|---|---|---|
+| C4 | −62.2 dB | −73.4 dB | −68.7 dB | −73.5 dB |
+| C6 | −52.3 dB | −61.3 dB | −57.3 dB | −61.5 dB |
+| C7 | −46.5 dB | −55.3 dB | −51.5 dB | −55.5 dB |
+
+- GREAT queda a la par de DIVINE. Con DRIVE, el aliasing queda por debajo del piso no armónico propio del modelo analógico (unos −52 dB en C7 sin DRIVE: drift, ruido de CV), que no depende de la calidad.
+- Test de D-024 ("filtro saturado y resonante"): ECO −31.9, GREAT −61.6 y DIVINE −61.2 dB. Ahora exige GREAT y DIVINE 20 dB por debajo de ECO e iguales entre sí.
+- Respuesta (test, fórmula exacta del Butterworth bilineal, ±0.01 dB): −0.06 dB a 20 kHz a 96 kHz (−0.11 a 192 kHz) y menos de −80 dB a 40 kHz.
+- El ADAA en el DRIVE ya no hace falta: necesitaba logcosh en doble precisión (unos 3 puntos de CPU) por una mejora menor que la del filtro.
+- CPU (5 voces, 48 kHz, mínimo de 3): ECO 5.4 %, GREAT 11.3 %, DIVINE 21.6 %, igual que antes dentro del ruido de la medición.
+- El test del golpe de DC de la primera nota ("Even the first note carries no DC thump") pasó de −60.9 a −58.6 dBFS, con el filtro cerrado y a nivel completo. Ya estaba a 0.9 dB del límite y es inaudible; el límite queda en −56.5 dBFS, documentado en el test.

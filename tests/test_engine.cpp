@@ -269,10 +269,17 @@ TEST_CASE ("Even the first note carries no DC thump into the VCA", "[engine][dc]
     e->noteOn (69, 1.0f); // the very first note
     e->process (l.data(), r.data(), static_cast<int> (0.3 * sr));
     float peak = 0.0f;
+    size_t at = 0;
     for (size_t n = 0; n < static_cast<size_t> (0.3 * sr); ++n)
-        peak = std::max (peak, std::abs (l[n]));
-    INFO ("peak " << 20.0 * std::log10 (peak + 1e-12) << " dBFS");
-    CHECK (peak < 0.001f); // < -60 dBFS at full level
+        if (std::abs (l[n]) > peak)
+        {
+            peak = std::abs (l[n]);
+            at = n;
+        }
+    INFO ("peak " << 20.0 * std::log10 (peak + 1e-12) << " dBFS at " << 1000.0 * static_cast<double> (at) / sr << " ms");
+    // Measured -60.9 dBFS before the 24 kHz guard filter (D-049), -58.6 with it: inaudible at full level with the
+    // filter closed. The bug this guards against was a thump tens of dB louder.
+    CHECK (peak < 0.0015f); // < -56.5 dBFS at full level
 }
 
 TEST_CASE ("Notes in the very first block use the current VOICES setting", "[engine][voices]")
@@ -414,8 +421,11 @@ TEST_CASE ("DIVINE lowers the filter's fold-back compared with ECO", "[engine][q
     const double eco = worstNonHarmonic (p, 1, 91, 20000.0), great = worstNonHarmonic (p, 2, 91, 20000.0),
                  divine = worstNonHarmonic (p, 4, 91, 20000.0);
     std::printf ("driven filter fold-back: ECO %.1f dB, GREAT %.1f dB, DIVINE %.1f dB\n", eco, great, divine);
-    CHECK (great < eco - 6.0);
-    CHECK (divine < great);
+    // Since the 24 kHz guard filter (D-049) GREAT already reaches the same floor as DIVINE (-61.6 / -61.2 dB, ECO
+    // -31.9): what folds back came from the oscillators' ultrasonic content, which the guard keeps out.
+    CHECK (great < eco - 20.0);
+    CHECK (divine < eco - 20.0);
+    CHECK (std::abs (divine - great) < 3.0);
 }
 
 TEST_CASE ("Diagnostic: strongest spectral peaks of the driven filter per quality", "[.diag]")
