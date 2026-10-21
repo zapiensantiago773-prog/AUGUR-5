@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "Util/MidiValues.h"
 
 #include "Parameters.h"
 #include "PluginProcessor.h"
@@ -395,7 +396,7 @@ public:
         settings->setTooltip ("Settings");
 
         wheels.push_back (fixed.add (std::make_unique<Wheel> (true, [&proc] { return proc.getBendShown(); }, [&proc] (float v) {
-                                         const int value = juce::jlimit (0, 16383, juce::roundToInt ((v + 1.0f) * 8192.0f));
+                                         const int value = augur::pitchBendToMidi (v);
                                          proc.sendUiMidi (0xE0, value & 127, value >> 7);
                                      }),
                                      { 80, 798, 26, 117 }));

@@ -25,6 +25,7 @@ public:
     juce::String getFactoryCategory (int index) const;
     int findFactory (const juce::String& name) const;
     void loadFactory (int index);
+    void loadFactoryNow (int index); // the load itself (loadFactory wraps it in soundChange)
 
     // All user presets, including installed expansion packs (sub-folders), sorted by path.
     juce::Array<juce::File> getUserPresets() const;
@@ -35,6 +36,7 @@ public:
     // the folder structure under the folder's own name. Returns the number of presets added.
     static int importFolder (const juce::File& folder);
     void loadUser (const juce::File& file);
+    void loadUserNow (const juce::File& file);
     bool saveUser (const juce::String& name);
     static juce::File getUserFolder();
 
@@ -44,6 +46,8 @@ public:
 
     juce::String getCurrentName() const { return currentName; }
     std::function<void()> onPresetLoaded; // message thread, after every factory/user preset load
+    // Wraps every load (the processor fades out, the load happens in silence, it fades back in: no clicks).
+    std::function<void (const std::function<void()>&)> soundChange;
     // The effects rack order is plugin state, not a parameter: user presets carry it, factory sounds use the default.
     std::function<juce::String()> saveFxOrder;
     std::function<void (const juce::String&)> loadFxOrder; // "" = default order

@@ -80,8 +80,15 @@ public:
     // processing briefly suspended), so the first note carries no DC step.
     void warmUpEngine();
 
+    // A whole new sound (preset, session, AUGURY recall / omen), without clicks: the audio fades out (6 ms), the
+    // settings are written in silence, the engine is warmed and the effects' tails cleared, the audio fades in.
+    // Message thread.
+    void changeSound (const std::function<void()>& apply);
+
 private:
     void handleMidi (const juce::uint8* data, int numBytes) noexcept;
+    void applySoundFade (juce::AudioBuffer<float>& buffer, int numSamples) noexcept; // audio thread
+    void restoreState (const void* data, int sizeInBytes);                             // setStateInformation's work
     void fillSnapshot() noexcept; // parameters + rack order -> snapshot
 
     // Quality (oversampling) changes rebuild the voices: done off the audio thread with processing
@@ -109,6 +116,14 @@ private:
     float uiScale = 0.65f;
     bool uiScaleChosen = false;
     bool prepared = false;
+
+    // changeSound(): idle -> fading out (audio thread) -> silent -> settings written -> fading in -> idle.
+    enum : int { soundIdle, soundFadingOut, soundSilent, soundFadingIn };
+    std::atomic<int> soundState { soundIdle };
+    std::atomic<std::uint64_t> blocksProcessed { 0 }; // tells the message thread whether audio is running
+    float soundGain = 1.0f, soundGainStep = 1.0f / 288.0f; // audio thread
+    int hostBlockMs = 6;                                    // the host's block length, for changeSound()'s waits
+    bool inSoundChange = false;                              // message thread
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Augur5Processor)
 };

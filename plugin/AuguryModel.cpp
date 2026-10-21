@@ -121,8 +121,14 @@ void AuguryModel::recall (int corner)
         target = c.values;
         position = { corner % 2 == 0 ? 0.0f : 1.0f, corner < 2 ? 0.0f : 1.0f };
     }
-    for (size_t i = 0; i < params.size(); ++i)
-        setNormalised (i, target[i]);
+    const auto apply = [this, &target] {
+        for (size_t i = 0; i < params.size(); ++i)
+            setNormalised (i, target[i]);
+    };
+    if (soundChange)
+        soundChange (apply);
+    else
+        apply();
 }
 
 std::array<float, AuguryModel::numCorners> AuguryModel::weights() const
@@ -284,8 +290,14 @@ juce::uint32 AuguryModel::castOmen (float amount, juce::uint32 lockedGroups, juc
             next[static_cast<size_t> (a)] = 0.7f;
     }
 
-    for (size_t i = 0; i < params.size(); ++i)
-        setNormalised (i, next[i]);
+    const auto apply = [this, &next] {
+        for (size_t i = 0; i < params.size(); ++i)
+            setNormalised (i, next[i]);
+    };
+    if (soundChange)
+        soundChange (apply);
+    else
+        apply();
     return seed;
 }
 

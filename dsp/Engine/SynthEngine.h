@@ -64,6 +64,9 @@ public:
     // been switched on for a while), so even the first note carries no DC step. Not for the audio thread
     // while it is running: call after prepare(), or with processing suspended.
     void warmUp() noexcept;
+    void clearTails() noexcept; // the effects' tails (a new sound must not inherit the last one's echoes)
+    // A new sound fades in (6 ms, raised cosine) on the voices' bus, ahead of FUZZ, the decimators and the effects.
+    void beginFadeIn() noexcept { fadeInPos = 0.0f; }
 
     int getOversampling() const noexcept { return oversampling; }
 
@@ -110,6 +113,8 @@ private:
 
     // Voices
     std::array<SynthVoice, maxVoices> voices;
+    SynthVoice warmVoice; // warmUp() runs on a copy of voice 0, so a note held on voice 0 keeps sounding
+    float fadeInPos = 1.0f, fadeInStep = 1.0f;
     std::array<LadderFilter, 4> spareFilters; // idle lanes of a partly filled SIMD group
     std::array<std::atomic<float>, maxVoices> voiceLevels {};
     std::uint64_t noteCounter = 0;

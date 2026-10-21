@@ -693,6 +693,14 @@ void PresetManager::resetToDefaults()
 
 void PresetManager::loadFactory (int index)
 {
+    if (soundChange)
+        soundChange ([this, index] { loadFactoryNow (index); });
+    else
+        loadFactoryNow (index);
+}
+
+void PresetManager::loadFactoryNow (int index)
+{
     index = juce::jlimit (0, getNumFactoryPresets() - 1, index);
     const auto& preset = factoryBank()[static_cast<size_t> (index)];
     resetToDefaults();
@@ -779,6 +787,14 @@ int PresetManager::installPack (const juce::File& zipFile)
 }
 
 void PresetManager::loadUser (const juce::File& file)
+{
+    if (soundChange)
+        soundChange ([this, &file] { loadUserNow (file); });
+    else
+        loadUserNow (file);
+}
+
+void PresetManager::loadUserNow (const juce::File& file)
 {
     auto xml = juce::XmlDocument::parse (file);
     if (xml == nullptr || ! xml->hasTagName ("AUGUR5_PRESET"))

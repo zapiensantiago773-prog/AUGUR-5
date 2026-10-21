@@ -10,11 +10,13 @@
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
 
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <thread>
 
 namespace
 {
@@ -649,6 +651,153 @@ int chordHeadroom (const juce::File& folder, bool adjust)
     return over == 0 ? 0 : 1;
 }
 
+// --check-preset-clicks [out.wav]: a chord is held while factory pads are loaded, half a second apart, with the audio
+// running on its own real-time thread exactly as a VST3 host runs it (the processor's callback lock; silence while
+// suspended). Six pads, each loaded four times: the three reloads of the same pad (A -> A) can only differ by the
+// change mechanism itself; the switches to a new pad (A -> B) are reported too.
+// A click: in 1 ms windows, the peak second difference over the signal's own rms there (so a fade does not hide or fake
+// one), against the median of that ratio over the 80 ms around it.
+int checkPresetClicks (const juce::File& wavOut)
+{
+    constexpr double sr = 48000.0;
+    constexpr int block = 256, changes = 24;
+    std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+    auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+    proc.setPlayConfigDetails (0, 2, sr, block);
+    proc.prepareToPlay (sr, block);
+    auto& presets = proc.getPresets();
+    std::vector<int> pads;
+    for (int i = 0; i < presets.getNumFactoryPresets(); ++i)
+        if (presets.getFactoryCategory (i) == "Pad")
+            pads.push_back (i);
+    presets.loadFactory (pads[0]);
+
+    const auto total = static_cast<size_t> ((changes + 2) * 0.5 * sr);
+    std::vector<float> out (total, 0.0f);
+    std::atomic<size_t> written { 0 };
+    std::atomic<bool> running { true };
+    std::thread audio ([&] {
+        juce::AudioBuffer<float> buffer (2, block);
+        auto deadline = std::chrono::steady_clock::now();
+        bool first = true;
+        while (running.load() && written.load() + block <= total)
+        {
+            juce::MidiBuffer midi;
+            if (first)
+                for (int n : { 48, 55, 60, 64 })
+                    midi.addEvent (juce::MidiMessage::noteOn (1, n, static_cast<juce::uint8> (100)), 0);
+            first = false;
+            {
+                const juce::ScopedLock lock (proc.getCallbackLock()); // as the VST3 wrapper does
+                if (proc.isSuspended())
+                    buffer.clear();
+                else
+                    proc.processBlock (buffer, midi);
+            }
+            const size_t at = written.load();
+            for (int i = 0; i < block; ++i)
+                out[at + static_cast<size_t> (i)] = buffer.getSample (0, i);
+            written.store (at + block);
+            deadline += std::chrono::microseconds (static_cast<long long> (block * 1.0e6 / sr));
+            std::this_thread::sleep_until (deadline);
+        }
+    });
+
+    std::vector<size_t> changeAt;
+    std::vector<bool> reload;
+    for (int c = 0; c < changes; ++c)
+    {
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (500);
+        changeAt.push_back (written.load());
+        reload.push_back (c % 4 != 3);
+        presets.loadFactory (pads[static_cast<size_t> ((c + 1) / 4) % pads.size()]);
+    }
+    juce::MessageManager::getInstance()->runDispatchLoopUntil (600);
+    running.store (false);
+    audio.join();
+    const size_t n = written.load();
+    int sounding = 0; // the held chord must survive every change (a warm-up must not silence a held voice)
+    for (int v = 0; v < 8; ++v)
+        sounding += proc.getVoiceLevel (v) > 1.0e-4f ? 1 : 0;
+
+    // Per 1 ms window: peak second difference over the rms of the 6 ms around it.
+    constexpr size_t win = 48;
+    const size_t windows = n / win;
+    std::vector<double> peak (windows, 0.0), power (windows, 0.0);
+    for (size_t i = 2; i < n; ++i)
+    {
+        const size_t k = std::min (windows - 1, i / win);
+        peak[k] = std::max (peak[k], std::abs (static_cast<double> (out[i]) - 2.0 * out[i - 1] + out[i - 2]));
+        power[k] += static_cast<double> (out[i]) * out[i] / win;
+    }
+    double median = 0.0;
+    {
+        auto p = power;
+        std::nth_element (p.begin(), p.begin() + static_cast<long> (p.size() / 2), p.end());
+        median = p[p.size() / 2];
+    }
+    std::vector<double> ratio (windows, -1.0);
+    for (size_t k = 3; k + 3 < windows; ++k)
+    {
+        double acc = 0.0;
+        for (size_t j = k - 3; j <= k + 3; ++j)
+            acc += power[j] / 7.0;
+        if (acc > 1.0e-4 * median) // not in the silence of a fade
+            ratio[k] = peak[k] / std::sqrt (acc);
+    }
+    int clicksReload = 0, clicksSwitch = 0, elsewhere = 0;
+    double worstReload = 0.0, worstSwitch = 0.0;
+    for (size_t k = 40; k + 40 < windows; ++k)
+    {
+        if (ratio[k] < 0.0)
+            continue;
+        std::vector<double> around;
+        for (size_t j = k - 40; j <= k + 40; ++j)
+            if ((j + 2 < k || j > k + 2) && ratio[j] >= 0.0)
+                around.push_back (ratio[j]);
+        if (around.size() < 20)
+            continue;
+        std::nth_element (around.begin(), around.begin() + static_cast<long> (around.size() / 2), around.end());
+        const double score = ratio[k] / std::max (around[around.size() / 2], 1.0e-9);
+        if (score < 6.0)
+            continue;
+        const size_t s = k * win;
+        int change = -1;
+        for (size_t c = 0; c < changeAt.size(); ++c)
+            if (s + static_cast<size_t> (0.01 * sr) >= changeAt[c] && s <= changeAt[c] + static_cast<size_t> (0.15 * sr))
+                change = static_cast<int> (c);
+        if (change < 0)
+            ++elsewhere;
+        else if (reload[static_cast<size_t> (change)])
+        {
+            ++clicksReload;
+            worstReload = std::max (worstReload, score);
+        }
+        else
+        {
+            ++clicksSwitch;
+            worstSwitch = std::max (worstSwitch, score);
+        }
+    }
+    if (wavOut != juce::File())
+    {
+        wavOut.deleteFile();
+        juce::FileOutputStream os (wavOut);
+        const auto bytes = static_cast<int> (n * sizeof (float));
+        os.write ("RIFF", 4); os.writeInt (36 + bytes); os.write ("WAVEfmt ", 8); os.writeInt (16); os.writeShort (3); os.writeShort (1);
+        os.writeInt (48000); os.writeInt (48000 * 4); os.writeShort (4); os.writeShort (32); os.write ("data", 4); os.writeInt (bytes);
+        for (size_t i = 0; i < n; ++i)
+            os.writeFloat (out[i]);
+    }
+    const int reloads = static_cast<int> (std::count (reload.begin(), reload.end(), true));
+    std::printf ("preset changes: %d (%d reloads of the same pad, %d switches; chord held, real-time audio thread)\n", changes, reloads,
+                 changes - reloads);
+    std::printf ("clicks at a reload: %d (worst %.1fx)   at a switch: %d (worst %.1fx)   elsewhere: %d\n", clicksReload, worstReload,
+                 clicksSwitch, worstSwitch, elsewhere);
+    std::printf ("held notes still sounding after the changes: %d of 4\n", sounding);
+    return clicksReload == 0 && clicksSwitch == 0 && sounding == 4 ? 0 : 1;
+}
+
 // --check-migration: a session and a user preset saved before 1.3 (no pb_down / lfo_div / lfo2_div) must load with the
 // values that keep their sound: BEND DOWN = their single bend range, each synced LFO on the division its RATE knob chose.
 int checkMigration()
@@ -896,6 +1045,8 @@ int main (int argc, char** argv)
     if (argc >= 3 && std::strcmp (argv[1], "--chord-headroom") == 0)
         return chordHeadroom (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])),
                               ! (argc >= 4 && std::strcmp (argv[3], "--check") == 0));
+    if (argc >= 2 && std::strcmp (argv[1], "--check-preset-clicks") == 0)
+        return checkPresetClicks (argc >= 3 ? juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])) : juce::File());
     if (argc >= 2 && std::strcmp (argv[1], "--check-migration") == 0)
         return checkMigration();
     if (argc >= 2 && std::strcmp (argv[1], "--factory-loudness") == 0)

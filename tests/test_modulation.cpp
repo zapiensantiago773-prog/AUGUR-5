@@ -1,6 +1,7 @@
 #include "TestHelpers.h"
 #include "Engine/SynthEngine.h"
 #include "Util/FastMath.h"
+#include "Util/MidiValues.h"
 #include "Util/Random.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -437,4 +438,16 @@ TEST_CASE ("Sessions and presets from before 1.3 keep the division their RATE kn
         REQUIRE (div >= 0);
         CHECK_THAT (augur::lfoDivisionBeats[static_cast<size_t> (div)], Catch::Matchers::WithinAbs (beats, 1e-6f));
     }
+}
+
+TEST_CASE ("MIDI pitch bend: the wheel's top is exactly +1, its bottom -1, its centre 0", "[modulation][bend]")
+{
+    CHECK (augur::pitchBendFromMidi (16383) == 1.0f);
+    CHECK (augur::pitchBendFromMidi (0) == -1.0f);
+    CHECK (augur::pitchBendFromMidi (8192) == 0.0f);
+    // Every MIDI value survives the round trip (the on-screen wheel sends what MIDI would).
+    for (int v = 0; v <= 16383; ++v)
+        REQUIRE (augur::pitchBendToMidi (augur::pitchBendFromMidi (v)) == v);
+    CHECK (augur::pitchBendToMidi (1.0f) == 16383);
+    CHECK (augur::pitchBendToMidi (-1.0f) == 0);
 }

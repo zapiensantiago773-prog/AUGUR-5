@@ -61,6 +61,8 @@ void SynthEngine::prepare (double hostSampleRate, std::uint64_t unitSeed, int ov
     lfo.prepare (internalRate, deriveSeed (unitSeed, 7));
     floorNoise.setSeed (deriveSeed (unitSeed, 8));
     wheelModNoise.prepare (internalRate, deriveSeed (unitSeed, 10));
+    fadeInPos = 1.0f;
+    fadeInStep = static_cast<float> (1.0 / (0.006 * internalRate));
     rack.prepare (hostSampleRate, deriveSeed (unitSeed, 9));
     fuzz.prepare (internalRate);
 
@@ -335,10 +337,33 @@ void SynthEngine::warmUp() noexcept
     controlUpdate(); // current parameters into the chunk signals
     constexpr double seconds = 0.06; // per measurement phase (see SynthVoice::warmUp)
     const int chunks = static_cast<int> (seconds * hostRate / controlInterval) + 1;
-    voices[0].warmUp (sig, chunks);
-    for (size_t v = 1; v < voices.size(); ++v)
-        voices[v].copyCouplingFrom (voices[0]);
+    // Voice 0 settles for everyone (its filter and coupling capacitors charged for the new sound); when it is
+    // playing a held note, a copy of it does, so that note keeps sounding through a preset change.
+    SynthVoice* warm = &voices[0];
+    if (voices[0].isActive())
+    {
+        warmVoice = voices[0];
+        warm = &warmVoice;
+    }
+    warm->warmUp (sig, chunks);
+    for (auto& v : voices)
+        if (&v != warm)
+            v.copyCouplingFrom (*warm);
     chunkPos = 0; // the next process() starts a fresh control chunk
+}
+
+void SynthEngine::clearTails() noexcept
+{
+    // Called in silence, between a sound and the next: whatever is still stored downstream of the voices (the
+    // effects' tails, the decimators' history, the output DC blocker) belongs to the old sound and would sound at
+    // full level as the new one fades in.
+    rack.reset();
+    fuzz.reset();
+    decimL.reset();
+    decimR.reset();
+    quadL.reset();
+    quadR.reset();
+    dcL = dcR = 0.0f;
 }
 
 void SynthEngine::monoTrigger (int note, float velocity, bool retrigger) noexcept
@@ -751,6 +776,19 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
     }
     for (size_t v = 0; v < voices.size(); ++v)
         voiceLevels[v].store (voices[v].isActive() ? voices[v].getLevel() : 0.0f, std::memory_order_relaxed);
+
+    // A new sound comes in under a short fade on the bus, before FUZZ, the decimators and the effects: their delay
+    // lines fill with the fade too, so the first echoes of the new sound come in as smoothly as the sound itself.
+    if (fadeInPos < 1.0f)
+    {
+        for (int i = 0; i < iCount; ++i)
+        {
+            fadeInPos = std::min (1.0f, fadeInPos + fadeInStep);
+            const float g = 0.5f - 0.5f * std::cos (3.14159265f * fadeInPos);
+            busL[static_cast<size_t> (i)] *= g;
+            busR[static_cast<size_t> (i)] *= g;
+        }
+    }
 
     // FUZZ pedal on the oversampled bus, before the decimator (it oversamples further inside).
     if (params.fuzzOn || fuzzActive)

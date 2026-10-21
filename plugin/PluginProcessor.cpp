@@ -1,4 +1,5 @@
 #include "PluginProcessor.h"
+#include "Util/MidiValues.h"
 #include "PluginEditor.h"
 #include "LegacyEffects.h"
 #include "Parameters.h"
@@ -19,6 +20,8 @@ Augur5Processor::Augur5Processor()
     // A fresh instance opens on the showcase patch, not a bare init sound.
     presets.loadFactory (presets.findFactory ("Warm Horizon"));
     presets.onPresetLoaded = [this] { warmUpEngine(); };
+    presets.soundChange = [this] (const std::function<void()>& apply) { changeSound (apply); };
+    augury.soundChange = [this] (const std::function<void()>& apply) { changeSound (apply); };
     undoManager.clearUndoHistory();
     qualityParam = parameters.getRawParameterValue (augur5::params::quality);
     offlineQualityParam = parameters.getRawParameterValue (augur5::params::offline_quality);
@@ -65,13 +68,17 @@ bool Augur5Processor::isBusesLayoutSupported (const BusesLayout& layouts) const
     return out == juce::AudioChannelSet::mono() || out == juce::AudioChannelSet::stereo();
 }
 
-void Augur5Processor::prepareToPlay (double sampleRate, int)
+void Augur5Processor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    hostBlockMs = juce::jmax (1, static_cast<int> (std::ceil (1000.0 * juce::jmax (1, samplesPerBlock) / sampleRate)));
     // Latency (BLEP kernels + decimators) is reported so hosts can align us with other tracks.
     int q = juce::roundToInt (qualityParam->load());
     if (isNonRealtime() && juce::roundToInt (offlineQualityParam->load()) == 1)
         q = 2;
     configureEngine (sampleRate, augur::SynthEngine::oversamplingFor (q, sampleRate));
+    soundGainStep = static_cast<float> (1.0 / (0.006 * sampleRate));
+    soundGain = 1.0f;
+    soundState.store (soundIdle);
     prepared = true;
 }
 
@@ -150,7 +157,81 @@ void Augur5Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     for (int ch = 2; ch < numChannels; ++ch)
         buffer.clear (ch, 0, numSamples);
 
+    applySoundFade (buffer, numSamples);
+    blocksProcessed.fetch_add (1, std::memory_order_relaxed);
     audioTap.push (buffer.getArrayOfReadPointers(), juce::jmin (2, numChannels), numSamples); // the horizon
+}
+
+void Augur5Processor::applySoundFade (juce::AudioBuffer<float>& buffer, int numSamples) noexcept
+{
+    const int state = soundState.load (std::memory_order_acquire);
+    if (state == soundIdle && soundGain >= 1.0f)
+        return;
+    const bool down = state == soundFadingOut || state == soundSilent;
+    const int channels = juce::jmin (2, buffer.getNumChannels());
+    for (int i = 0; i < numSamples; ++i)
+    {
+        soundGain = down ? juce::jmax (0.0f, soundGain - soundGainStep) : juce::jmin (1.0f, soundGain + soundGainStep);
+        const float g = 0.5f - 0.5f * std::cos (juce::MathConstants<float>::pi * soundGain); // raised cosine
+        for (int ch = 0; ch < channels; ++ch)
+            buffer.getWritePointer (ch)[i] *= g;
+    }
+    // Only this thread's own transitions; the message thread may have moved on meanwhile.
+    int expected = soundFadingOut;
+    if (soundGain <= 0.0f)
+        soundState.compare_exchange_strong (expected, soundSilent);
+    expected = soundFadingIn;
+    if (soundGain >= 1.0f)
+        soundState.compare_exchange_strong (expected, soundIdle);
+}
+
+void Augur5Processor::changeSound (const std::function<void()>& apply)
+{
+    if (inSoundChange)
+    {
+        apply(); // nested (a load inside a session restore): one fade covers both
+        return;
+    }
+    inSoundChange = true;
+
+    // Fade out, if the audio is running (it advances its block counter within a few milliseconds).
+    // The waits follow the host's block length (a 2048-sample block lasts 43 ms at 48 kHz).
+    bool running = false;
+    if (prepared)
+    {
+        const auto before = blocksProcessed.load();
+        const int detect = 2 * hostBlockMs + 5, limit = juce::jmax (60, 3 * hostBlockMs + 10);
+        soundState.store (soundFadingOut);
+        for (int waited = 0; waited < limit; ++waited)
+        {
+            running = running || blocksProcessed.load() != before;
+            if (soundState.load() == soundSilent || (! running && waited >= detect))
+                break;
+            juce::Thread::sleep (1);
+        }
+    }
+
+    apply(); // in silence
+
+    inSoundChange = false;
+    if (prepared)
+    {
+        suspendProcessing (true);
+        fillSnapshot();
+        engine->setParams (snapshot);
+        engine->warmUp();
+        engine->clearTails();
+        // The new sound fades in inside the engine, ahead of the decimators and the effects (their delay lines must
+        // fill with the fade, or the first echo of the new sound comes in as a step); the output is back at full
+        // level at once.
+        engine->beginFadeIn();
+        soundGain = 1.0f;
+        soundState.store (soundIdle);
+        suspendProcessing (false);
+        return;
+    }
+    soundState.store (soundIdle);
+    soundGain = 1.0f;
 }
 
 void Augur5Processor::fillSnapshot() noexcept
@@ -245,7 +326,7 @@ void Augur5Processor::handleMidi (const juce::uint8* data, int numBytes) noexcep
             break;
         case 0xE0:
         {
-            const float bend = static_cast<float> ((d2 << 7 | d1) - 8192) / 8192.0f;
+            const float bend = augur::pitchBendFromMidi (d2 << 7 | d1);
             bendShown.store (bend, std::memory_order_relaxed);
             engine->setPitchBend (bend);
             break;
@@ -301,6 +382,12 @@ void Augur5Processor::getStateInformation (juce::MemoryBlock& destData)
 
 void Augur5Processor::setStateInformation (const void* data, int sizeInBytes)
 {
+    // A session (or a host's own preset) is a whole new sound: loaded between a fade out and a fade in.
+    changeSound ([this, data, sizeInBytes] { restoreState (data, sizeInBytes); });
+}
+
+void Augur5Processor::restoreState (const void* data, int sizeInBytes)
+{
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
     {
         if (xml->hasTagName (parameters.state.getType()))
@@ -344,6 +431,8 @@ void Augur5Processor::setStateInformation (const void* data, int sizeInBytes)
 
 void Augur5Processor::warmUpEngine()
 {
+    if (inSoundChange)
+        return; // changeSound() warms the engine once the whole sound is in
     if (! prepared)
         return; // prepareToPlay will do it
     suspendProcessing (true);

@@ -652,3 +652,23 @@ Revisión de la configuración contra el Prophet-5 (manual de servicio y User's 
 - Los plucks de SUN ATLAS tienen ahora el cuerpo y la caída de PYTHIA, siguen más brillantes (el carácter del Prophet) y dejan 2 dB de margen para tocarlos como acordes; MANTIS es mono y PYTHIA usa un recortador suave a la salida: de ahí sus 2 dB de más.
 - Toda la fábrica: mediana −16.0 dB (pico máximo −1.0 dBFS), la CI vuelve a 0 fuera de rango con los acordes. Anthology: mediana −16.0 dB en lo melódico; 66 de 272 sonidos de acordes bajados.
 - Zips regenerados en `packs/dist`.
+
+## D-048 · Versión definitiva, parte 1: pitch bend exacto y cambios de sonido sin clics (2026-10-21)
+Orden del usuario: primero el plugin en su versión definitiva; la compatibilidad (CLAP, Linux, MPE, MTS-ESP) y los instaladores al final, con su autorización. Varias de estas mejoras las propuso la sesión de MANTIS-37 a partir de lo que midió en MANTIS 1.5; aquí se midieron en AUGUR.
+
+**Pitch bend exacto.** `(valor − 8192) / 8192` dejaba la rueda arriba en 8191/8192 (0.15 cents cortos con 12 semitonos). `Util/MidiValues.h`: la mitad de arriba se escala por 8191 y la de abajo por 8192. 16383 da +1 exacto y 0 da −1. La rueda en pantalla usa la conversión inversa. Test: los 16 384 valores hacen ida y vuelta.
+
+**Cambios de sonido sin clics.** Medido con `augur_preset_audit --check-preset-clicks`: un acorde sostenido mientras se cargan pads de fábrica (seis pads, cada uno cuatro veces: recargas A→A y cambios A→B), con el audio en un hilo de tiempo real como el de un host VST3 (el callback lock; silencio mientras está suspendido). Un clic: en ventanas de 1 ms, el pico de la segunda diferencia sobre el rms local, contra la mediana de los 80 ms alrededor.
+- **Antes: 74 clics en 24 cambios** (el peor 157× su entorno). Los parámetros se escribían con el audio sonando, la suspensión cortaba el sonido de golpe y el calentamiento silenciaba la nota que sonaba en la voz 0.
+- `changeSound()` (presets de fábrica y de usuario, sesiones del DAW, RECALL y OMEN de AUGURY):
+  1. fade out de 6 ms en la salida (coseno alzado);
+  2. los ajustes se escriben en silencio;
+  3. calentamiento del motor; si la voz 0 tiene una nota sostenida, se calienta una copia de ella;
+  4. se vacía lo que guarda la etapa posterior a las voces: colas de efectos, historia de los decimadores y bloqueo de DC;
+  5. fade in de 6 ms dentro del motor, sobre el bus de voces antes de FUZZ, decimadores y efectos, para que las líneas de retardo también se llenen con el fade (con el fade en la salida, el primer eco del sonido nuevo entraba como un escalón).
+- Las esperas siguen al tamaño de bloque del host, porque un bloque de 2048 muestras dura 43 ms.
+- **Después: 0 clics** en recargas y cambios, en tres corridas, y las cuatro notas del acorde siguen sonando tras los 24 cambios.
+- Pasos que se probaron y se descartaron por la medición:
+  - pasar 8 ms del sonido nuevo por los decimadores antes del fade in: bajó de 62 a 47, no a 0;
+  - el fade in en la salida: los efectos daban escalones a 35–40 ms.
+- La auditoría de fábrica, los 82 tests, la migración, AUGURY (modelo y GUI) y pluginval siguen en verde.

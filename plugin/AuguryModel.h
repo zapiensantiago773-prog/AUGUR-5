@@ -57,6 +57,9 @@ public:
     juce::uint32 castOmen (float amount, juce::uint32 lockedGroups, juce::uint32 seed = 0);
     juce::uint32 getLastSeed() const { return lastSeed; }
 
+    // RECALL and OMEN replace the whole sound: the processor wraps them as a preset load (fade out / in).
+    std::function<void (const std::function<void()>&)> soundChange;
+
     juce::ValueTree toTree() const;
     void fromTree (const juce::ValueTree& tree);
 
