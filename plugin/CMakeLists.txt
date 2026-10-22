@@ -38,6 +38,9 @@ juce_add_binary_data(AugurBinary
         resources/brand/tonal_lab/tonal-lab-logo-horizontal-light-bg.svg
         resources/brand/tonal_lab/tonal-lab-logo-stacked-light-bg.svg
         resources/brand/tonal_lab/tonal-lab-mark-brand-light-bg.svg
+        resources/brand/tonal_lab/tonal-lab-logo-horizontal-dark-bg.svg
+        resources/brand/tonal_lab/tonal-lab-logo-stacked-dark-bg.svg
+        resources/brand/tonal_lab/tonal-lab-mark-brand.svg
 )
 
 target_sources(Augur5 PRIVATE

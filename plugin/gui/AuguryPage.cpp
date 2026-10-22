@@ -6,7 +6,17 @@ namespace augur5::ui
 namespace
 {
 const char* const cornerLetters[4] { "A", "B", "C", "D" };
-const juce::Colour cornerColours[4] { colours::accent, colours::slate, colours::sage, colours::plum };
+// The corners' colours, read when painting (they follow the skin).
+juce::Colour cornerColour (int c)
+{
+    switch (c)
+    {
+        case 0: return colours::accent;
+        case 1: return colours::slate;
+        case 2: return colours::sage;
+        default: return colours::plum;
+    }
+}
 
 juce::String u8 (const char* s) { return juce::String::fromUTF8 (s); }
 
@@ -91,18 +101,18 @@ public:
             if (filled && weight > 0.001f)
             {
                 const float rr = field.getWidth() * (0.18f + 0.5f * weight);
-                juce::ColourGradient wash (cornerColours[c].withAlpha (0.16f * weight + 0.04f), corner.x, corner.y, cornerColours[c].withAlpha (0.0f),
+                juce::ColourGradient wash (cornerColour (c).withAlpha (0.16f * weight + 0.04f), corner.x, corner.y, cornerColour (c).withAlpha (0.0f),
                                            corner.x + rr, corner.y, true);
                 g.setGradientFill (wash);
                 g.fillEllipse (corner.x - rr, corner.y - rr, rr * 2.0f, rr * 2.0f);
             }
             // Badge.
             const juce::Rectangle<float> badge (corner.x - 15.0f, corner.y - 15.0f, 30.0f, 30.0f);
-            g.setColour (juce::Colours::white);
+            g.setColour (colours::surface);
             g.fillEllipse (badge);
-            g.setColour (filled ? cornerColours[c] : colours::fieldBorder);
+            g.setColour (filled ? cornerColour (c) : colours::fieldBorder);
             g.drawEllipse (badge.reduced (0.5f), filled ? 1.5f : 1.0f);
-            drawTracked (g, cornerLetters[c], badge, Fonts::jost (13.0f, true), filled ? cornerColours[c].darker (0.2f) : colours::caption,
+            drawTracked (g, cornerLetters[c], badge, Fonts::jost (13.0f, true), filled ? lit (cornerColour (c), 0.2f) : colours::caption,
                          juce::Justification::centred);
             const bool left = c % 2 == 0, top = c < 2;
             const juce::Rectangle<float> label (left ? corner.x + 22.0f : corner.x - 22.0f - 260.0f, top ? corner.y - 15.0f : corner.y - 1.0f, 260.0f, 16.0f);
@@ -111,7 +121,7 @@ public:
                          just);
             if (filled && active)
                 drawTracked (g, juce::String (juce::roundToInt (weight * 100.0f)) + " %", label.translated (0.0f, 16.0f), Fonts::mono (8.5f),
-                             cornerColours[c].darker (0.15f), just);
+                             lit (cornerColour (c), 0.15f), just);
         }
 
         // Flight trail and the bird.
@@ -182,14 +192,14 @@ AuguryPage::AuguryPage (AuguryModel& m, std::function<juce::String()> name) : mo
     for (int c = 0; c < AuguryModel::numCorners; ++c)
     {
         const int y = 60 + c * 58;
-        add (std::make_unique<ActionButton> ("CAPTURE", cornerColours[c], [this, c] {
+        add (std::make_unique<ActionButton> ("CAPTURE", cornerColour (c), [this, c] {
                  model.capture (c, soundName ? soundName() : juce::String ("Sound"));
                  refresh();
              }),
              { 1180, y + 6, 100, 30 })
             ->setTooltip ("Store the current sound in this corner");
         recallButtons[static_cast<size_t> (c)] = static_cast<ActionButton*> (
-            add (std::make_unique<ActionButton> ("RECALL", cornerColours[c], [this, c] { model.recall (c); }), { 1288, y + 6, 92, 30 }));
+            add (std::make_unique<ActionButton> ("RECALL", cornerColour (c), [this, c] { model.recall (c); }), { 1288, y + 6, 92, 30 }));
         recallButtons[static_cast<size_t> (c)]->setTooltip ("Play this corner's sound exactly");
         clearButtons[static_cast<size_t> (c)] = static_cast<ActionButton*> (add (std::make_unique<ActionButton> ("CLEAR", colours::caption, [this, c] {
                                                                                      model.clear (c);
@@ -263,11 +273,11 @@ void AuguryPage::paint (juce::Graphics& g)
         g.setColour (colours::subPanel);
         g.fillRoundedRectangle (840.0f, y, 628.0f, 42.0f, 6.0f);
         const juce::Rectangle<float> badge (850.0f, y + 7.0f, 28.0f, 28.0f);
-        g.setColour (juce::Colours::white);
+        g.setColour (colours::surface);
         g.fillEllipse (badge);
-        g.setColour (filled ? cornerColours[c] : colours::fieldBorder);
+        g.setColour (filled ? cornerColour (c) : colours::fieldBorder);
         g.drawEllipse (badge.reduced (0.5f), filled ? 1.5f : 1.0f);
-        drawTracked (g, cornerLetters[c], badge, Fonts::jost (12.0f, true), filled ? cornerColours[c].darker (0.2f) : colours::caption,
+        drawTracked (g, cornerLetters[c], badge, Fonts::jost (12.0f, true), filled ? lit (cornerColour (c), 0.2f) : colours::caption,
                      juce::Justification::centred);
         drawTracked (g, filled ? model.getName (c) : juce::String ("EMPTY"), { 890.0f, y + 6.0f, 280.0f, 18.0f }, Fonts::jost (12.5f, filled),
                      filled ? colours::title : colours::caption, juce::Justification::centredLeft);
@@ -282,7 +292,7 @@ void AuguryPage::paint (juce::Graphics& g)
               { 840.0f, 368.0f, 628.0f, 48.0f });
     drawCaption (g, "AMOUNT", 840.0f, 444.0f, 90.0f, colours::captionLight);
     drawTracked (g, juce::String (juce::roundToInt (amount.getValue() * 100.0)) + " %", { 1352.0f, 440.0f, 116.0f, 20.0f }, Fonts::mono (10.0f),
-                 colours::accent.darker (0.2f), juce::Justification::centredLeft);
+                 lit (colours::accent, 0.2f), juce::Justification::centredLeft);
     drawCaption (g, "LOCKED GROUPS", 840.0f, 488.0f, 200.0f, colours::captionLight);
     if (shownSeed.isNotEmpty())
         drawTracked (g, u8 ("OMEN  \xe2\x84\x96 ") + shownSeed, { 1160.0f, 594.0f, 308.0f, 34.0f }, Fonts::light (17.0f, 0.2f), colours::title,

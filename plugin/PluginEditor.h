@@ -16,7 +16,7 @@ class SettingsPanel;
 // The TONAL LAB series layout on a fixed 1536 x 1024 canvas, scaled as one piece (every size, gap and font stays
 // exact at any window size): header with the preset bar and the tabs (MAIN, MOD, ARP, VOICE, FX, AUGURY), the tab
 // page, and the performance strip with the AUGURY frequency horizon. MAIN holds the classic instrument's panel; the
-// expansions live in the other tabs.
+// expansions live in the other tabs. A skin (SETTINGS) repaints every open AUGUR-5 window: each one rebuilds.
 class Augur5Editor final : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
@@ -36,9 +36,14 @@ public:
     void showTab (int tab); // 0 MAIN, 1 MOD, 2 ARP, 3 VOICE, 4 FX, 5 AUGURY
     void showOverlay (int which); // 0 presets, 1 settings
     void showEffect (int id);     // FX tab with that unit's editor (0..7 rack, 8 fuzz)
+    void setSkin (int skin);      // 0 LIGHT, 1 NEON, 2 IMPERIAL: applied, remembered, and every open window rebuilds
+    // A skin for this process only, before an editor opens (the audit tool's snapshots): the user's choice stays.
+    static void previewSkin (int skin);
 
 private:
     void timerCallback() override;
+    void buildUi();
+    void rebuildUi(); // after a skin change
     void showSaveDialog();
     void showInstallPackDialog();
     void showAddFolderDialog();

@@ -108,11 +108,14 @@ int soak (const juce::String& presetName, double seconds)
 }
 } // namespace
 
-// --snapshot out.png [scale] [tab]: renders the plugin editor (design canvas) to a PNG, for layout review.
+// --snapshot out.png [scale] [tab] [skin]: renders the plugin editor (design canvas) to a PNG, for layout review.
+// skin: 0 LIGHT, 1 NEON, 2 IMPERIAL (this run only: the user's saved choice is not touched).
 // tab: 0 MAIN, 1 MOD, 2 ARP, 3 VOICE, 4 FX, 5 AUGURY, 6 = the preset browser open, 7 = settings open,
 // 10..18 = the FX tab showing effect 0..8, 19 = the MOD tab with a busy test matrix.
-int snapshot (const juce::String& path, float scale, int tab)
+int snapshot (const juce::String& path, float scale, int tab, int skin)
 {
+    if (skin >= 0)
+        Augur5Editor::previewSkin (skin);
     std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
     base->setPlayConfigDetails (0, 2, 48000.0, 256);
     base->prepareToPlay (48000.0, 256);
@@ -1020,6 +1023,130 @@ int checkAuguryGui()
     return failures == 0 ? 0 : 1;
 }
 
+// --check-skins: the SETTINGS skin buttons clicked as a user clicks them, with two editors open (two instances in a host):
+// both windows rebuild in the new skin and keep their tab and their open panel, the choice is remembered, and coming back
+// to LIGHT paints exactly what LIGHT painted before (no colour left behind). The user's saved skin is put back afterwards.
+int checkSkins()
+{
+    int failures = 0;
+    const auto expect = [&failures] (bool ok, const juce::String& what) {
+        std::printf ("%-78s %s\n", what.toRawUTF8(), ok ? "ok" : "FAIL");
+        failures += ok ? 0 : 1;
+    };
+    const auto pump = [] { juce::MessageManager::getInstance()->runDispatchLoopUntil (150); };
+    const auto settings = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
+                              .getChildFile ("TONAL LAB")
+                              .getChildFile ("AUGUR-5")
+                              .getChildFile ("settings.xml");
+    const bool hadSettings = settings.existsAsFile();
+    juce::MemoryBlock saved;
+    if (hadSettings)
+        settings.loadFileAsData (saved);
+
+    Augur5Editor::previewSkin (0);
+    std::unique_ptr<juce::AudioProcessor> procA (createPluginFilter()), procB (createPluginFilter());
+    for (auto* p : { procA.get(), procB.get() })
+    {
+        p->setPlayConfigDetails (0, 2, 48000.0, 256);
+        p->prepareToPlay (48000.0, 256);
+    }
+    auto* a = dynamic_cast<Augur5Editor*> (procA->createEditorIfNeeded());
+    auto* b = dynamic_cast<Augur5Editor*> (procB->createEditorIfNeeded());
+    if (a == nullptr || b == nullptr)
+        return 2;
+    for (auto* e : { a, b })
+    {
+        e->setScale (1.0f);
+        e->setScaleFactor (1.0f);
+    }
+    a->showTab (2);     // ARP, with SETTINGS open on top
+    a->showOverlay (1);
+    b->showTab (4);     // FX
+
+    const auto shot = [] (juce::Component& c) { return c.createComponentSnapshot (c.getLocalBounds(), true, 1.0f); };
+    // Pixels that differ, outside the horizon (it is animated: its sky and ridges move with time).
+    const auto differing = [] (const juce::Image& x, const juce::Image& y) {
+        if (x.getBounds() != y.getBounds())
+            return -1;
+        const juce::Rectangle<int> horizon (388, 778, 760, 186);
+        int n = 0;
+        for (int py = 0; py < x.getHeight(); ++py)
+            for (int px = 0; px < x.getWidth(); ++px)
+                if (! horizon.contains (px, py) && x.getPixelAt (px, py) != y.getPixelAt (px, py))
+                    ++n;
+        return n;
+    };
+    // The skin buttons, found in the open SETTINGS panel as a user finds them on screen.
+    // (no window here, so "on screen" = visible all the way up to the editor)
+    const auto skinButton = [] (juce::Component& root, const juce::String& text) {
+        const auto visibleIn = [&root] (juce::Component* c) {
+            for (; c != nullptr && c != &root; c = c->getParentComponent())
+                if (! c->isVisible())
+                    return false;
+            return c == &root;
+        };
+        juce::Button* found = nullptr;
+        std::function<void (juce::Component&)> walk = [&] (juce::Component& c) {
+            if (auto* btn = dynamic_cast<juce::Button*> (&c); btn != nullptr && btn->getButtonText() == text && visibleIn (btn))
+                found = btn;
+            for (auto* child : c.getChildren())
+                walk (*child);
+        };
+        walk (root);
+        return found;
+    };
+
+    pump(); // the editors' first poll (the FX chain lights the units that are on)
+    const auto lightA = shot (*a), lightB = shot (*b);
+    const char* names[] { "LIGHT", "NEON", "IMPERIAL" };
+    for (const int s : { 1, 2, 0 })
+    {
+        const juce::String name (names[s]);
+        auto* button = skinButton (*a, name);
+        expect (button != nullptr, "SETTINGS shows the " + name + " button");
+        if (button == nullptr)
+            break;
+        button->onClick();
+        pump();
+        expect (static_cast<int> (augur5::ui::currentSkin()) == s, name + ": the skin is applied");
+        expect (static_cast<int> (augur5::ui::loadSavedSkin()) == s, name + ": the choice is remembered (settings.xml)");
+        expect (skinButton (*a, name) != nullptr && skinButton (*a, name)->getToggleState(),
+                name + ": the rebuilt window still has SETTINGS open, with " + name + " lit");
+        const auto imgA = shot (*a), imgB = shot (*b);
+        const int dA = differing (imgA, lightA), dB = differing (imgB, lightB);
+        if (s == 0)
+        {
+            expect (dA == 0 && dB == 0, "back to LIGHT: both windows paint exactly as before (" + juce::String (dA) + " / "
+                                            + juce::String (dB) + " pixels differ)");
+            for (auto [before, after] : { std::pair { &lightA, &imgA }, std::pair { &lightB, &imgB } })
+            {
+                juce::Rectangle<int> where;
+                for (int py = 0; py < after->getHeight(); ++py)
+                    for (int px = 0; px < after->getWidth(); ++px)
+                        if (! juce::Rectangle<int> (388, 778, 760, 186).contains (px, py) && before->getPixelAt (px, py) != after->getPixelAt (px, py))
+                            where = where.isEmpty() ? juce::Rectangle<int> (px, py, 1, 1) : where.getUnion ({ px, py, 1, 1 });
+                if (! where.isEmpty())
+                    std::printf ("    differing area x %d..%d  y %d..%d\n", where.getX(), where.getRight(), where.getY(), where.getBottom());
+            }
+        }
+        else
+            expect (dA > 100000 && dB > 100000, name + ": both open windows repainted (" + juce::String (dA) + " / " + juce::String (dB)
+                                                     + " pixels changed)");
+    }
+
+    for (auto [proc, editor] : { std::pair { procA.get(), a }, std::pair { procB.get(), b } })
+    {
+        proc->editorBeingDeleted (editor);
+        delete editor;
+    }
+    if (hadSettings)
+        settings.replaceWithData (saved.getData(), saved.getSize());
+    else
+        settings.deleteFile();
+    std::printf ("%s\n", failures == 0 ? "skins: all checks passed" : "skins: FAILURES");
+    return failures == 0 ? 0 : 1;
+}
+
 int main (int argc, char** argv)
 {
     if (argc >= 2 && std::strcmp (argv[1], "--params") == 0)
@@ -1056,6 +1183,8 @@ int main (int argc, char** argv)
                            argc >= 4 ? juce::String::fromUTF8 (argv[3]) : juce::String());
     if (argc >= 2 && std::strcmp (argv[1], "--check-augury-gui") == 0)
         return checkAuguryGui();
+    if (argc >= 2 && std::strcmp (argv[1], "--check-skins") == 0)
+        return checkSkins();
     if (argc >= 3 && (std::strcmp (argv[1], "--install-pack") == 0 || std::strcmp (argv[1], "--import-folder") == 0))
     {
         // Same code paths as the browser's "Install expansion pack" / "Add presets folder".
@@ -1072,7 +1201,8 @@ int main (int argc, char** argv)
         return levelPack (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])),
                           argc >= 4 && std::strcmp (argv[3], "--pack-scale") == 0);
     if (argc >= 3 && std::strcmp (argv[1], "--snapshot") == 0)
-        return snapshot (juce::String::fromUTF8 (argv[2]), argc >= 4 ? static_cast<float> (std::atof (argv[3])) : 1.0f, argc >= 5 ? std::atoi (argv[4]) : 0);
+        return snapshot (juce::String::fromUTF8 (argv[2]), argc >= 4 ? static_cast<float> (std::atof (argv[3])) : 1.0f, argc >= 5 ? std::atoi (argv[4]) : 0,
+                         argc >= 6 ? std::atoi (argv[5]) : -1);
     if (argc >= 4 && std::strcmp (argv[1], "--soak") == 0)
         return soak (juce::String::fromUTF8 (argv[2]), std::atof (argv[3]));
     constexpr double sr = 48000.0;

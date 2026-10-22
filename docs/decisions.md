@@ -690,3 +690,50 @@ Peor línea no armónica, nota sostenida con el filtro abierto (DRIVE 1):
 - El ADAA en el DRIVE ya no hace falta: necesitaba logcosh en doble precisión (unos 3 puntos de CPU) por una mejora menor que la del filtro.
 - CPU (5 voces, 48 kHz, mínimo de 3): ECO 5.4 %, GREAT 11.3 %, DIVINE 21.6 %, igual que antes dentro del ruido de la medición.
 - El test del golpe de DC de la primera nota ("Even the first note carries no DC thump") pasó de −60.9 a −58.6 dBFS, con el filtro cerrado y a nivel completo. Ya estaba a 0.9 dB del límite y es inaudible; el límite queda en −56.5 dBFS, documentado en el test.
+
+## D-050 · Skins: LIGHT, NEON e IMPERIAL (2026-10-22)
+Se eligen en SETTINGS → SKIN. Son una preferencia del usuario, no del preset: se guarda en `<app data>/TONAL LAB/AUGUR-5/settings.xml` y la siguen todas las ventanas de AUGUR-5 abiertas, que se reconstruyen al momento. La serie lo hace así en MANTIS-37 (DUSK, NEON, TOON) y PYTHIA 32 (MOONLIGHT, NEON, DELPHI): cada instrumento tiene su skin original, un NEON con colores propios y un tercer skin temático.
+- **LIGHT:** el aspecto de siempre. Las 17 páginas que no cambian (pestañas, browser, efectos, matriz) son **idénticas píxel a píxel** a las de antes (comparadas con 18 capturas de referencia); SETTINGS gana la fila SKIN.
+- **NEON** (el tratamiento de la serie): vidrio azul-negro, y el borde de cada sección es un tubo de luz del color de esa sección, con el título en ese color. Colores propios de AUGUR, para no repetir el magenta y cian de MANTIS ni el lima de PYTHIA: ámbar de lámpara de sodio, turquesa, rojo eléctrico y lima. Brillan los arcos de las perillas, los LEDs y la línea del encabezado; el sol del horizonte va del ámbar al rojo.
+- **IMPERIAL** (el tercero, temático): el augur era un sacerdote romano y su toga, la *trabea*, llevaba púrpura de Tiro.
+  - Laca color vino casi negra, con brillo en el borde superior de cada sección.
+  - Filetes dorados dobles con esquinas biseladas Art Déco, y un rombo dorado bajo cada título.
+  - En el escritorio, un guilloché de rayos de sol, como la esfera de un reloj fino, que nace del sol del horizonte; el sol tiene rayos finos.
+  - Perillas de laca con bisel de oro y teclado de marfil y ébano.
+  - Acentos de oro, jade, platino, cuarzo rosa y cobre.
+  - No choca con DELPHI (mármol blanco) ni con ningún NEON.
+- **Implementación:**
+  - Todo color sale de `gui/Theme.h` (57 tokens). La tabla de `Theme.cpp` tiene los tres valores de cada token lado a lado, así ninguno queda sin definir en un skin.
+  - `style::` reúne lo que no es color: logos para fondo oscuro, brillo, dorado y fuerza de la sombra.
+  - Al cambiar de skin, cada editor abierto se reconstruye (`MessageManager::callAsync` + `SafePointer`) y conserva su pestaña y el panel abierto.
+  - Los logos TONAL LAB para fondo oscuro ya estaban en el kit de marca y se añadieron a `AugurBinary`.
+- **Pruebas:**
+  - `augur_preset_audit --check-skins`, con dos editores abiertos y los botones de SETTINGS pulsados como un usuario:
+    - las dos ventanas cambian de skin y conservan pestaña y panel;
+    - la elección queda guardada;
+    - al volver a LIGHT las dos ventanas pintan exactamente lo mismo que antes (0 píxeles distintos fuera del horizonte, que está animado);
+    - al final deja el archivo del usuario como estaba.
+  - `--snapshot out.png escala pestaña [skin]` toma capturas en cualquier skin sin tocar la preferencia.
+- 83 tests y pluginval en verde.
+
+## D-051 · Afinación a la resolución del DAC del Prophet: se queda como está (2026-10-22)
+Medido con edad 0: error de afinación de hasta ±1.3 cents entre notas. Viene de la rutina TUNE del Prophet-5, modelada tal cual:
+- el DAC de afinación tiene una resolución de 1/128 de semitono (0.78 cents);
+- la búsqueda redondea hacia arriba, así que cada nota puede quedar hasta un paso alta;
+- las octavas C0–C2 se extrapolan, no se miden.
+
+**Decisión:** no se corrige. Es parte del carácter del instrumento real, y ±1.3 cents queda por debajo de los 3–5 cents que se suelen citar como umbral para distinguir dos notas sucesivas. Si alguien pide afinación exacta, se puede añadir más adelante como opción, sin cambiar el valor por defecto.
+
+## D-052 · CPU medida con la máquina en reposo (2026-10-22)
+`augur_render --bench 10 --voices 5 --sr 48000`, tres corridas por calidad (la medición es de tiempo de reloj, por eso se repitió con la máquina sin carga; las tres corridas difieren menos de 0.1 punto):
+
+| Calidad | Sobremuestreo | CPU de un núcleo |
+|---|---|---|
+| ECO | 1x | 5.0 % |
+| GREAT | 2x | 10.4 % |
+| DIVINE | 4x | 20.0 % |
+
+- ECO cumple el objetivo de CLAUDE.md (menos del 5 % con 5 voces a 48 kHz), justo en el límite.
+- GREAT y DIVINE escalan exactamente con su sobremuestreo: el costo por muestra interna es el mismo en los tres modos.
+- Las cifras anteriores (5.4 / 11.3 / 21.6 %, D-049) eran más altas por la carga de la máquina, no por el código.
+- Para bajar más habría que procesar las voces en paralelo con SIMD. Es un cambio de arquitectura que queda como opción para después.

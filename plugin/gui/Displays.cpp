@@ -308,11 +308,11 @@ void MatrixMap::paint (juce::Graphics& g)
             // Badges of routes sharing a source and destination sit apart along the line.
             const float along = 0.5f + (rt.twin % 2 == 1 ? -1.0f : 1.0f) * 0.13f * static_cast<float> ((rt.twin + 1) / 2);
             const auto mid = p.getPointAlongPath (p.getLength() * juce::jlimit (0.15f, 0.85f, along));
-            g.setColour (juce::Colours::white);
+            g.setColour (colours::surface);
             g.fillEllipse (mid.x - 8.0f, mid.y - 8.0f, 16.0f, 16.0f);
             g.setColour (c);
             g.drawEllipse (mid.x - 8.0f, mid.y - 8.0f, 16.0f, 16.0f, 1.0f);
-            drawTracked (g, juce::String (rt.slot), { mid.x - 8.0f, mid.y - 7.0f, 16.0f, 14.0f }, Fonts::mono (7.5f), c.darker (0.2f),
+            drawTracked (g, juce::String (rt.slot), { mid.x - 8.0f, mid.y - 7.0f, 16.0f, 14.0f }, Fonts::mono (7.5f), lit (c, 0.2f),
                          juce::Justification::centred);
         }
 
@@ -538,8 +538,8 @@ void Keys::paint (juce::Graphics& g)
             continue;
         const auto k = keyBounds (n).reduced (0.5f, 0.0f);
         const bool down = shownHeld[static_cast<size_t> (n)] || n == playing;
-        g.setGradientFill (juce::ColourGradient (down ? juce::Colour (0xfff6e3d8) : juce::Colours::white, 0.0f, k.getY(),
-                                                 down ? juce::Colour (0xffefcdbb) : juce::Colour (0xfff3f0ea), 0.0f, k.getBottom(), false));
+        g.setGradientFill (juce::ColourGradient (down ? colours::keyWhiteDown : colours::keyWhite, 0.0f, k.getY(),
+                                                 down ? colours::keyWhiteDownShade : colours::keyWhiteShade, 0.0f, k.getBottom(), false));
         g.fillRoundedRectangle (k, 4.0f);
         g.setColour (colours::panelBorder);
         g.drawRoundedRectangle (k, 4.0f, 1.0f);
@@ -558,10 +558,10 @@ void Keys::paint (juce::Graphics& g)
             continue;
         const auto k = keyBounds (n);
         const bool down = shownHeld[static_cast<size_t> (n)] || n == playing;
-        g.setColour (juce::Colours::black.withAlpha (0.12f));
+        g.setColour (shade (0.12f));
         g.fillRoundedRectangle (k.translated (1.0f, 2.0f), 3.0f);
-        g.setGradientFill (juce::ColourGradient (down ? colours::accent : juce::Colour (0xff3a3a3e), 0.0f, k.getY(),
-                                                 down ? colours::accent.darker (0.3f) : juce::Colour (0xff1e1e21), 0.0f, k.getBottom(), false));
+        g.setGradientFill (juce::ColourGradient (down ? colours::accent : colours::keyBlack, 0.0f, k.getY(),
+                                                 down ? colours::accent.darker (0.3f) : colours::keyBlackShade, 0.0f, k.getBottom(), false));
         g.fillRoundedRectangle (k, 3.0f);
     }
 }

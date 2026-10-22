@@ -44,17 +44,18 @@ bool Overlay::keyPressed (const juce::KeyPress& key)
 
 void Overlay::paintCard (juce::Graphics& g, const juce::String& title) const
 {
-    // A white veil over the instrument, then the card.
-    g.fillAll (juce::Colour (0xffe9e6e0).withAlpha (0.72f));
+    // A veil of the desk over the instrument, then the card.
+    g.fillAll (colours::background.withAlpha (0.72f));
     const auto r = panel.toFloat();
-    g.setColour (juce::Colours::black.withAlpha (0.06f));
+    g.setColour (shade (0.06f));
     g.fillRoundedRectangle (r.translated (0.0f, 8.0f).expanded (6.0f), 16.0f);
-    g.setColour (juce::Colours::black.withAlpha (0.07f));
+    g.setColour (shade (0.07f));
     g.fillRoundedRectangle (r.translated (0.0f, 2.0f).expanded (1.0f), 12.0f);
-    g.setColour (juce::Colours::white);
+    g.setColour (colours::surface);
     g.fillRoundedRectangle (r, 12.0f);
     g.setColour (colours::panelBorder);
     g.drawRoundedRectangle (r.reduced (0.5f), 12.0f, 1.0f);
+    drawCardFrame (g, r, 12.0f, colours::accent);
     drawTracked (g, title, { r.getX() + 28.0f, r.getY() + 18.0f, 360.0f, 30.0f }, Fonts::light (22.0f, 0.3f), colours::title,
                  juce::Justification::centredLeft);
     g.setColour (colours::accent);
@@ -119,7 +120,7 @@ void paintRow (juce::Graphics& g, int w, int h, bool selected, bool current, con
         g.setColour (colours::hairline);
         g.fillRect (14, h - 1, w - 28, 1);
     }
-    const auto colour = current ? colours::accent.darker (0.15f) : (selected ? colours::title : colours::label);
+    const auto colour = current ? lit (colours::accent, 0.15f) : (selected ? colours::title : colours::label);
     drawTracked (g, text, { 16.0f, 0.0f, static_cast<float> (w) - (tag.isEmpty() ? 24.0f : 210.0f), static_cast<float> (h) },
                  Fonts::jost (13.0f, current || selected, 0.02f), colour, juce::Justification::centredLeft);
     if (tag.isNotEmpty())
@@ -389,7 +390,7 @@ void PresetBrowser::load (int row, bool andClose)
 SettingsPanel::SettingsPanel (APVTS& s, Actions a) : state (s), actions (std::move (a))
 {
     setWantsKeyboardFocus (true);
-    panel = { 944, 82, 540, 676 };
+    panel = { 944, 82, 540, 754 };
     const int x = panel.getX() + 28, w = panel.getWidth() - 56;
     const auto add = [this] (std::unique_ptr<juce::Component> c, juce::Rectangle<int> r) {
         c->setBounds (r);
@@ -430,6 +431,17 @@ SettingsPanel::SettingsPanel (APVTS& s, Actions a) : state (s), actions (std::mo
     choiceRow (params::osc_model, { "REV 3  \xc2\xb7  CEM3340", "REV 1  \xc2\xb7  SSM2030" }, panel.getY() + 330, colours::accent);
     add (std::make_unique<ParamToggle> (state, params::vintage_cv, "VINTAGE 7-BIT KNOBS (REV 3)", colours::accent), { x, panel.getY() + 368, w, 30 });
 
+    // SKIN: the whole panel's colours (every AUGUR-5 window follows; the choice is remembered)
+    const int sw = (w - 12) / 3;
+    const char* skins[] = { "LIGHT", "NEON", "IMPERIAL" };
+    for (int i = 0; i < 3; ++i)
+        skinButtons.push_back (static_cast<ActionButton*> (add (std::make_unique<ActionButton> (skins[i], colours::accent, [this, i] {
+                                                                    if (actions.setSkin)
+                                                                        actions.setSkin (i);
+                                                                    opened();
+                                                                }),
+                                                                { x + i * (sw + 6), panel.getY() + 446, sw, 30 })));
+
     // DISPLAY
     idsButton = static_cast<ActionButton*> (add (std::make_unique<ActionButton> ("SHOW PARAMETER IDS", colours::plum, [this] {
                                                      showIds = ! showIds;
@@ -437,18 +449,18 @@ SettingsPanel::SettingsPanel (APVTS& s, Actions a) : state (s), actions (std::mo
                                                          actions.refreshIds();
                                                      opened();
                                                  }),
-                                                 { x, panel.getY() + 446, w, 30 }));
+                                                 { x, panel.getY() + 524, w, 30 }));
 
     // PRESETS
     const int hw = (w - 6) / 2;
     add (std::make_unique<ActionButton> ("SAVE PRESET...", colours::accent, [this] { close(); if (actions.save) actions.save(); }),
-         { x, panel.getY() + 524, hw, 30 });
+         { x, panel.getY() + 602, hw, 30 });
     add (std::make_unique<ActionButton> ("INSTALL PACK (.ZIP)...", colours::slate, [this] { close(); if (actions.install) actions.install(); }),
-         { x + hw + 6, panel.getY() + 524, hw, 30 });
+         { x + hw + 6, panel.getY() + 602, hw, 30 });
     add (std::make_unique<ActionButton> ("ADD PRESETS FOLDER...", colours::slate, [this] { close(); if (actions.addFolder) actions.addFolder(); }),
-         { x, panel.getY() + 562, hw, 30 });
+         { x, panel.getY() + 640, hw, 30 });
     add (std::make_unique<ActionButton> ("OPEN PRESETS FOLDER", colours::slate, [this] { if (actions.openFolder) actions.openFolder(); }),
-         { x + hw + 6, panel.getY() + 562, hw, 30 });
+         { x + hw + 6, panel.getY() + 640, hw, 30 });
 }
 
 void SettingsPanel::opened()
@@ -457,6 +469,9 @@ void SettingsPanel::opened()
     for (auto& [b, sc] : sizeButtons)
         b->setToggleState (std::abs (current - sc) < 0.01f, juce::dontSendNotification);
     idsButton->setToggleState (showIds, juce::dontSendNotification);
+    const int skin = actions.skin ? actions.skin() : 0;
+    for (size_t i = 0; i < skinButtons.size(); ++i)
+        skinButtons[i]->setToggleState (static_cast<int> (i) == skin, juce::dontSendNotification);
     repaint();
 }
 
@@ -471,8 +486,9 @@ void SettingsPanel::paint (juce::Graphics& g)
     caption ("WINDOW SIZE", 76.0f);
     caption ("SOUND QUALITY  (OVERSAMPLING)", 192.0f);
     caption ("OSCILLATOR CIRCUIT", 308.0f);
-    caption ("DISPLAY", 424.0f);
-    caption ("PRESETS", 502.0f);
+    caption ("SKIN", 424.0f);
+    caption ("DISPLAY", 502.0f);
+    caption ("PRESETS", 580.0f);
     g.setColour (colours::hairline);
     g.fillRect (p.getX() + 28.0f, p.getBottom() - 74.0f, p.getWidth() - 56.0f, 1.0f);
     drawTracked (g, u8 ("AUGUR-5 \xe2\x80\x9c" "3340\xe2\x80\x9d  v") + JucePlugin_VersionString, { p.getX() + 30.0f, p.getBottom() - 54.0f, 250.0f, 18.0f },

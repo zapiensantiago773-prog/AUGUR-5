@@ -8,8 +8,6 @@ namespace augur5::ui
 namespace
 {
 constexpr float fLo = 30.0f, fHi = 16000.0f;
-
-const juce::Colour skyTop { 0xfffefdfb }, skyLow { 0xfff3eee6 }, groundTop { 0xfffbf9f5 }, groundLow { 0xfff2eee7 };
 } // namespace
 
 Horizon::Horizon (AudioTap& t, std::function<double()> sr) : tap (t), sampleRate (std::move (sr))
@@ -181,10 +179,10 @@ void Horizon::paint (juce::Graphics& g)
     const float horizon = b.getY() + h * 0.47f;
     const float level = juce::jlimit (0.0f, 1.0f, rms * 5.0f);
 
-    // Paper sky and ground.
-    g.setGradientFill (juce::ColourGradient (skyTop, 0.0f, b.getY(), skyLow, 0.0f, horizon, false));
+    // Sky and ground (paper on LIGHT).
+    g.setGradientFill (juce::ColourGradient (colours::skyTop, 0.0f, b.getY(), colours::skyLow, 0.0f, horizon, false));
     g.fillRect (b.withBottom (horizon));
-    g.setGradientFill (juce::ColourGradient (groundTop, 0.0f, horizon, groundLow, 0.0f, b.getBottom(), false));
+    g.setGradientFill (juce::ColourGradient (colours::groundTop, 0.0f, horizon, colours::groundLow, 0.0f, b.getBottom(), false));
     g.fillRect (b.withTop (horizon));
 
     // Pale sun resting on the far ridges: a soft halo, a few contour rings and the sunset cuts.
@@ -201,7 +199,21 @@ void Horizon::paint (juce::Graphics& g)
             const float rr = sunR * (1.0f + 0.32f * static_cast<float> (i));
             g.drawEllipse (sun.x - rr, sun.y - rr, rr * 2.0f, rr * 2.0f, 0.6f);
         }
-        juce::ColourGradient disc (juce::Colour (0xfffbeee4), sun.x, sun.y - sunR * 0.6f, juce::Colour (0xfff0c4aa), sun.x, sun.y + sunR, false);
+        if (style::gilded)
+        {
+            // IMPERIAL: fine gold rays around the sun, in the sky only.
+            juce::Graphics::ScopedSaveState sky (g);
+            g.reduceClipRegion (b.withBottom (horizon).toNearestInt());
+            for (int i = 0; i < 40; ++i)
+            {
+                const float a = juce::MathConstants<float>::pi * (static_cast<float> (i) + 0.5f) / 40.0f;
+                const float ca = std::cos (a), sa = std::sin (a);
+                g.setColour (colours::accent.withAlpha (i % 2 == 0 ? 0.30f : 0.14f));
+                g.drawLine (sun.x + ca * sunR * 1.18f, sun.y - sa * sunR * 1.18f, sun.x + ca * sunR * (i % 2 == 0 ? 2.7f : 2.1f),
+                            sun.y - sa * sunR * (i % 2 == 0 ? 2.7f : 2.1f), 0.6f);
+            }
+        }
+        juce::ColourGradient disc (colours::sunHigh, sun.x, sun.y - sunR * 0.6f, colours::sunLow, sun.x, sun.y + sunR, false);
         g.setGradientFill (disc);
         g.fillEllipse (sun.x - sunR, sun.y - sunR, sunR * 2.0f, sunR * 2.0f);
         // Cuts across the lower half, thicker towards the horizon.
@@ -210,7 +222,7 @@ void Horizon::paint (juce::Graphics& g)
             const float fi = static_cast<float> (i);
             const float y = sun.y + sunR * (0.12f + 0.18f * fi);
             const float thick = 0.8f + 0.7f * fi;
-            g.setColour (skyLow.interpolatedWith (skyTop, 0.3f));
+            g.setColour (colours::skyLow.interpolatedWith (colours::skyTop, 0.3f));
             g.fillRect (sun.x - sunR, y, sunR * 2.0f, thick);
         }
     }
@@ -264,7 +276,7 @@ void Horizon::paint (juce::Graphics& g)
         fill.lineTo (x0 + span, b.getBottom());
         fill.lineTo (x0, b.getBottom());
         fill.closeSubPath();
-        g.setGradientFill (juce::ColourGradient (juce::Colours::white.withAlpha (0.97f), 0.0f, baseY - amp, groundLow, 0.0f, b.getBottom(), false));
+        g.setGradientFill (juce::ColourGradient (colours::ridge, 0.0f, baseY - amp, colours::groundLow, 0.0f, b.getBottom(), false));
         g.fillPath (fill);
 
         const float lvl = historyLevel[static_cast<size_t> (idx)];

@@ -449,6 +449,8 @@ public:
         fxPage->select (id);
     }
 
+    int getCurrentTab() const noexcept { return current; }
+
     void showTab (int t)
     {
         current = juce::jlimit (0, Augur5Editor::numTabs - 1, t);
@@ -512,15 +514,16 @@ public:
     void paint (juce::Graphics& g) override
     {
         const float w = static_cast<float> (getWidth()), h = static_cast<float> (getHeight());
-        g.setGradientFill (juce::ColourGradient (C (0xffefece7), 0.0f, 0.0f, colours::background, 0.0f, h, false));
+        g.setGradientFill (juce::ColourGradient (colours::deskTop, 0.0f, 0.0f, colours::background, 0.0f, h, false));
         g.fillAll();
+        drawDeskPattern (g, getLocalBounds().toFloat(), { 768.0f, 851.0f }); // the horizon's sun
 
         // Header
         drawAugurLogo (g, 52.0f, 22.0f);
         const auto box = presetBox();
-        g.setColour (juce::Colours::black.withAlpha (0.04f));
+        g.setColour (shade (0.04f));
         g.fillRoundedRectangle (box.translated (0.0f, 1.5f), 7.0f);
-        g.setColour (juce::Colours::white);
+        g.setColour (colours::surface);
         g.fillRoundedRectangle (box, 7.0f);
         g.setColour (colours::panelBorder);
         g.drawRoundedRectangle (box.reduced (0.5f), 7.0f, 1.0f);
@@ -532,7 +535,15 @@ public:
         g.fillRect (1262.0f, 32.0f, 1.0f, 40.0f);
         drawTonalLabLogo (g, { 1276.0f, 24.0f, 208.0f, 52.0f }, TonalLabLogo::horizontal,
                           juce::RectanglePlacement::xRight | juce::RectanglePlacement::yMid);
-        g.setColour (colours::panelBorder);
+        if (style::glow)
+        {
+            // NEON: the header's rule is a lit tube.
+            g.setColour (colours::slate.withAlpha (0.12f));
+            g.fillRoundedRectangle (52.0f, 96.5f, w - 104.0f, 8.0f, 4.0f);
+            g.setColour (colours::slate.withAlpha (0.35f));
+            g.fillRoundedRectangle (52.0f, 99.0f, w - 104.0f, 3.0f, 1.5f);
+        }
+        g.setColour (style::glow ? colours::slate.brighter (0.4f) : colours::panelBorder);
         g.fillRect (52.0f, 100.0f, w - 104.0f, 1.0f);
 
         // Performance strip (every tab): wheels, activity, the horizon in the middle, output and categories.
@@ -593,9 +604,57 @@ private:
 
 //==============================================================================
 
+namespace
+{
+// Every open AUGUR-5 window: a skin change rebuilds them all (the colours are shared by the process).
+std::vector<Augur5Editor*>& openEditors()
+{
+    static std::vector<Augur5Editor*> editors;
+    return editors;
+}
+
+bool skinChosen = false; // the user's skin is read once per process
+} // namespace
+
+void Augur5Editor::previewSkin (int skin)
+{
+    skinChosen = true;
+    augur5::ui::applySkin (static_cast<augur5::ui::Skin> (juce::jlimit (0, augur5::ui::numSkins - 1, skin)));
+}
+
 Augur5Editor::Augur5Editor (Augur5Processor& p) : AudioProcessorEditor (p), processor (p)
 {
+    if (! skinChosen)
+    {
+        skinChosen = true;
+        augur5::ui::applySkin (augur5::ui::loadSavedSkin());
+    }
+    lookAndFeel.refreshColours();
     setLookAndFeel (&lookAndFeel);
+    openEditors().push_back (this);
+    buildUi();
+
+    setResizable (true, true);
+    setResizeLimits (designWidth * 2 / 5, designHeight * 2 / 5, designWidth * 2, designHeight * 2);
+    if (auto* c = getConstrainer())
+        c->setFixedAspectRatio (static_cast<double> (designWidth) / designHeight);
+    // Open as large as the screen allows (the whole panel visible) unless a size was chosen in SETTINGS; never
+    // larger than the screen.
+    setScale (p.isUiScaleChosen() ? juce::jmin (p.getUiScale(), fitScale()) : fitScale());
+    startTimerHz (30);
+}
+
+Augur5Editor::~Augur5Editor()
+{
+    stopTimer();
+    auto& editors = openEditors();
+    editors.erase (std::remove (editors.begin(), editors.end(), this), editors.end());
+    setLookAndFeel (nullptr);
+}
+
+void Augur5Editor::buildUi()
+{
+    auto& p = processor;
     canvas = std::make_unique<augur5::ui::Canvas> (p);
     addAndMakeVisible (*canvas);
     canvas->addMouseListener (this, true);
@@ -636,27 +695,50 @@ Augur5Editor::Augur5Editor (Augur5Processor& p) : AudioProcessorEditor (p), proc
         folder.startAsProcess();
     };
     actions.refreshIds = [this] { augur5::ui::repaintAll (*canvas); };
+    actions.skin = [] { return static_cast<int> (augur5::ui::currentSkin()); };
+    actions.setSkin = [this] (int s) { setSkin (s); };
     settingsPanel = std::make_unique<augur5::ui::SettingsPanel> (processor.getParameters(), std::move (actions));
     for (auto* o : { static_cast<juce::Component*> (browser.get()), static_cast<juce::Component*> (settingsPanel.get()) })
     {
         canvas->addChildComponent (*o);
         o->setBounds (0, 0, designWidth, designHeight);
     }
-
-    setResizable (true, true);
-    setResizeLimits (designWidth * 2 / 5, designHeight * 2 / 5, designWidth * 2, designHeight * 2);
-    if (auto* c = getConstrainer())
-        c->setFixedAspectRatio (static_cast<double> (designWidth) / designHeight);
-    // Open as large as the screen allows (the whole panel visible) unless a size was chosen in SETTINGS; never
-    // larger than the screen.
-    setScale (p.isUiScaleChosen() ? juce::jmin (p.getUiScale(), fitScale()) : fitScale());
-    startTimerHz (30);
 }
 
-Augur5Editor::~Augur5Editor()
+void Augur5Editor::setSkin (int skin)
 {
-    stopTimer();
-    setLookAndFeel (nullptr);
+    const auto s = static_cast<augur5::ui::Skin> (juce::jlimit (0, augur5::ui::numSkins - 1, skin));
+    if (s == augur5::ui::currentSkin())
+        return;
+    augur5::ui::applySkin (s);
+    augur5::ui::saveSkin (s);
+    // After this click returns (the button that asked lives in a panel that is about to be rebuilt).
+    for (auto* e : openEditors())
+    {
+        juce::Component::SafePointer<Augur5Editor> safe (e);
+        juce::MessageManager::callAsync ([safe] {
+            if (safe != nullptr)
+                safe->rebuildUi();
+        });
+    }
+}
+
+void Augur5Editor::rebuildUi()
+{
+    const int tab = canvas != nullptr ? canvas->getCurrentTab() : 0;
+    const bool settingsOpen = settingsPanel != nullptr && settingsPanel->isVisible();
+    browser.reset();
+    settingsPanel.reset();
+    if (canvas != nullptr)
+        removeChildComponent (canvas.get());
+    canvas.reset();
+    lookAndFeel.refreshColours();
+    buildUi();
+    resized();
+    canvas->showTab (tab);
+    if (settingsOpen)
+        settingsPanel->open();
+    repaint();
 }
 
 float Augur5Editor::fitScale() const

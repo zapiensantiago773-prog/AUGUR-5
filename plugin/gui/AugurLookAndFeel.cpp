@@ -5,10 +5,12 @@
 namespace augur5::ui
 {
 
-AugurLookAndFeel::AugurLookAndFeel()
+AugurLookAndFeel::AugurLookAndFeel() { refreshColours(); }
+
+void AugurLookAndFeel::refreshColours()
 {
     using namespace colours;
-    setColour (juce::PopupMenu::backgroundColourId, juce::Colour (0xfffdfcfa));
+    setColour (juce::PopupMenu::backgroundColourId, popup);
     setColour (juce::PopupMenu::textColourId, subTitle);
     setColour (juce::PopupMenu::headerTextColourId, caption);
     setColour (juce::PopupMenu::highlightedBackgroundColourId, accent.withAlpha (0.10f));
@@ -17,12 +19,12 @@ AugurLookAndFeel::AugurLookAndFeel()
     setColour (juce::ComboBox::backgroundColourId, field);
     setColour (juce::ComboBox::outlineColourId, fieldBorder);
     setColour (juce::ComboBox::arrowColourId, captionLight);
-    setColour (juce::TooltipWindow::backgroundColourId, juce::Colour (0xff26272b));
-    setColour (juce::TooltipWindow::textColourId, juce::Colour (0xfff4f1ec));
-    setColour (juce::TooltipWindow::outlineColourId, juce::Colour (0xff26272b));
-    setColour (juce::BubbleComponent::backgroundColourId, juce::Colour (0xff26272b));
-    setColour (juce::BubbleComponent::outlineColourId, juce::Colour (0xff26272b));
-    setColour (juce::AlertWindow::backgroundColourId, juce::Colour (0xfffdfcfa));
+    setColour (juce::TooltipWindow::backgroundColourId, tooltip);
+    setColour (juce::TooltipWindow::textColourId, tooltipText);
+    setColour (juce::TooltipWindow::outlineColourId, tooltip);
+    setColour (juce::BubbleComponent::backgroundColourId, tooltip);
+    setColour (juce::BubbleComponent::outlineColourId, tooltip);
+    setColour (juce::AlertWindow::backgroundColourId, popup);
     setColour (juce::AlertWindow::textColourId, subTitle);
     setColour (juce::AlertWindow::outlineColourId, panelBorder);
     setColour (juce::TextEditor::backgroundColourId, field);
@@ -31,7 +33,7 @@ AugurLookAndFeel::AugurLookAndFeel()
     setColour (juce::TextEditor::focusedOutlineColourId, accent.withAlpha (0.7f));
     setColour (juce::TextEditor::highlightColourId, accent.withAlpha (0.2f));
     setColour (juce::CaretComponent::caretColourId, accent);
-    setColour (juce::TextButton::buttonColourId, juce::Colour (0xfff3f0ea));
+    setColour (juce::TextButton::buttonColourId, surfaceShade);
     setColour (juce::TextButton::textColourOffId, subTitle);
     setColour (juce::Slider::textBoxTextColourId, text);
     setColour (juce::ListBox::backgroundColourId, field);
@@ -79,6 +81,11 @@ void AugurLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w,
         {
             juce::Path arc;
             arc.addCentredArc (c.x, c.y, arcR, arcR, 0.0f, juce::jmin (from, angle), juce::jmax (from, angle), true);
+            if (style::glow)
+            {
+                g.setColour (arcColour.withAlpha (hot ? 0.30f : 0.20f));
+                g.strokePath (arc, juce::PathStrokeType (6.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+            }
             g.setColour (arcColour.withAlpha (hot ? 1.0f : 0.85f));
             g.strokePath (arc, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
         }
@@ -86,17 +93,17 @@ void AugurLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w,
 
     // Body: soft shadow, white turned face (light from the top left), hairline edge.
     const juce::Rectangle<float> body (c.x - r, c.y - r, size, size);
-    g.setColour (juce::Colours::black.withAlpha (0.07f));
+    g.setColour (shade (0.07f));
     g.fillEllipse (body.translated (0.0f, 2.5f).expanded (1.0f));
-    g.setColour (juce::Colours::black.withAlpha (0.06f));
+    g.setColour (shade (0.06f));
     g.fillEllipse (body.translated (0.0f, 1.0f));
-    juce::ColourGradient face (juce::Colours::white, c.x - r * 0.4f, c.y - r * 0.5f, juce::Colour (0xffe9e5de), c.x + r * 0.6f, c.y + r, true);
+    juce::ColourGradient face (colours::knobFace, c.x - r * 0.4f, c.y - r * 0.5f, colours::knobFaceShade, c.x + r * 0.6f, c.y + r, true);
     g.setGradientFill (face);
     g.fillEllipse (body);
     g.setColour (colours::knobEdge);
     g.drawEllipse (body.reduced (0.5f), 1.0f);
     // A faint inner ring: the turned cap.
-    g.setColour (juce::Colour (0xffeeebe5));
+    g.setColour (colours::knobRing);
     g.drawEllipse (body.reduced (size * 0.16f), 1.0f);
 
     // Pointer: a fine ink line from near the centre to the edge.
@@ -125,9 +132,9 @@ void AugurLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, int w,
         g.fillRoundedRectangle (juce::Rectangle<float>::leftTopRightBottom (track.getX(), pos, track.getRight(), track.getBottom()), 1.5f);
 
         const auto thumb = juce::Rectangle<float> (cx - 12.0f, pos - 6.0f, 24.0f, 12.0f);
-        g.setColour (juce::Colours::black.withAlpha (0.10f));
+        g.setColour (shade (0.10f));
         g.fillRoundedRectangle (thumb.translated (0.0f, 1.5f), 3.0f);
-        g.setColour (juce::Colours::white);
+        g.setColour (colours::thumb);
         g.fillRoundedRectangle (thumb, 3.0f);
         g.setColour (colours::knobEdge);
         g.drawRoundedRectangle (thumb.reduced (0.5f), 3.0f, 1.0f);
@@ -148,9 +155,9 @@ void AugurLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, int w,
     g.fillRect (centreX - 0.5f, cy - 4.0f, 1.0f, 8.0f);
 
     const auto thumb = juce::Rectangle<float> (pos - 6.0f, cy - 6.0f, 12.0f, 12.0f);
-    g.setColour (juce::Colours::black.withAlpha (0.10f));
+    g.setColour (shade (0.10f));
     g.fillEllipse (thumb.translated (0.0f, 1.0f));
-    g.setColour (juce::Colours::white);
+    g.setColour (colours::thumb);
     g.fillEllipse (thumb);
     g.setColour (colours::accent);
     g.drawEllipse (thumb.reduced (0.75f), 1.5f);
@@ -196,7 +203,7 @@ int AugurLookAndFeel::getSliderPopupPlacement (juce::Slider&) { return juce::Bub
 
 void AugurLookAndFeel::drawBubble (juce::Graphics& g, juce::BubbleComponent&, const juce::Point<float>&, const juce::Rectangle<float>& body)
 {
-    g.setColour (juce::Colour (0xff26272b));
+    g.setColour (colours::tooltip);
     g.fillRoundedRectangle (body, 4.0f);
 }
 
@@ -213,9 +220,9 @@ juce::Rectangle<int> AugurLookAndFeel::getTooltipBounds (const juce::String& tip
 void AugurLookAndFeel::drawTooltip (juce::Graphics& g, const juce::String& text, int w, int h)
 {
     const auto r = juce::Rectangle<float> (0.0f, 0.0f, static_cast<float> (w), static_cast<float> (h));
-    g.setColour (juce::Colour (0xff26272b));
+    g.setColour (colours::tooltip);
     g.fillRoundedRectangle (r, 4.0f);
-    g.setColour (juce::Colour (0xfff4f1ec));
+    g.setColour (colours::tooltipText);
     g.setFont (Fonts::jost (12.0f));
     g.drawText (text, r, juce::Justification::centred);
 }

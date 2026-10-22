@@ -219,7 +219,7 @@ private:
         const float amountDb = rawValue (st, P::fx_drive_amount);
         const float gain = juce::Decibels::decibelsToGain (amountDb);
         const float bias = rawValue (st, P::fx_drive_bias);
-        g.setColour (colours::hairline.darker (0.08f));
+        g.setColour (lit (colours::hairline, 0.08f));
         g.drawLine (plot.getX(), plot.getBottom(), plot.getRight(), plot.getY(), 1.0f);
         curve (g, plot, [&] (float x01) {
             const float x = (x01 * 2.0f - 1.0f) * gain;
@@ -531,7 +531,7 @@ public:
             // The selector position spelled out: which heads, and whether the spring tank is in.
             const int mode = juce::jlimit (0, 11, juce::roundToInt (choiceValues[0]->load()));
             drawTracked (g, juce::String::fromUTF8 ("POSITION ") + P::echoModes()[mode].trim().replace ("  ", juce::String::fromUTF8 ("  \xc2\xb7  ")),
-                         { 116.0f, static_cast<float> (choiceY (0) + 32), 600.0f, 14.0f }, Fonts::jost (9.0f, true, 0.14f), accent.darker (0.2f),
+                         { 116.0f, static_cast<float> (choiceY (0) + 32), 600.0f, 14.0f }, Fonts::jost (9.0f, true, 0.14f), lit (accent, 0.2f),
                          juce::Justification::centredLeft);
         }
     }
@@ -630,7 +630,7 @@ public:
     {
         const auto r = getLocalBounds().toFloat().reduced (0.5f);
         const auto accent = fxAccent (id);
-        g.setColour (juce::Colours::white);
+        g.setColour (colours::surface);
         g.fillRoundedRectangle (r, 7.0f);
         if (selected)
         {

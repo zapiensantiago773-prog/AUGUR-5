@@ -70,7 +70,7 @@ void Knob::paint (juce::Graphics& g)
     if ((slider.isMouseOverOrDragging() || slider.isMouseButtonDown()) && param != nullptr)
     {
         // The exact value, in the parameter's own units, while the knob is under the hand.
-        drawTracked (g, param->getCurrentValueAsText(), area.expanded (14.0f, 0.0f), Fonts::mono (9.5f), colour.darker (0.25f),
+        drawTracked (g, param->getCurrentValueAsText(), area.expanded (14.0f, 0.0f), Fonts::mono (9.5f), lit (colour, 0.25f),
                      juce::Justification::centredTop);
         return;
     }
@@ -89,7 +89,7 @@ void LedToggle::paintButton (juce::Graphics& g, bool over, bool down)
     const auto r = getLocalBounds().toFloat().reduced (0.5f);
     if (! isEnabled())
         g.beginTransparencyLayer (0.4f); // nothing to act on (an empty AUGURY corner)
-    g.setColour (juce::Colours::white);
+    g.setColour (colours::surface);
     g.fillRoundedRectangle (r, 5.0f);
     if (on)
     {
@@ -107,7 +107,7 @@ void LedToggle::paintButton (juce::Graphics& g, bool over, bool down)
     const float x0 = r.getCentreX() - total * 0.5f;
     drawLedDot (g, { x0, r.getCentreY() - 3.0f, 6.0f, 6.0f }, colour, on ? 1.0f : 0.0f);
     drawTracked (g, shownText, { x0 + 13.0f, r.getY(), textW + 4.0f, r.getHeight() }, font,
-                 on ? colour.darker (0.2f) : colours::label, juce::Justification::centredLeft);
+                 on ? lit (colour, 0.2f) : colours::label, juce::Justification::centredLeft);
     if (! isEnabled())
         g.endTransparencyLayer();
 }
@@ -132,7 +132,7 @@ void TabButton::paintButton (juce::Graphics& g, bool over, bool)
     const bool on = getToggleState();
     if (on)
     {
-        g.setColour (juce::Colours::white);
+        g.setColour (colours::surface);
         g.fillRoundedRectangle (r.reduced (0.5f), 5.0f);
         g.setColour (colours::panelBorder);
         g.drawRoundedRectangle (r.reduced (0.5f), 5.0f, 1.0f);
@@ -147,7 +147,7 @@ void SegmentButton::paintButton (juce::Graphics& g, bool over, bool down)
 {
     const bool on = getToggleState() || down;
     const auto r = getLocalBounds().toFloat().reduced (0.5f);
-    g.setColour (juce::Colours::white);
+    g.setColour (colours::surface);
     g.fillRoundedRectangle (r, 4.0f);
     if (on)
     {
@@ -158,7 +158,7 @@ void SegmentButton::paintButton (juce::Graphics& g, bool over, bool down)
     g.drawRoundedRectangle (r, 4.0f, 1.0f);
     const bool ids = showIds && idText.isNotEmpty();
     drawTracked (g, ids ? idText : getButtonText(), r.reduced (3.0f, 0.0f), ids ? Fonts::mono (7.0f) : labelFont(),
-                 on ? colour.darker (0.25f) : colours::label, juce::Justification::centred);
+                 on ? lit (colour, 0.25f) : colours::label, juce::Justification::centred);
 }
 
 //==============================================================================
@@ -180,7 +180,7 @@ void WaveButton::paintButton (juce::Graphics& g, bool over, bool)
 {
     const bool on = getToggleState();
     const auto r = getLocalBounds().toFloat().reduced (0.5f);
-    g.setColour (juce::Colours::white);
+    g.setColour (colours::surface);
     g.fillRoundedRectangle (r, 5.0f);
     if (on)
     {
@@ -189,7 +189,7 @@ void WaveButton::paintButton (juce::Graphics& g, bool over, bool)
     }
     g.setColour (on ? colour.withAlpha (0.7f) : (over ? colours::captionLight.withAlpha (0.55f) : colours::fieldBorder));
     g.drawRoundedRectangle (r, 5.0f, 1.0f);
-    g.setColour (on ? colour.darker (0.1f) : colours::icon);
+    g.setColour (on ? lit (colour, 0.1f) : colours::icon);
     g.strokePath (path, juce::PathStrokeType (1.4f, juce::PathStrokeType::mitered, juce::PathStrokeType::butt),
                   juce::AffineTransform::translation (r.getCentreX() - 12.0f, r.getCentreY() - 7.0f));
 }
@@ -545,7 +545,7 @@ void MatrixRow::paint (juce::Graphics& g)
     const int v = juce::roundToInt (amount.getValue() * 100.0);
     const juce::Rectangle<float> valueArea { static_cast<float> (getWidth() - 50), 0.0f, 50.0f, 30.0f };
     drawTracked (g, (v > 0 ? "+" : "") + juce::String (v) + " %", valueArea, Fonts::mono (9.5f),
-                 v == 0 || ! active ? colours::caption : colours::accent.darker (0.2f), juce::Justification::centredRight);
+                 v == 0 || ! active ? colours::caption : lit (colours::accent, 0.2f), juce::Justification::centredRight);
     if (! active && v != 0)
     {
         // Struck through: this route does nothing (see the tooltip and the ROUTING map).
@@ -589,15 +589,15 @@ void Wheel::mouseUp (const juce::MouseEvent&)
 void Wheel::paint (juce::Graphics& g)
 {
     const auto r = getLocalBounds().toFloat().reduced (0.5f);
-    g.setColour (juce::Colours::black.withAlpha (0.06f));
+    g.setColour (shade (0.06f));
     g.fillRoundedRectangle (r.translated (0.0f, 1.5f), 7.0f);
-    juce::ColourGradient grad (juce::Colour (0xffe6e2db), r.getX(), 0.0f, juce::Colour (0xffe6e2db), r.getRight(), 0.0f, false);
-    grad.addColour (0.5, juce::Colours::white);
+    juce::ColourGradient grad (colours::wheelEdge, r.getX(), 0.0f, colours::wheelEdge, r.getRight(), 0.0f, false);
+    grad.addColour (0.5, colours::surface);
     g.setGradientFill (grad);
     g.fillRoundedRectangle (r, 6.0f);
     const float norm = pitch ? 0.5f * (shown + 1.0f) : shown;
     const float offset = (1.0f - norm) * 12.0f;
-    g.setColour (juce::Colours::black.withAlpha (0.08f));
+    g.setColour (style::dark ? colours::ink.withAlpha (0.10f) : juce::Colours::black.withAlpha (0.08f));
     for (float y = r.getY() + 4.0f + std::fmod (offset, 6.0f); y < r.getBottom() - 3.0f; y += 6.0f)
         g.fillRect (r.getX() + 3.0f, y, r.getWidth() - 6.0f, 1.0f);
     const float markY = r.getBottom() - 8.0f - norm * (r.getHeight() - 16.0f);

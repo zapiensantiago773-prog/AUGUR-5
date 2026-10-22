@@ -80,6 +80,8 @@ public:
         std::function<void (float)> setScale; // a chosen size (remembered)
         std::function<void()> fitScale;       // largest size that fits the screen
         std::function<void()> save, install, addFolder, openFolder, refreshIds;
+        std::function<int()> skin;           // 0 LIGHT, 1 NEON, 2 IMPERIAL
+        std::function<void (int)> setSkin;   // applied, remembered, every open window rebuilds
     };
     SettingsPanel (APVTS& state, Actions actions);
     void paint (juce::Graphics&) override;
@@ -91,6 +93,7 @@ private:
     std::vector<std::unique_ptr<juce::Component>> owned;
     std::vector<std::pair<ActionButton*, float>> sizeButtons;
     ActionButton* idsButton = nullptr;
+    std::vector<ActionButton*> skinButtons;
 };
 
 } // namespace augur5::ui

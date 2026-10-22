@@ -10,6 +10,7 @@ class AugurLookAndFeel final : public juce::LookAndFeel_V4
 {
 public:
     AugurLookAndFeel();
+    void refreshColours(); // after a skin change
 
     void drawRotarySlider (juce::Graphics&, int x, int y, int w, int h, float pos, float startAngle, float endAngle,
                            juce::Slider&) override;
