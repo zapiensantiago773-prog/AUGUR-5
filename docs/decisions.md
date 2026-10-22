@@ -715,6 +715,7 @@ Se eligen en SETTINGS → SKIN. Son una preferencia del usuario, no del preset: 
     - al final deja el archivo del usuario como estaba.
   - `--snapshot out.png escala pestaña [skin]` toma capturas en cualquier skin sin tocar la preferencia.
 - 83 tests y pluginval en verde.
+- Capturas: `docs/skins/` (MAIN en los tres skins, ARP en IMPERIAL, MOD en NEON y un detalle de IMPERIAL a 2x).
 
 ## D-051 · Afinación a la resolución del DAC del Prophet: se queda como está (2026-10-22)
 Medido con edad 0: error de afinación de hasta ±1.3 cents entre notas. Viene de la rutina TUNE del Prophet-5, modelada tal cual:
@@ -738,4 +739,3 @@ Medido con edad 0: error de afinación de hasta ±1.3 cents entre notas. Viene d
 - Las cifras anteriores (5.4 / 11.3 / 21.6 %, D-049) eran más altas por la carga de la máquina, no por el código.
 - Para bajar más habría que procesar las voces en paralelo con SIMD. Es un cambio de arquitectura que queda como opción para después.
 
-Capturas: `docs/skins/` (MAIN en los tres skins, ARP en IMPERIAL, MOD en NEON y un detalle de IMPERIAL a 2x).
