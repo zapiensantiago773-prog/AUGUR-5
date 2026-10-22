@@ -737,3 +737,5 @@ Medido con edad 0: error de afinación de hasta ±1.3 cents entre notas. Viene d
 - GREAT y DIVINE escalan exactamente con su sobremuestreo: el costo por muestra interna es el mismo en los tres modos.
 - Las cifras anteriores (5.4 / 11.3 / 21.6 %, D-049) eran más altas por la carga de la máquina, no por el código.
 - Para bajar más habría que procesar las voces en paralelo con SIMD. Es un cambio de arquitectura que queda como opción para después.
+
+Capturas: `docs/skins/` (MAIN en los tres skins, ARP en IMPERIAL, MOD en NEON y un detalle de IMPERIAL a 2x).
