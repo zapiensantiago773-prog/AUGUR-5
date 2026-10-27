@@ -35,6 +35,6 @@
     <P id="osc2_saw" value="0"/>
     <P id="osc2_tri" value="1"/>
     <P id="voice_spread" value="0.7"/>
-    <P id="amp_level" value="4.3"/>
+    <P id="amp_level" value="3.7"/>
   </PARAMS>
 </AUGUR5_PRESET>

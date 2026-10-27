@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <AUGUR5_PRESET formatVersion="1" name="Concrete Lattice">
-  <META role="arp" note="57" pack="SUN ATLAS" category="ARP" family="TECHNO" kind="octaves" author="TONAL LAB"/>
+  <META role="arp" note="57" pack="SUN ATLAS" category="ARP" family="TECHNO"
+        kind="octaves" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
     <P id="aenv_d" value="1.3099"/>
     <P id="aenv_r" value="1.0638"/>
     <P id="aenv_s" value="0.19091"/>
-    <P id="amp_level" value="4.37"/>
+    <P id="amp_level" value="3.5"/>
     <P id="amp_velocity" value="0.45148"/>
     <P id="analog_age" value="0.32019"/>
     <P id="arp_gate" value="0.48412"/>

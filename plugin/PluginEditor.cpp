@@ -516,7 +516,7 @@ public:
         const float w = static_cast<float> (getWidth()), h = static_cast<float> (getHeight());
         g.setGradientFill (juce::ColourGradient (colours::deskTop, 0.0f, 0.0f, colours::background, 0.0f, h, false));
         g.fillAll();
-        drawDeskPattern (g, getLocalBounds().toFloat(), { 768.0f, 851.0f }); // the horizon's sun
+        drawDeskPattern (g, getLocalBounds().toFloat(), { 768.0f, 851.0f }, deskPattern); // the horizon's sun
 
         // Header
         drawAugurLogo (g, 52.0f, 22.0f);
@@ -598,6 +598,7 @@ private:
     Keys* keys = nullptr;
     Horizon* horizon = nullptr;
     juce::String shownPreset;
+    DeskPatternCache deskPattern;
 };
 
 } // namespace augur5::ui

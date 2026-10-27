@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <AUGUR5_PRESET formatVersion="1" name="Wheel of Rain">
-  <META role="arp" note="57" pack="SUN ATLAS" category="ARP" family="CINE" kind="up16" author="TONAL LAB"/>
+  <META role="arp" note="57" pack="SUN ATLAS" category="ARP" family="CINE"
+        kind="up16" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
     <P id="aenv_d" value="1.244"/>
     <P id="aenv_r" value="0.9489"/>
     <P id="aenv_s" value="0.11014"/>
-    <P id="amp_level" value="3.39"/>
+    <P id="amp_level" value="3.2"/>
     <P id="amp_velocity" value="0.5363"/>
     <P id="analog_age" value="0.27418"/>
     <P id="arp_gate" value="0.46981"/>

@@ -211,22 +211,51 @@ juce::Colour lit (juce::Colour c, float amount)
     return current == Skin::Light ? c.darker (amount) : c.brighter (amount * 0.6f);
 }
 
-void drawDeskPattern (juce::Graphics& g, juce::Rectangle<float> r, juce::Point<float> sun)
+void drawDeskPattern (juce::Graphics& g, juce::Rectangle<float> r, juce::Point<float> sun, DeskPatternCache& cache)
 {
     if (! style::gilded)
         return;
     // IMPERIAL: an engine-turned sunburst, as on a fine watch dial, rising from the sun of the horizon; every third
-    // ray a little brighter, and faint rings around the sun.
-    const float reach = r.getWidth() + r.getHeight();
-    for (int i = 0; i < 240; ++i)
+    // ray a little brighter, and faint rings around the sun. Drawn once into a mask at the screen's pixel density and
+    // then only copied: drawn afresh, it cost ~280 ms on every small repaint (a knob, an LED), 40 times LIGHT (D-053).
+    // The mask is drawn by the software renderer (8 times faster than Direct2D for these hundreds of thin shapes) and
+    // kept as a native image, so the graphics card holds it and a repaint does not upload it again. Never in a static:
+    // a Direct2D image released after JUCE has shut down hangs the host when it unloads the plug-in (D-055).
+    // Pixel density in steps of 1/8, so a window being resized redraws the mask a few times, not on every step.
+    const float pixels = std::ceil (juce::jmax (0.25f, g.getInternalContext().getPhysicalPixelScaleFactor()) * 8.0f) / 8.0f;
+    if (cache.mask.isNull() || pixels != cache.scale || r != cache.area || sun != cache.sun)
     {
-        const float a = juce::MathConstants<float>::twoPi * static_cast<float> (i) / 240.0f;
-        g.setColour (colours::accent.withAlpha (i % 3 == 0 ? 0.075f : 0.035f));
-        g.drawLine (sun.x, sun.y, sun.x + std::cos (a) * reach, sun.y + std::sin (a) * reach, 0.7f);
+        cache.scale = pixels;
+        cache.area = r;
+        cache.sun = sun;
+        juce::Image drawn (juce::SoftwareImageType().create (juce::Image::SingleChannel, juce::roundToInt (r.getWidth() * pixels),
+                                                             juce::roundToInt (r.getHeight() * pixels), true));
+        juce::Graphics mg (drawn);
+        mg.addTransform (juce::AffineTransform::translation (-r.getX(), -r.getY()).scaled (pixels));
+        float reach = 0.0f; // to the farthest corner
+        for (const auto corner : { r.getTopLeft(), r.getTopRight(), r.getBottomLeft(), r.getBottomRight() })
+            reach = juce::jmax (reach, corner.getDistanceFrom (sun));
+        // Rays and rings as filled shapes (one fill each): far cheaper than stroking every line.
+        juce::Path bright, faint, rings;
+        for (int i = 0; i < 240; ++i)
+        {
+            const float a = juce::MathConstants<float>::twoPi * static_cast<float> (i) / 240.0f;
+            (i % 3 == 0 ? bright : faint).addLineSegment ({ sun, sun + juce::Point<float> (std::cos (a), std::sin (a)) * reach }, 0.7f);
+        }
+        rings.setUsingNonZeroWinding (false); // two circles per ring: the space between them is the ring
+        for (float rr = 120.0f; rr < reach; rr += 36.0f)
+            for (const float edge : { rr - 0.3f, rr + 0.3f })
+                rings.addEllipse (sun.x - edge, sun.y - edge, edge * 2.0f, edge * 2.0f);
+        mg.setColour (juce::Colours::white.withAlpha (0.075f));
+        mg.fillPath (bright);
+        mg.setColour (juce::Colours::white.withAlpha (0.035f));
+        mg.fillPath (faint);
+        mg.setColour (juce::Colours::white.withAlpha (0.03f));
+        mg.fillPath (rings);
+        cache.mask = juce::NativeImageType().convert (drawn);
     }
-    g.setColour (colours::accent.withAlpha (0.03f));
-    for (float rr = 120.0f; rr < reach; rr += 36.0f)
-        g.drawEllipse (sun.x - rr, sun.y - rr, rr * 2.0f, rr * 2.0f, 0.6f);
+    g.setColour (colours::accent);
+    g.drawImageTransformed (cache.mask, juce::AffineTransform::scale (1.0f / pixels).translated (r.getX(), r.getY()), true);
 }
 
 void drawCardFrame (juce::Graphics& g, juce::Rectangle<float> r, float corner, juce::Colour accent)
@@ -278,6 +307,10 @@ juce::Path svgPath (const char* data)
 
 void drawSection (juce::Graphics& g, juce::Rectangle<float> r, const juce::String& title, juce::Colour accent)
 {
+    // A page paints all its cards on every small repaint (a knob, an LED): skip the cards outside it (shadow and NEON's
+    // glow included).
+    if (! g.clipRegionIntersects (r.expanded (8.0f).getSmallestIntegerContainer()))
+        return;
     // The card: a soft two-step shadow, the face (white paper on LIGHT), the edge.
     g.setColour (shade (0.035f));
     g.fillRoundedRectangle (r.translated (0.0f, 3.0f).expanded (1.5f), 11.0f);
@@ -330,6 +363,8 @@ void drawSection (juce::Graphics& g, juce::Rectangle<float> r, const juce::Strin
 
 void drawSubSection (juce::Graphics& g, juce::Rectangle<float> r, const juce::String& title, juce::Colour accent)
 {
+    if (! g.clipRegionIntersects (r.expanded (2.0f).getSmallestIntegerContainer()))
+        return;
     g.setColour (colours::subPanel);
     g.fillRoundedRectangle (r, 7.0f);
     g.setColour (style::glow ? accent.withAlpha (0.45f) : colours::subPanelBorder);

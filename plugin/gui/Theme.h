@@ -136,8 +136,16 @@ void drawSubSection (juce::Graphics& g, juce::Rectangle<float> r, const juce::St
 void drawCaption (juce::Graphics& g, const juce::String& text, float x, float y, float w = 220.0f, juce::Colour colour = colours::caption);
 void drawNote (juce::Graphics& g, const juce::String& text, juce::Rectangle<float> r);
 void drawLedDot (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour colour, float intensity);
-// IMPERIAL's sunburst on the desk, rising from the horizon's sun (nothing in the other skins).
-void drawDeskPattern (juce::Graphics& g, juce::Rectangle<float> r, juce::Point<float> sun);
+// IMPERIAL's sunburst on the desk, rising from the horizon's sun (nothing in the other skins). It is drawn once into
+// the cache and then only copied; the window owns the cache, so it is released with the window (D-055).
+struct DeskPatternCache
+{
+    juce::Image mask;
+    float scale = 0.0f;
+    juce::Rectangle<float> area;
+    juce::Point<float> sun;
+};
+void drawDeskPattern (juce::Graphics& g, juce::Rectangle<float> r, juce::Point<float> sun, DeskPatternCache& cache);
 // The skin's frame over a card's edge: NEON's lit tube, IMPERIAL's inner gold rule (nothing on LIGHT).
 void drawCardFrame (juce::Graphics& g, juce::Rectangle<float> r, float corner, juce::Colour accent);
 

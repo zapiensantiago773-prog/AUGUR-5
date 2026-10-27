@@ -8,7 +8,7 @@
     <P id="aenv_d" value="0.6865"/>
     <P id="aenv_r" value="0.6288"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="1.0"/>
+    <P id="amp_level" value="0.5"/>
     <P id="amp_velocity" value="0.43809"/>
     <P id="analog_age" value="0.25341"/>
     <P id="at_amount" value="0.001808"/>

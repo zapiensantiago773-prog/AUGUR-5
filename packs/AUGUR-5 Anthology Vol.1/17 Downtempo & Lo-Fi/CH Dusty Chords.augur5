@@ -33,7 +33,7 @@
     <P id="osc2_freq" value="12.0"/>
     <P id="osc2_pulse" value="1.0"/>
     <P id="osc2_saw" value="0.0"/>
-    <P id="amp_level" value="0.9"/>
+    <P id="amp_level" value="0.7"/>
     <P id="fx_reverb_on" value="1.0"/>
     <P id="fx_reverb_type" value="4.0"/>
     <P id="fx_reverb_size" value="1.356100082397461"/>

@@ -739,3 +739,49 @@ Medido con edad 0: error de afinación de hasta ±1.3 cents entre notas. Viene d
 - Las cifras anteriores (5.4 / 11.3 / 21.6 %, D-049) eran más altas por la carga de la máquina, no por el código.
 - Para bajar más habría que procesar las voces en paralelo con SIMD. Es un cambio de arquitectura que queda como opción para después.
 
+
+## D-053 · IMPERIAL se trababa: el guilloché se dibujaba en cada refresco (2026-10-23)
+El usuario notó que AUGUR "se traba" en IMPERIAL. Medido con `augur_preset_audit --paint-bench [escala]`, que mide cuánto tarda en pintarse el editor en cada skin: la ventana entera y los pequeños refrescos que el temporizador de 30 Hz hace todo el tiempo (una perilla, las ruedas y LEDs, el horizonte).
+- **Causa:** el guilloché de IMPERIAL (240 rayos y unos 70 anillos que cruzan la ventana) se volvía a trazar en cada refresco, aunque solo cambiara una perilla. Repintar una perilla costaba **289 ms**, contra 7 ms en LIGHT y NEON: unas 40 veces más.
+- **Corrección:**
+  - El guilloché se dibuja **una vez** en una máscara de un canal, a la densidad de píxeles de la pantalla, y luego solo se copia.
+  - La máscara se dibuja con el renderizador de software (8 veces más rápido que Direct2D para cientos de figuras finas: 20 contra 185 ms) y se guarda como imagen nativa, para que la tarjeta gráfica la conserve. Si se guarda como imagen de software, JUCE la vuelve a subir a la GPU en cada dibujo.
+  - Rayos y anillos se rellenan como figuras en lugar de trazarse como líneas, y solo llegan hasta la esquina más lejana.
+  - La máscara se rehace solo cuando cambia la densidad de píxeles en pasos de 1/8, así que al redimensionar la ventana se rehace pocas veces.
+  - Para los tres skins: una página vuelve a dibujar sus tarjetas en cada refresco; ahora se salta las que quedan fuera de la zona que se repinta.
+- **Después** (repintar una perilla):
+
+| Ventana | LIGHT | NEON | IMPERIAL antes | IMPERIAL ahora |
+|---|---|---|---|---|
+| 100 % | 7.2 ms | 7.2 ms | 289 ms | 7.4 ms |
+| 200 % | 16.0 ms | 18.7 ms | — | 15.9 ms |
+
+  - El primer pintado al pasar a IMPERIAL, que construye la máscara, tarda 108 ms a 100 %, contra 95 ms de LIGHT.
+  - Las cifras de la prueba incluyen unos 5 ms fijos de crear el contexto gráfico en cada medición.
+- **Comprobaciones:**
+  - LIGHT y NEON quedan idénticos píxel a píxel a las capturas de `docs/skins/`.
+  - En IMPERIAL el guilloché varía hasta 7/255, por el cambio de renderizador; las capturas se actualizaron.
+  - `--check-skins` ignora diferencias de hasta 12/255 por canal: después de dibujar la máscara de IMPERIAL, Direct2D redondea distinto un píxel del borde de una curva gris (7/255). Un color pegado de otro skin cambiaría miles de píxeles por mucho más.
+
+## D-054 · Versión 1.5.0, la definitiva (2026-10-26)
+Incluye D-048 a D-053: pitch bend exacto, cambios de sonido sin clics, filtro de guarda antes de DRIVE, skins LIGHT / NEON / IMPERIAL y el pintado eficiente de IMPERIAL.
+- **Packs.** El filtro de guarda cambia un poco los picos de los sonidos con DRIVE. Con `--chord-headroom`, que baja solo lo que se pasa más 0.05 dB y vuelve a medir:
+  - SUN ATLAS: 18 de 600 sonidos de acordes bajaron entre 0.3 y 0.9 dB;
+  - Anthology Vol.1: 8 de 272;
+  - ninguno queda por encima de −1 dBFS tocado como acorde;
+  - zips regenerados en `packs/dist`.
+- **Recurso de versión de Windows.** Las propiedades de archivo del VST3 y de la aplicación decían 1.1.0 desde la 1.1: JUCE genera `*_resources.rc` una vez y no lo regenera al cambiar `project(VERSION)`. El código sí tenía la versión correcta (`JucePlugin_VersionString`). Al subir de versión hay que borrar `build/<preset>/plugin/*_artefacts/JuceLibraryCode/*_resources.rc`. La CI compila desde cero y no tiene el problema.
+- **Comprobaciones:**
+  - 83 tests y pluginval estricto; desde D-055, pluginval también termina solo (28 s);
+  - auditoría de fábrica: 170 sonidos, 0 fuera de rango;
+  - `--check-migration` y `--check-skins`;
+  - `--check-preset-clicks`: 0 clics, las 4 notas siguen sonando.
+- **CPU** (`augur_render --bench 10 --voices 5 --sr 48000`, tres corridas, 2026-10-27): ECO 5.3 %, GREAT 11.0 %, DIVINE 21.3 %. El DSP no cambió desde D-052 (5.0 / 10.4 / 20.0 %). La diferencia viene de la carga de la máquina, que estaba entre 14 y 26 % durante la medición.
+
+## D-055 · pluginval se colgaba al cerrar: la máscara de IMPERIAL vivía más que JUCE (2026-10-27)
+pluginval pasaba todas las pruebas de la 1.5.0, pero el proceso no terminaba: se quedaba gastando un núcleo entero.
+- **Causa:** la máscara del guilloché (D-053) se guardaba en una variable `static`. Es una imagen nativa de Direct2D, y se liberaba al final del proceso, cuando JUCE ya había apagado Direct2D. Esa liberación tardía colgaba el proceso. En un DAW podía pasar lo mismo al descargar el plugin o cerrar el proyecto.
+- **Corrección:** la máscara pertenece a cada ventana del plugin (`DeskPatternCache`, miembro del editor) y se libera con ella, mientras JUCE sigue vivo. Cada ventana abierta dibuja su propia máscara una vez.
+- **Comprobaciones:**
+  - IMPERIAL sigue igual de rápido: repintar una perilla tarda 6.7 ms, contra 5.6 ms en LIGHT;
+  - `--check-skins` pasa.

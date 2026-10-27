@@ -1064,15 +1064,21 @@ int checkSkins()
     b->showTab (4);     // FX
 
     const auto shot = [] (juce::Component& c) { return c.createComponentSnapshot (c.getLocalBounds(), true, 1.0f); };
-    // Pixels that differ, outside the horizon (it is animated: its sky and ridges move with time).
-    const auto differing = [] (const juce::Image& x, const juce::Image& y) {
+    // Pixels that differ, outside the horizon (it is animated: its sky and ridges move with time). A colour left behind
+    // by a dark skin changes a pixel by far more than 12/255; less is anti-aliasing (Direct2D's caches can round an
+    // edge pixel of a curve differently once IMPERIAL's mask has been drawn: seen once, 7/255).
+    const auto differs = [] (juce::Colour p, juce::Colour q) {
+        return std::abs (p.getRed() - q.getRed()) > 12 || std::abs (p.getGreen() - q.getGreen()) > 12
+               || std::abs (p.getBlue() - q.getBlue()) > 12 || std::abs (p.getAlpha() - q.getAlpha()) > 12;
+    };
+    const auto differing = [&differs] (const juce::Image& x, const juce::Image& y) {
         if (x.getBounds() != y.getBounds())
             return -1;
         const juce::Rectangle<int> horizon (388, 778, 760, 186);
         int n = 0;
         for (int py = 0; py < x.getHeight(); ++py)
             for (int px = 0; px < x.getWidth(); ++px)
-                if (! horizon.contains (px, py) && x.getPixelAt (px, py) != y.getPixelAt (px, py))
+                if (! horizon.contains (px, py) && differs (x.getPixelAt (px, py), y.getPixelAt (px, py)))
                     ++n;
         return n;
     };
@@ -1123,10 +1129,12 @@ int checkSkins()
                 juce::Rectangle<int> where;
                 for (int py = 0; py < after->getHeight(); ++py)
                     for (int px = 0; px < after->getWidth(); ++px)
-                        if (! juce::Rectangle<int> (388, 778, 760, 186).contains (px, py) && before->getPixelAt (px, py) != after->getPixelAt (px, py))
+                        if (! juce::Rectangle<int> (388, 778, 760, 186).contains (px, py) && differs (before->getPixelAt (px, py), after->getPixelAt (px, py)))
                             where = where.isEmpty() ? juce::Rectangle<int> (px, py, 1, 1) : where.getUnion ({ px, py, 1, 1 });
                 if (! where.isEmpty())
-                    std::printf ("    differing area x %d..%d  y %d..%d\n", where.getX(), where.getRight(), where.getY(), where.getBottom());
+                    std::printf ("    differing area x %d..%d  y %d..%d  (first pixel %s before, %s after)\n", where.getX(), where.getRight(),
+                                 where.getY(), where.getBottom(), before->getPixelAt (where.getX(), where.getY()).toDisplayString (true).toRawUTF8(),
+                                 after->getPixelAt (where.getX(), where.getY()).toDisplayString (true).toRawUTF8());
             }
         }
         else
@@ -1145,6 +1153,50 @@ int checkSkins()
         settings.deleteFile();
     std::printf ("%s\n", failures == 0 ? "skins: all checks passed" : "skins: FAILURES");
     return failures == 0 ? 0 : 1;
+}
+
+// --paint-bench [scale]: how long the editor takes to paint in each skin, at a window scale (default 1.0): the whole
+// window, and the small repaints the 30 Hz timer makes all the time (a knob, the wheels and LEDs, the horizon).
+int paintBench (float scale)
+{
+    const juce::Rectangle<int> regions[] { { 0, 0, 1536, 1024 }, { 620, 170, 60, 60 }, { 70, 790, 300, 140 }, { 388, 778, 760, 186 } };
+    const char* regionNames[] { "whole window", "one knob", "wheels and LEDs", "horizon" };
+    for (int skin = 0; skin < augur5::ui::numSkins; ++skin)
+    {
+        Augur5Editor::previewSkin (skin);
+        std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+        base->setPlayConfigDetails (0, 2, 48000.0, 256);
+        base->prepareToPlay (48000.0, 256);
+        auto* editor = dynamic_cast<Augur5Editor*> (base->createEditorIfNeeded());
+        editor->setScaleFactor (1.0f);
+        editor->setScale (scale);
+        juce::Image image (juce::Image::ARGB, editor->getWidth(), editor->getHeight(), true);
+        std::printf ("%-9s", augur5::ui::skinName (static_cast<augur5::ui::Skin> (skin)));
+        {
+            const auto start = juce::Time::getHighResolutionTicks();
+            juce::Graphics g (image);
+            editor->paintEntireComponent (g, true);
+            std::printf ("   first paint %6.1f ms", juce::Time::highResolutionTicksToSeconds (juce::Time::getHighResolutionTicks() - start) * 1000.0);
+        }
+        for (size_t r = 0; r < std::size (regions); ++r)
+        {
+            const auto area = (regions[r].toFloat() * scale).getSmallestIntegerContainer();
+            const int runs = r == 0 ? 10 : 60;
+            const auto start = juce::Time::getHighResolutionTicks();
+            for (int i = 0; i < runs; ++i)
+            {
+                juce::Graphics g (image);
+                g.reduceClipRegion (area);
+                editor->paintEntireComponent (g, true);
+            }
+            const double ms = juce::Time::highResolutionTicksToSeconds (juce::Time::getHighResolutionTicks() - start) * 1000.0 / runs;
+            std::printf ("   %s %6.2f ms", regionNames[r], ms);
+        }
+        std::printf ("\n");
+        base->editorBeingDeleted (editor);
+        delete editor;
+    }
+    return 0;
 }
 
 int main (int argc, char** argv)
@@ -1185,6 +1237,8 @@ int main (int argc, char** argv)
         return checkAuguryGui();
     if (argc >= 2 && std::strcmp (argv[1], "--check-skins") == 0)
         return checkSkins();
+    if (argc >= 2 && std::strcmp (argv[1], "--paint-bench") == 0)
+        return paintBench (argc >= 3 ? static_cast<float> (std::atof (argv[2])) : 1.0f);
     if (argc >= 3 && (std::strcmp (argv[1], "--install-pack") == 0 || std::strcmp (argv[1], "--import-folder") == 0))
     {
         // Same code paths as the browser's "Install expansion pack" / "Add presets folder".
