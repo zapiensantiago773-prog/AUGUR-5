@@ -785,3 +785,25 @@ pluginval pasaba todas las pruebas de la 1.5.0, pero el proceso no terminaba: se
 - **Comprobaciones:**
   - IMPERIAL sigue igual de rápido: repintar una perilla tarda 6.7 ms, contra 5.6 ms en LIGHT;
   - `--check-skins` pasa.
+
+## D-056 · AUSPICE: librería de melodic & progressive house (2026-10-27)
+155 sonidos escritos uno por uno, cada uno con su receta y su nombre: BASS 20, ARP 15, PLUCK 15, LEAD 15, PAD 15, KEYS 15, BRASS 15, TEXTURE 15, DRONE 15, FX 15. Generador `tools/pack/make_auspice.py`; resultado `packs/AUSPICE`; zip en `packs/dist`; mediciones en `docs/pack_auspice.md`. No entra en los instaladores (lo pidió el usuario).
+- **Bajos, medidos** con `tools/pack/bass_metrics.py` sobre el patrón rodante en A1 (medianas):
+
+| | SUB 30–90 Hz | BODY 90–300 | BITE 300–2k | SMALL > 150 | PUNCH | EVEN |
+|---|---|---|---|---|---|---|
+| SUN ATLAS (120) | 66 % | 25 % | 3 % | 14 % | 6.9 dB | 3.7 dB |
+| AUSPICE (20) | 50 % | 37 % | 11 % | 23 % | 8.0 dB | 1.3 dB |
+
+  - Todos mono (estéreo bajo 150 Hz 0.002) y con el fundamental en la nota tocada; de E1 a G2 el nivel cambia 1.4 dB como máximo.
+- **Lo que enseñó la medición:**
+  - Una saw sin filtro en A1 tiene 61 % de SUB y 24 % de SMALL: con saws al tono de la nota, el SUB no baja de ahí aunque se abra el filtro. El cuerpo y la mordida vienen de una capa una octava arriba o de saturar. La meta de SMALL bajó de 25 a 18 %: 25 % pedía bajos más brillantes que una saw abierta, finos y no gordos.
+  - El DRIVE del rack va después del bloqueador de DC del motor: TUBE y DIODE, asimétricos, dejan DC en un bajo; TAPE deja ~2 s de cola de ruido. En los bajos la saturación va en el mixer, antes del filtro.
+  - El PUNCH lo da el VCA (que caiga del pico a un sustain menor), no el envolvente del filtro.
+  - Un compresor rápido con mucho makeup no doma el pico de un stab: tras un silencio el detector arranca descargado y los primeros milisegundos pasan con todo el makeup (+8.5 dB en el primer acorde de Sunday Stab). En los stabs de acordes el nivel se resolvió con sustain y decay, sin compresor.
+  - La huella tímbrica empieza en 60 Hz: no ve el fundamental de un bajo en A1. Gemelos: cada sonido a ≥ 1.5 de su vecino más cercano; en BASS ≥ 1.1 (todos tocan el mismo patrón mono). Mediana de la librería 2.80; en SUN ATLAS, el 10 % de los bajos queda bajo 0.55.
+- **Comprobaciones:**
+  - nivel −17.0 … −15.9 dB (mediana −16.0), picos ≤ −0.9 dBFS;
+  - los 87 sonidos de acordes no pasan de −1 dBFS tocados como acorde (`--chord-headroom --check`);
+  - la librería en orden inverso: 0.00 dB de diferencia;
+  - nombres únicos, sin marcas ni artistas, ninguno repetido de SUN ATLAS ni de Anthology.
