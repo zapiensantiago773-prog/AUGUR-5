@@ -20,6 +20,9 @@ void FxRack::prepare (double sampleRate, std::uint64_t seed)
     springTank.prepare (sampleRate, seed ^ 0x55u);
     comp.prepare (sampleRate);
     springMixS.prepare (sampleRate, 0.02);
+    echoSpringS.prepare (sampleRate, 0.02);
+    echoSpringBass.prepare (sampleRate);
+    tankBass.prepare (sampleRate);
     fade.fill (0.0);
     fadeStep = 1.0 / (0.01 * sampleRate);
 }
@@ -40,8 +43,8 @@ void FxRack::resetOne (FxId id) noexcept
         case FxId::phaser: phaser.reset(); break;
         case FxId::flanger: flanger.reset(); break;
         case FxId::delay: delay.reset(); break;
-        case FxId::echo: echo.reset(); echoSpring.reset(); break;
-        case FxId::reverb: reverb.reset(); springTank.reset(); break;
+        case FxId::echo: echo.reset(); echoSpring.reset(); echoSpringBass.reset(); break;
+        case FxId::reverb: reverb.reset(); springTank.reset(); tankBass.reset(); break;
         case FxId::comp: comp.reset(); break;
         case FxId::count: break;
     }
@@ -99,12 +102,14 @@ void FxRack::runOne (FxId id, double& l, double& r, const FxParams& p, double bp
                 echo.process (l, r, q);
             }
             // The unit's spring tank hears the input and the echoes (selector positions 5..12).
-            if (p.echoSpring > 0.0)
+            const double springLevel = echoSpringS.next (std::clamp (p.echoSpring, 0.0, 1.0));
+            if (springLevel > 1.0e-6)
             {
                 double wr = 0.0;
-                const double wl = springWet (echoSpring, l, r, 2.6, 0.5, wr);
-                l += p.echoSpring * wl;
-                r += p.echoSpring * wr;
+                double wl = springWet (echoSpring, l, r, 2.6, 0.5, wr);
+                echoSpringBass.process (wl, wr);
+                l += springLevel * wl;
+                r += springLevel * wr;
             }
             break;
         }
@@ -118,7 +123,8 @@ void FxRack::runOne (FxId id, double& l, double& r, const FxParams& p, double bp
             // SPRING: AUGUR's three-spring tank. SIZE sets the tension, DECAY its RT60; same equal-power MIX as the rack.
             const double tension = std::clamp ((p.reverb.size - 0.3) / 1.7, 0.0, 1.0);
             double wr = 0.0;
-            const double wl = springWet (springTank, l, r, std::clamp (p.reverb.decayS, 0.3, 6.0), tension, wr);
+            double wl = springWet (springTank, l, r, std::clamp (p.reverb.decayS, 0.3, 6.0), tension, wr);
+            tankBass.process (wl, wr);
             const double mix = springMixS.next (std::clamp (p.reverb.mix, 0.0, 1.0));
             const double gd = std::cos (0.5 * pi * mix), gw = std::sin (0.5 * pi * mix);
             l = gd * l + gw * 1.6 * wl;
@@ -133,6 +139,8 @@ void FxRack::runOne (FxId id, double& l, double& r, const FxParams& p, double bp
 void FxRack::process (double& left, double& right, const FxParams& p, double bpm) noexcept
 {
     bpm = std::clamp (bpm, 20.0, 999.0);
+    if (! std::isfinite (left) || ! std::isfinite (right))
+        left = right = 0.0; // never let a bad sample into the delay lines
     for (int slot = 0; slot < fxCount; ++slot)
     {
         const int idx = std::clamp (p.order[static_cast<size_t> (slot)], 0, fxCount - 1);
@@ -148,6 +156,11 @@ void FxRack::process (double& left, double& right, const FxParams& p, double bpm
         runOne (id, l, r, p, bpm);
         left += f * (l - left);
         right += f * (r - right);
+    }
+    if (! std::isfinite (left) || ! std::isfinite (right))
+    {
+        reset();
+        left = right = 0.0;
     }
 }
 

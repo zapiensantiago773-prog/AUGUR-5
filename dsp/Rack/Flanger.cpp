@@ -19,6 +19,7 @@ void Flanger::prepare (double sampleRate)
     mixS.prepare (sr, 0.02);
     fbS.prepare (sr, 0.02);
     depthS.prepare (sr, 0.05);
+    spreadS.prepare (sr, 0.05);
     manualS.prepare (sr, 0.05);
     manualS.snap (2.0);
     reset();
@@ -44,7 +45,7 @@ void Flanger::process (double& left, double& right, const FlangerParams& p) noex
     const double manual = manualS.next (std::clamp (p.manualMs, 0.1, 10.0));
     phase += std::clamp (p.rateHz, 0.005, 20.0) / sr;
     phase -= std::floor (phase);
-    const double off = std::clamp (p.spreadDeg, 0.0, 180.0) / 360.0;
+    const double off = spreadS.next (std::clamp (p.spreadDeg, 0.0, 180.0)) / 360.0;
 
     double io[2] { left, right };
     for (int c = 0; c < 2; ++c)

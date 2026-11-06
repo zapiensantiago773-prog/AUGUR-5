@@ -86,10 +86,15 @@ TEST_CASE ("Ping-pong delay alternates sides", "[fx][delay]")
     std::fill (r.begin(), r.end(), 0.0f);
     l[0] = r[0] = 1.0f;
     d.process (l.data(), r.data(), n, 0.1f, 0.6f, 1.0f, true);
+    // Energy of the first difference (a gentle high-pass): the repeats alternate sides above stereoBassHz, while
+    // their bass comes out in the middle (D-057).
     const auto energy = [&] (const std::vector<float>& x, int from, int to) {
         double e = 0.0;
         for (int i = from; i < to; ++i)
-            e += static_cast<double> (x[static_cast<size_t> (i)]) * x[static_cast<size_t> (i)];
+        {
+            const double d = static_cast<double> (x[static_cast<size_t> (i)]) - x[static_cast<size_t> (i - 1)];
+            e += d * d;
+        }
         return e;
     };
     // First repeat (100 ms): left only; second: right only.

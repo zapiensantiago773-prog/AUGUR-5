@@ -30,7 +30,7 @@
     <P id="voice_detune" value="0.7786999940872192"/>
     <P id="voice_mode" value="1.0"/>
     <P id="voice_spread" value="0.9376999735832214"/>
-    <P id="amp_level" value="-2.3"/>
+    <P id="amp_level" value="-2.63"/>
     <P id="fx_phaser_on" value="1.0"/>
     <P id="fx_phaser_stages" value="1.0"/>
     <P id="fx_phaser_rate" value="0.08160000294446945"/>

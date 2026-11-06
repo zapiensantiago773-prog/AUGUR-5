@@ -196,7 +196,7 @@ std::vector<FactoryPreset> buildBank()
             { "voice_spread", 0.8f }, { "voice_detune", 0.4f }, { "analog_age", 0.5f },
             { "chorus_on", 1.0f }, { "chorus_mix", 0.45f },
             { "reverb_on", 1.0f }, { "reverb_size", 0.85f }, { "reverb_decay", 8.0f }, { "reverb_mix", 0.45f },
-            { "mm4_dst", 4.0f }, { "mm4_amt", 0.3f }, { "amp_level", -3.5f } }, "Pad" },
+            { "mm4_dst", 4.0f }, { "mm4_amt", 0.3f }, { "amp_level", -3.1f } }, "Pad" },
 
         { "Nightfall Strings", {
             { "osc1_saw", 0.0f }, { "osc1_pulse", 1.0f }, { "osc1_pw", 35.0f }, { "osc2_freq", 12.0f }, { "osc2_fine", 4.0f },

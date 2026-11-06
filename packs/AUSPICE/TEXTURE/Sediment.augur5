@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <AUGUR5_PRESET formatVersion="1" name="Sediment">
-  <META role="pad" note="57" pack="AUSPICE" category="TEXTURE" family="DEEP" kind="flutter" author="TONAL LAB"/>
+  <META role="pad" note="57" pack="AUSPICE" category="TEXTURE" family="DEEP"
+        kind="flutter" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.6"/>
     <P id="aenv_d" value="4"/>
     <P id="aenv_r" value="3.5"/>
     <P id="aenv_s" value="0.85"/>
-    <P id="amp_level" value="-4.6"/>
+    <P id="amp_level" value="-4.9"/>
     <P id="amp_velocity" value="0.4"/>
     <P id="analog_age" value="0.3"/>
     <P id="at_amount" value="0.2"/>

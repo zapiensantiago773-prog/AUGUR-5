@@ -2,6 +2,7 @@
 
 #include "Rack/FxCommon.h"
 #include "Rack/RackRng.h"
+#include "Util/Lr4.h"
 
 #include <array>
 #include <cstdint>
@@ -30,7 +31,10 @@ struct ChorusParams
 };
 
 // Bucket-brigade choruses of three classic machines. Each delay line is a BBD model: clock-tracking
-// anti-alias / reconstruction low-passes, a soft compander limit and a little hiss.
+// anti-alias / reconstruction low-passes, a soft compander limit and a little hiss. The lines sweep in opposite
+// directions, so their bass came out of phase left against right: the wet's side loses its bass below stereoBassHz
+// (MonoBass) and the wet's bass comes out in the middle, while the dry is not touched at all (D-057). Feeding the
+// unit a high-passed input instead (the bass going around it) changed its sound by 2-4 dB in 250 Hz .. 1 kHz.
 class Chorus
 {
 public:
@@ -53,7 +57,8 @@ private:
     std::array<Bbd, 3> bbd;
     double phase = 0.0, vibPhase = 0.0;
     OnePole crossHpL, crossHpR, bassL, bassR;
-    Smooth mixS, depthS, widthS, rateS;
+    Smooth mixS, depthS, widthS, rateS, toneS;
+    MonoBass monoBass;
     ChorusMode lastMode = ChorusMode::juno1;
 };
 

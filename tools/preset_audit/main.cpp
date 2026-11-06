@@ -553,6 +553,143 @@ int packAudit (const juce::File& folder, const juce::File& wavDir, bool dryFinge
     return 0;
 }
 
+// --stereo-report <folder | factory>: the bass phase and the spectrum above it, per preset, for an A/B of a change
+// that must keep the lows in phase and leave the rest alone. Each preset is played as its role on a fresh engine and
+// the whole output (notes and tail) is measured from one FFT per channel. CSV on stdout:
+//   bassdb           the 20..120 Hz band, dB re the whole output
+//   corr, mono, bal  that band's L/R correlation, the loss of a mono sum (dB) and the L/R balance (dB)
+//   loud             the loudest 400 ms (the packs' level)
+//   L, R             per-channel level in the third-octave bands 160 Hz .. 16 kHz (dB), '|' separated
+int stereoReport (const juce::String& what)
+{
+    constexpr double sr = 48000.0;
+    constexpr int block = 256;
+    std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+    auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+    proc.setPlayConfigDetails (0, 2, sr, block);
+    proc.prepareToPlay (sr, block);
+    auto& presets = proc.getPresets();
+
+    struct Item
+    {
+        juce::String name, role;
+        int root = 60;
+        int factory = -1;
+        juce::File file;
+    };
+    std::vector<Item> items;
+    const auto folder = juce::File::getCurrentWorkingDirectory().getChildFile (what);
+    if (what == "factory")
+    {
+        for (int i = 0; i < presets.getNumFactoryPresets(); ++i)
+        {
+            const auto category = presets.getFactoryCategory (i), name = presets.getFactoryName (i);
+            if (category == "Drums" || name == "Init")
+                continue;
+            const auto role = factoryRole (category, name);
+            items.push_back ({ category + "/" + name, role, role == "bass" ? 36 : 60, i, {} });
+        }
+    }
+    else
+    {
+        auto files = folder.findChildFiles (juce::File::findFiles, true, "*.augur5");
+        files.sort();
+        for (const auto& f : files)
+        {
+            auto xml = juce::XmlDocument::parse (f);
+            if (xml == nullptr)
+                continue;
+            Item it { f.getRelativePathFrom (folder).replaceCharacter ('\\', '/'), "pad", 60, -1, f };
+            if (auto* meta = xml->getChildByName ("META"))
+            {
+                it.role = meta->getStringAttribute ("role", it.role);
+                it.root = meta->getIntAttribute ("note", it.root);
+            }
+            else
+            {
+                // Expansion packs without META: the category from the file's prefix, as their browser shows it.
+                const auto prefix = f.getFileName().substring (0, 2);
+                const char* roles[][2] { { "BA", "bass" }, { "LD", "lead" }, { "PD", "pad" }, { "PL", "pluck" }, { "CH", "keys" },
+                                         { "KY", "keys" }, { "AR", "arp" }, { "FX", "fx" }, { "DR", "bass" } };
+                for (const auto& r : roles)
+                    if (prefix == r[0])
+                        it.role = r[1];
+                it.root = it.role == "bass" ? 36 : 60;
+            }
+            items.push_back (it);
+        }
+    }
+
+    constexpr double bandCentres[] { 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000,
+                                     10000, 12500, 16000 };
+    std::printf ("path;role;loud;bassdb;corr;mono;bal;L;R\n");
+    for (const auto& it : items)
+    {
+        if (it.factory >= 0)
+            presets.loadFactory (it.factory);
+        else
+            presets.loadUser (it.file);
+        proc.prepareToPlay (sr, block); // fresh state: no tails from the previous sound
+        const double seconds = it.role == "pad" || it.role == "drone" || it.role == "fx" ? 8.0 : 6.0;
+        std::vector<float> L, R;
+        packaudit::renderRole (proc, it.role, it.root, seconds, L, R);
+
+        double loudest = 0.0;
+        const size_t win = static_cast<size_t> (0.4 * sr), hop = win / 4;
+        for (size_t s = 0; s + win <= L.size(); s += hop)
+        {
+            double acc = 0.0;
+            for (size_t i = s; i < s + win; ++i)
+                acc += 0.5 * (static_cast<double> (L[i]) * L[i] + static_cast<double> (R[i]) * R[i]);
+            loudest = std::max (loudest, acc / static_cast<double> (win));
+        }
+
+        size_t n = 1;
+        while (n < L.size())
+            n <<= 1;
+        std::vector<std::complex<double>> a (n), b (n);
+        for (size_t i = 0; i < L.size(); ++i)
+        {
+            a[i] = L[i];
+            b[i] = R[i];
+        }
+        packaudit::fft (a);
+        packaudit::fft (b);
+        double ll = 0.0, rr = 0.0, lr = 0.0, mm = 0.0, total = 0.0;
+        std::vector<double> bandL (std::size (bandCentres), 0.0), bandR (bandL.size(), 0.0);
+        for (size_t k = 1; k < n / 2; ++k)
+        {
+            const double f = static_cast<double> (k) * sr / static_cast<double> (n);
+            const double pl = std::norm (a[k]), pr = std::norm (b[k]);
+            total += 0.5 * (pl + pr);
+            if (f >= 20.0 && f <= 120.0)
+            {
+                ll += pl;
+                rr += pr;
+                lr += (a[k] * std::conj (b[k])).real();
+                mm += 0.25 * std::norm (a[k] + b[k]);
+            }
+            for (size_t j = 0; j < bandL.size(); ++j)
+                if (f >= bandCentres[j] * 0.8909 && f < bandCentres[j] * 1.1225)
+                {
+                    bandL[j] += pl;
+                    bandR[j] += pr;
+                }
+        }
+        const auto db = [] (double x) { return 10.0 * std::log10 (x + 1.0e-30); };
+        juce::String sl, srr;
+        for (size_t j = 0; j < bandL.size(); ++j)
+        {
+            sl << (j ? "|" : "") << juce::String (db (bandL[j]), 2);
+            srr << (j ? "|" : "") << juce::String (db (bandR[j]), 2);
+        }
+        std::printf ("%s;%s;%.2f;%.2f;%.4f;%.3f;%.2f;%s;%s\n", it.name.toRawUTF8(), it.role.toRawUTF8(), db (loudest), db (0.5 * (ll + rr)) - db (total),
+                     lr / std::sqrt (ll * rr + 1.0e-30), db (mm) - db (0.5 * (ll + rr)), db (ll) - db (rr), sl.toRawUTF8(), srr.toRawUTF8());
+        std::fflush (stdout);
+    }
+    return 0;
+}
+
 // --factory-wav <dir> [category]: every factory sound (or one category) played as its role in a track (the pack
 // phrases), written as <dir>/<CATEGORY>/<name>.wav for tools/compare.
 // --factory-loudness: the same measurement (loudest 400 ms, as the packs) as a report for tools/level_presets.py.
@@ -1216,6 +1353,8 @@ int main (int argc, char** argv)
         }
         return packAudit (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])), wavDir, dry);
     }
+    if (argc >= 3 && std::strcmp (argv[1], "--stereo-report") == 0)
+        return stereoReport (juce::String::fromUTF8 (argv[2]));
     if (argc >= 3 && std::strcmp (argv[1], "--logo") == 0)
         return exportLogo (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])));
     if (argc >= 2 && std::strcmp (argv[1], "--check-augury") == 0)

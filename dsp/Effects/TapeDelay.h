@@ -1,12 +1,16 @@
 #pragma once
 
+#include "Util/Lr4.h"
+
 #include <vector>
 
 namespace augur
 {
 
 // Stereo delay with a tape-like feedback path: band-limited (HP 90 Hz, LP 5.5 kHz), soft saturation
-// and slight cross-feed for width. Delay-time changes glide (pitch bend like tape) instead of clicking.
+// and slight cross-feed for width. Delay-time changes glide (pitch bend like tape) instead of clicking; MIX and
+// FEEDBACK glide over 20 ms (no zipper when automated). The repeats' bass comes out in the middle, the ping-pong and
+// the width stay above stereoBassHz (D-057).
 class TapeDelay
 {
 public:
@@ -30,6 +34,9 @@ private:
     float smoothedDelay = 0.0f, delayCoeff = 0.0f;
     float lpCoeff = 0.5f, hpCoeff = 0.01f;
     float lpL = 0.0f, lpR = 0.0f, hpL = 0.0f, hpR = 0.0f;
+    float mixNow = 0.0f, fbNow = 0.0f, paramCoeff = 1.0f;
+    bool paramsFresh = true; // after prepare / reset the first values are taken as they are
+    MonoBass monoBass;
 };
 
 } // namespace augur

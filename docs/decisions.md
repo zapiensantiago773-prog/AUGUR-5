@@ -807,3 +807,35 @@ pluginval pasaba todas las pruebas de la 1.5.0, pero el proceso no terminaba: se
   - los 87 sonidos de acordes no pasan de −1 dBFS tocados como acorde (`--chord-headroom --check`);
   - la librería en orden inverso: 0.00 dB de diferencia;
   - nombres únicos, sin marcas ni artistas, ninguno repetido de SUN ATLAS ni de Anthology.
+
+## D-057 · El grave en fase en los extras; fallos del rack (2026-11-06)
+Origen: `TAREA_MEJORAS_DESDE_MANTIS/TAREA.md`, medido desde MANTIS-37. Condiciones del usuario: la voz del Prophet no se toca (VCO, mixer, filtro, envolventes, poly-mod), solo los extras; por encima de 150 Hz el sonido no debe cambiar; "si no conviene, mejorar AUGUR"; "mantener la idea de la reconstrucción y mejora del Prophet".
+- **El problema** (banco `probe` de la tarea, banda 20–120 Hz): CHORUS ENSEMBLE con correlación 0.41 (−1.6 dB al sumar a mono), DIMENSION 0.59, PHASER 0.80, UNISON ×5 con VOICE SPREAD 1 0.47 (−1.4 dB); DELAY y TAPE ECHO desequilibraban el grave 2.5 dB. En los 1811 presets (fábrica, SUN ATLAS, Anthology, AUSPICE), 19 en contrafase real: correlación negativa o una pérdida en mono mayor que los 3 dB de la ley de paneo, hasta −6.1 dB.
+- **Lo que se hizo** (`dsp/Util/Lr4.h`: paso alto Linkwitz-Riley de 4.º orden a `stereoBassHz` = 150 Hz, aplicado al lado; el centro pasa intacto muestra a muestra):
+  - **CHORUS, DELAY, TAPE ECHO (y su muelle), REVERB, SPRING:** el lado de su wet pierde el grave; el grave del wet sale al centro, su estéreo sigue arriba y el seco no se toca. Con MIX 0, la entrada exacta.
+  - **UNISON y DUO:** el mismo paso alto en el lado del bus de voces, alineado con el PAN global (un sonido paneado a propósito conserva su grave donde está), con fundido de 20 ms al cambiar de modo. Tras un reinicio o un cambio de sonido arranca con el estado del sonido actual (una versión que heredaba el del anterior hizo fallar `--check-augury-gui`: corregido).
+  - **POLY, PHASER y FLANGER quedan como estaban.** Cada voz POLY es una fuente mono paneada en fase (correlación 1.00); el phaser y el flanger procesan cada canal por separado, con las voces paneadas dentro, y su grave pierde como mucho 0.84 dB en mono.
+- **Lo que se probó y se descartó** (medido sobre las unidades reales y en el A/B de todos los presets):
+  - La receta de MANTIS, (x − hp(x)) + E(hp(x)): x − hp(x) no es grave (+2.5 dB a 300 Hz). Cambiaba el chorus 2–4 dB en 250 Hz–1 kHz (394 presets movidos de nivel) y rellenaba las muescas del phaser por debajo de 2 kHz.
+  - Un divisor LR4 completo (pasa-bajos + E(pasa-altos)): el seco pasaba por un pasa-todo, giraba la fase de los armónicos graves de la sierra y subía los picos hasta 4.7 dB en acordes de plucks. Contra la forma de onda del instrumento.
+  - El paso alto en el lado para las voces POLY y para el phaser: giraba la fase del lado hasta ~1 kHz y casi borraba el paneo de una voz en C4 (+4.2 → +1.0 dB de balance); en los 141 presets con phaser cambiaba 2 dB por canal en 315–630 Hz.
+  - El divisor en el wet de delay, eco y reverb: su pasa-todo cambiaba cómo se suman ecos y cola con una nota sostenida (574 presets movidos, uno +5.9 dB).
+- **Medido después** (A/B de los 1811 presets; `tools/pack/stereo_ab.py`):
+  - `probe`: CHORUS (todos los modos), DELAY, TAPE ECHO, REVERB y SPRING con correlación 1.00 y 0.00 dB en mono; UNISON ×5 con SPREAD 1, de 0.47 a 1.00. PHASER y FLANGER, como antes.
+  - Contrafase real: de 19 a 8; peor pérdida en mono, de −6.1 a −4.3 dB. Las que quedan son voces POLY casi en un extremo (SPREAD 0.75–0.9) bajo un chorus o un phaser: el peine propio del efecto en el grave contra una voz paneada.
+  - Por encima del grave, cambio por canal en tercios de octava (mediana / 95 %, en 315–630 Hz): presets sin efectos 0.00 / 0.03 dB (idénticos); solo chorus 0.30 / 2.1; solo delay 0.20 / 1.2; solo reverb 0.89 / 3.0; solo eco 1.15 / 3.3. En reverb y eco es el reparto L↔R del wet (su lado gira de fase); su nivel no se mueve (mediana 0.01–0.04 dB).
+- **Sub-oscilador** (revisado; ahora con test): cambia exactamente en los resets del OSC A, 125 resets por nota, tres notas, una y dos octavas abajo, sin un cambio fuera de lugar.
+- **Fallos del rack encontrados y corregidos:**
+  - DRIVE dejaba DC (TUBE; DIODE y FOLD con BIAS; TAPE sin polarizar): el código decía "DC removed later" y no se quitaba en ningún lado. Ahora el condensador de salida, a 5 Hz: DC a −240 dB.
+  - DRIVE CRUSH con MIX parcial: su seco iba retrasado 52.5 muestras (la latencia de los modelos sobremuestreados, que CRUSH no usa): un filtro peine (muescas en 457 Hz, 1371 Hz…) que restaba 2–4 dB a 53 presets.
+  - DELAY sin suavizado de MIX y FEEDBACK (zipper al automatizarlos): ahora 20 ms. También se suavizan el SPRING del eco, el PREDELAY del reverb (saltaba la lectura: un clic), su LOW CUT, BASS y TREBLE del eco, el SPREAD de phaser y flanger y el TONE del chorus.
+  - Un NaN o un infinito ya no entra al rack; si una unidad lo produjera, el rack se limpia en vez de dejarlo circulando en ecos y colas.
+- **Re-nivelado** (`tools/pack/relevel_moved.py`):
+  - los 181 presets de los packs que se movieron más de 0.3 dB vuelven a su nivel exacto (casi todos con CRUSH, que ahora suena entero); los 85 que subieron quedan con picos por debajo de −1.28 dBFS;
+  - fábrica: Afterglow Pad −3.5 → −3.1 y Melancholia Fuzz Pad 2.2 → 1.8. Deep Space Drone queda +0.4 dB, más cerca de −16 dB (estaba por debajo con LEVEL al máximo);
+  - headroom de acordes: 9 de SUN ATLAS, 8 de Anthology y 1 de AUSPICE bajan lo justo para no pasar de −1 dBFS;
+  - resultado: solo 15 presets quedan a más de 0.3 dB de su nivel anterior (esos 18 bajados y Deep Space Drone).
+- **CPU:** sin cambio medible (`augur_render --bench`, el DSP anterior y el nuevo medidos alternados: ECO 5.5–5.9 / 5.6–6.1 %, GREAT 11.5–12.2 / 11.8–12.5 %, DIVINE 21.8–23.5 / 22.2–22.8 %; la máquina estaba más cargada que en D-052).
+- **Comprobaciones:** 93 tests (10 nuevos en `tests/test_bass_phase.cpp`; el del ping-pong mide ahora por encima del corte), pluginval estricto, auditoría de fábrica, `--check-migration`, `--check-augury`, `--check-augury-gui`, `--check-skins`, `--check-preset-clicks` y `--chord-headroom --check` en los tres packs.
+- **Herramientas nuevas:** `augur_preset_audit --stereo-report`, `tools/pack/stereo_ab.py`, `tools/pack/relevel_moved.py`.
+- **No hecho:** el §5 de la tarea (ajustar etapas a grabaciones del original) espera una grabación libre del instrumento; el WAV de la raíz del repositorio es de otro sintetizador. La versión la decide el usuario: los instaladores 1.5.0 no lo incluyen.

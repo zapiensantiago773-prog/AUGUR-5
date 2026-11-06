@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <AUGUR5_PRESET formatVersion="1" name="Steel Harp">
-  <META role="pluck" note="60" pack="SUN ATLAS" category="PLUCK" family="TECHNO" kind="classic" author="TONAL LAB"/>
+  <META role="pluck" note="60" pack="SUN ATLAS" category="PLUCK" family="TECHNO"
+        kind="classic" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="0.001"/>
     <P id="aenv_d" value="1.8162"/>
     <P id="aenv_r" value="1.0928"/>
     <P id="aenv_s" value="0"/>
-    <P id="amp_level" value="4.92"/>
+    <P id="amp_level" value="4.8"/>
     <P id="amp_velocity" value="0.5133"/>
     <P id="analog_age" value="0.46057"/>
     <P id="at_amount" value="0.15951"/>

@@ -68,7 +68,9 @@ struct FxParams
 };
 
 // Each unit fades in / out over 10 ms when switched, costs nothing while off, and starts from silence when
-// switched back on. The order of the units is free (FxParams::order).
+// switched back on. The order of the units is free (FxParams::order). Below stereoBassHz every unit keeps the bass
+// mono and in phase (D-057). A non-finite sample (which no unit should ever make) clears the rack instead of
+// circulating in the delay lines and tails for ever.
 class FxRack
 {
 public:
@@ -97,7 +99,8 @@ private:
     Reverb reverb;
     SpringReverb springTank;
     BusComp comp;
-    Smooth springMixS;
+    MonoBass echoSpringBass, tankBass;
+    Smooth springMixS, echoSpringS;
     std::array<double, fxCount> fade {};
     double fadeStep = 0.001;
 };

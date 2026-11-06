@@ -34,7 +34,7 @@
     <P id="osc1_saw" value="0.0"/>
     <P id="osc2_fine" value="6.601600170135498"/>
     <P id="voice_spread" value="0.8999999761581421"/>
-    <P id="amp_level" value="2.8"/>
+    <P id="amp_level" value="3.77"/>
     <P id="fx_reverb_on" value="1.0"/>
     <P id="fx_reverb_type" value="2.0"/>
     <P id="fx_reverb_size" value="1.5"/>

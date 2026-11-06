@@ -116,6 +116,7 @@ void Drive::prepare (double sampleRate)
         dryDelay[static_cast<size_t> (c)].prepare (256);
         preHp[static_cast<size_t> (c)].setCutoff (15.0, osRate);
         diodeHp[static_cast<size_t> (c)].setCutoff (720.0, osRate); // TS: 4.7 k + 47 nF in the feedback leg
+        dcBlock[static_cast<size_t> (c)].setCutoff (5.0, sr);
     }
     // Latency of up(A) + down(A) (2x rate) and up(B) + down(B) (4x rate), in host samples.
     dryLatency = upA[0].latency() + upB[0].latency() / 2.0;
@@ -142,6 +143,7 @@ void Drive::reset() noexcept
         preHp[static_cast<size_t> (c)].reset();
         toneLp[static_cast<size_t> (c)].reset();
         diodeHp[static_cast<size_t> (c)].reset();
+        dcBlock[static_cast<size_t> (c)].reset();
         tapeM[static_cast<size_t> (c)] = tapeH[static_cast<size_t> (c)] = 0.0;
         crushHold[static_cast<size_t> (c)] = crushPhase[static_cast<size_t> (c)] = 0.0;
     }
@@ -151,7 +153,7 @@ double Drive::tube (double x, double bias) const noexcept
 {
     const double vk = 1.5 - 0.9 * bias;       // cathode bias: BIAS moves the operating point (0.6 .. 2.4 V)
     const double vq = triode() (-vk);
-    return (vq - triode() (x - vk)) * tubeNorm; // inverting stage, re-inverted; DC removed later
+    return (vq - triode() (x - vk)) * tubeNorm; // inverting stage, re-inverted; the output's DC goes in dcBlock
 }
 
 // Clipping stage of the Tube Screamer: DRIVE is Rf, so the gain (1 + Rf/Ri) applies above 720 Hz only (series
@@ -283,8 +285,9 @@ void Drive::process (double& left, double& right, const DriveParams& p) noexcept
                 const double levels = std::exp2 (bits - 1.0);
                 crushHold[uc] = std::round (io[c] * levels) / levels;
             }
-            wet = crushHold[uc] * dbToGain (p.outputDb);
-            io[c] = dry + mix * (wet - dry);
+            // No oversampling here, so no latency: the dry is the input itself (the delayed one made a comb, 1.1 ms).
+            wet = dcBlock[uc].hp (crushHold[uc] * outGain);
+            io[c] += mix * (wet - io[c]);
             continue;
         }
         double a1, a2;
@@ -304,7 +307,7 @@ void Drive::process (double& left, double& right, const DriveParams& p) noexcept
             }
             outHalf[k] = downB[uc].down (quad[0], quad[1]);
         }
-        wet = downA[uc].down (outHalf[0], outHalf[1]) * outGain;
+        wet = dcBlock[uc].hp (downA[uc].down (outHalf[0], outHalf[1]) * outGain);
         io[c] = dry + mix * (wet - dry);
     }
     left = io[0];

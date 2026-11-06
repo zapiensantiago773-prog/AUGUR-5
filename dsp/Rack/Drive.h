@@ -48,6 +48,7 @@ private:
     double dryLatency = 0.0;
     DriveModel lastModel = DriveModel::tube;
     std::array<OnePole, 2> preHp, toneLp, diodeHp;
+    std::array<OnePole, 2> dcBlock; // the output coupling capacitor: asymmetric stages (TUBE, BIAS) leave DC
     std::array<double, 2> tapeM {}, tapeH {}, crushHold {}, crushPhase {};
     Smooth gainIn, gainOut, mixS, toneS, biasS;
     double tubeNorm = 1.0, stageGain = 1.0;

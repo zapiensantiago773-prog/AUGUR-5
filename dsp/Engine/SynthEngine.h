@@ -9,6 +9,7 @@
 #include "Modulation/WheelModNoise.h"
 #include "Util/Halfband.h"
 #include "Util/HalfbandFir.h"
+#include "Util/Lr4.h"
 #include "Util/Random.h"
 #include "Util/Smoother.h"
 #include "Voice/SynthVoice.h"
@@ -166,6 +167,16 @@ private:
     HalfbandDecimator decimL, decimR;
     HalfbandDownsampler<27> quadL, quadR; // DIVINE: 4x -> 2x before the main decimator
     float dcL = 0.0f, dcR = 0.0f, dcCoeff = 0.0f;
+    // UNISON and DUO stack detuned voices on one note across the stereo field: their beating differs left and right,
+    // so the bass decorrelates (correlation 0.47 and -1.4 dB in mono at VOICE SPREAD 1). There the voices' panning
+    // acts only above stereoBassHz and their bass sits where PAN puts the instrument (D-057). POLY voices are each
+    // a mono source panned in phase: they are left exactly as they are (a high-pass on the side there turned the
+    // side's phase up to ~1 kHz and narrowed every voice's pan). The axis follows PAN over 20 ms; the stage fades
+    // in and out over 20 ms when the mode changes.
+    MonoBass voiceBass;
+    double panAngle = 0.25 * 3.14159265358979, panAxisL = 0.70710678118654752, panAxisR = 0.70710678118654752, panCoeff = 1.0;
+    double stackBlend = 0.0, stackStep = 0.001;
+    bool outputStageFresh = true; // after prepare / reset the first block takes PAN and the mode as they are
     Random floorNoise;
     Fuzz fuzz;
     rack::FxRack rack;

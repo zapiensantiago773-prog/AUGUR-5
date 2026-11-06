@@ -21,6 +21,8 @@ void TapeDelay::prepare (double newSampleRate)
     lpCoeff = static_cast<float> (1.0 - std::exp (-twoPi * 5500.0 / newSampleRate));
     hpCoeff = static_cast<float> (1.0 - std::exp (-twoPi * 90.0 / newSampleRate));
     delayCoeff = static_cast<float> (1.0 - std::exp (-1.0 / (0.12 * newSampleRate)));
+    paramCoeff = static_cast<float> (1.0 - std::exp (-1.0 / (0.02 * newSampleRate)));
+    monoBass.prepare (newSampleRate);
     smoothedDelay = static_cast<float> (0.375 * newSampleRate);
     reset();
 }
@@ -31,6 +33,8 @@ void TapeDelay::reset() noexcept
     std::fill (bufR.begin(), bufR.end(), 0.0f);
     writePos = 0;
     lpL = lpR = hpL = hpR = 0.0f;
+    paramsFresh = true;
+    monoBass.reset();
 }
 
 float TapeDelay::read (const std::vector<float>& buf, float delaySamples) const noexcept
@@ -47,13 +51,23 @@ float TapeDelay::read (const std::vector<float>& buf, float delaySamples) const 
 void TapeDelay::process (float* left, float* right, int numSamples, float timeSeconds, float feedback, float mix, bool pingPong) noexcept
 {
     const float target = std::clamp (timeSeconds, 0.005f, static_cast<float> (maxSeconds) - 0.01f) * static_cast<float> (sampleRate);
-    const float fb = std::clamp (feedback, 0.0f, 1.0f) * 1.05f; // can run slightly hot; saturation keeps it bounded
+    const float fbTarget = std::clamp (feedback, 0.0f, 1.0f) * 1.05f; // can run slightly hot; saturation keeps it bounded
+    const float mixTarget = std::clamp (mix, 0.0f, 1.0f);
+    if (paramsFresh)
+    {
+        paramsFresh = false;
+        fbNow = fbTarget;
+        mixNow = mixTarget;
+    }
     const float cross = pingPong ? 1.0f : 0.25f;
     const float spread = pingPong ? 1.0f : 1.0125f; // ping-pong keeps both sides on the beat
 
     for (int n = 0; n < numSamples; ++n)
     {
         smoothedDelay += (target - smoothedDelay) * delayCoeff;
+        fbNow += (fbTarget - fbNow) * paramCoeff;
+        mixNow += (mixTarget - mixNow) * paramCoeff;
+        const float fb = fbNow;
 
         const float wetL = read (bufL, smoothedDelay);
         const float wetR = read (bufR, smoothedDelay * spread);
@@ -80,8 +94,10 @@ void TapeDelay::process (float* left, float* right, int numSamples, float timeSe
             bufR[w] = right[n] + fR;
         }
 
-        left[n] += wetL * mix;
-        right[n] += wetR * mix;
+        double outL = wetL, outR = wetR;
+        monoBass.process (outL, outR);
+        left[n] += static_cast<float> (outL) * mixNow;
+        right[n] += static_cast<float> (outR) * mixNow;
         ++writePos;
     }
     writePos &= mask;

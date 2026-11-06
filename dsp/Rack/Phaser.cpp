@@ -15,6 +15,7 @@ void Phaser::prepare (double sampleRate)
     mixS.prepare (sr, 0.02);
     fbS.prepare (sr, 0.02);
     depthS.prepare (sr, 0.05);
+    spreadS.prepare (sr, 0.05);
     centreS.prepare (sr, 0.05);
     centreS.snap (std::log2 (600.0));
     reset();
@@ -58,6 +59,7 @@ void Phaser::process (double& left, double& right, const PhaserParams& p) noexce
     const double centre = centreS.next (std::log2 (std::clamp (p.centreHz, 50.0, 8000.0)));
 
     double mod[2];
+    const double spread = spreadS.next (std::clamp (p.spreadDeg, 0.0, 180.0));
     if (p.lfo == PhaserLfo::envelope)
     {
         const double level = std::abs (0.5 * (left + right));
@@ -69,7 +71,7 @@ void Phaser::process (double& left, double& right, const PhaserParams& p) noexce
     {
         phase += std::clamp (p.rateHz, 0.005, 20.0) / sr;
         phase -= std::floor (phase);
-        const double off = std::clamp (p.spreadDeg, 0.0, 180.0) / 360.0;
+        const double off = spread / 360.0;
         for (int c = 0; c < 2; ++c)
         {
             double ph = phase + (c == 1 ? off : 0.0);

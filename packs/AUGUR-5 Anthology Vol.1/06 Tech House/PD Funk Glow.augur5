@@ -38,7 +38,7 @@
     <P id="osc1_saw" value="0.0"/>
     <P id="osc2_fine" value="10.98530006408691"/>
     <P id="voice_spread" value="0.7583000063896179"/>
-    <P id="amp_level" value="-9.300000000000001"/>
+    <P id="amp_level" value="-9.69"/>
     <P id="fx_echo_on" value="1.0"/>
     <P id="fx_echo_mode" value="7.0"/>
     <P id="fx_echo_time" value="145.7622985839844"/>

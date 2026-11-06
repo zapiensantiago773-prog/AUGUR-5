@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <AUGUR5_PRESET formatVersion="1" name="Solemn Lichen">
-  <META role="pad" note="57" pack="SUN ATLAS" category="TEXTURE" family="CINE" kind="noise_wash" author="TONAL LAB"/>
+  <META role="pad" note="57" pack="SUN ATLAS" category="TEXTURE" family="CINE"
+        kind="noise_wash" author="TONAL LAB"/>
   <PARAMS>
     <P id="aenv_a" value="1.1143"/>
     <P id="aenv_d" value="4.7158"/>
     <P id="aenv_r" value="8.8314"/>
     <P id="aenv_s" value="0.85"/>
-    <P id="amp_level" value="4.77"/>
+    <P id="amp_level" value="4.6"/>
     <P id="amp_velocity" value="0.52898"/>
     <P id="analog_age" value="0.39014"/>
     <P id="at_amount" value="0.047043"/>

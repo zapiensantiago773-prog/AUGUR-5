@@ -30,6 +30,9 @@ void TapeEcho::prepare (double sampleRate, std::uint64_t seed)
     intS.prepare (sr, 0.02);
     satS.prepare (sr, 0.05);
     widthS.prepare (sr, 0.05);
+    bassS.prepare (sr, 0.05);
+    trebleS.prepare (sr, 0.05);
+    monoBass.prepare (sr);
     reset();
 }
 
@@ -39,6 +42,7 @@ void TapeEcho::reset() noexcept
     for (auto& h : headLoss)
         h.reset();
     fbHp.reset();
+    monoBass.reset();
     fbSample = 0.0;
     wowPhase = flutPhase = wowRandom = wowTarget = 0.0;
     speedMs = -1.0; // the first block takes the knob's speed (no glide from a previous preset's tape speed)
@@ -108,12 +112,14 @@ void TapeEcho::process (double& left, double& right, const TapeEchoParams& p) no
         wl += heads[h] * std::cos (a) * 1.41421356;
         wr += heads[h] * std::sin (a) * 1.41421356;
     }
-    bassL.set (false, 100.0, p.bassDb, sr);
-    bassR.set (false, 100.0, p.bassDb, sr);
-    trebleL.set (true, 4500.0, p.trebleDb, sr);
-    trebleR.set (true, 4500.0, p.trebleDb, sr);
+    const double bassDb = bassS.next (std::clamp (p.bassDb, -12.0, 12.0)), trebleDb = trebleS.next (std::clamp (p.trebleDb, -12.0, 12.0));
+    bassL.set (false, 100.0, bassDb, sr);
+    bassR.set (false, 100.0, bassDb, sr);
+    trebleL.set (true, 4500.0, trebleDb, sr);
+    trebleR.set (true, 4500.0, trebleDb, sr);
     wl = trebleL.process (bassL.process (wl));
     wr = trebleR.process (bassR.process (wr));
+    monoBass.process (wl, wr);
 
     const double gd = std::cos (0.5 * pi * mix), gw = std::sin (0.5 * pi * mix);
     left = left * gd + wl * gw;

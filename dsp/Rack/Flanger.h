@@ -35,7 +35,7 @@ private:
     std::array<DelayLine, 2> wetLine, dryLine;
     std::array<double, 2> fb {}, lastMs { 2.0, 2.0 };
     std::array<OnePole, 2> damp;
-    Smooth mixS, fbS, depthS, manualS;
+    Smooth mixS, fbS, depthS, manualS, spreadS;
 };
 
 } // namespace augur::rack

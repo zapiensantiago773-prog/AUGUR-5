@@ -2,6 +2,7 @@
 
 #include "Rack/FxCommon.h"
 #include "Rack/RackRng.h"
+#include "Util/Lr4.h"
 
 #include <array>
 #include <cstdint>
@@ -27,7 +28,8 @@ struct TapeEchoParams
 // Multi-head tape echo: one tape loop (a delay line written by the record head), three playback heads at the
 // RE-201's fixed spacing (delays in the ratio 1 : 1.90 : 2.75, from the measured head times 69/131/189 ms and
 // 177/337/489 ms). The tape speed sets all three at once and glides like a motor; playback bandwidth follows
-// the speed; wow (slow, irregular) and flutter (capstan, ~8 Hz) modulate the read positions.
+// the speed; wow (slow, irregular) and flutter (capstan, ~8 Hz) modulate the read positions. The echoes' bass
+// comes out in the middle, the heads' panning stays above stereoBassHz (D-057).
 class TapeEcho
 {
 public:
@@ -48,7 +50,8 @@ private:
     OnePole fbHp;
     double fbSample = 0.0, wowPhase = 0.0, flutPhase = 0.0, wowRandom = 0.0, wowTarget = 0.0;
     int wowCounter = 0;
-    Smooth mixS, intS, satS, widthS;
+    Smooth mixS, intS, satS, widthS, bassS, trebleS;
+    MonoBass monoBass;
 };
 
 } // namespace augur::rack

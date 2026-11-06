@@ -2,6 +2,7 @@
 
 #include "Rack/FxCommon.h"
 #include "Rack/RackRng.h"
+#include "Util/Lr4.h"
 
 #include <array>
 #include <cstdint>
@@ -85,7 +86,8 @@ private:
     OnePole shimmerLp, shimmerHp;
     // output
     OnePole lowCutL, lowCutR;
-    Smooth mixS, widthS, sizeS;
+    MonoBass monoBass; // the tail's bass in the middle, its width above stereoBassHz (D-057)
+    Smooth mixS, widthS, sizeS, predelayS, lowCutS;
     ReverbType lastType = ReverbType::plate;
 };
 

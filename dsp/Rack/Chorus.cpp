@@ -21,6 +21,8 @@ void Chorus::prepare (double sampleRate, std::uint64_t seed)
     depthS.prepare (sr, 0.05);
     widthS.prepare (sr, 0.05);
     rateS.prepare (sr, 0.05);
+    toneS.prepare (sr, 0.05);
+    monoBass.prepare (sr);
     rateS.snap (1.0);
     depthS.snap (1.0);
     reset();
@@ -38,6 +40,7 @@ void Chorus::reset() noexcept
     crossHpR.reset();
     bassL.reset();
     bassR.reset();
+    monoBass.reset();
     phase = vibPhase = 0.0;
 }
 
@@ -69,7 +72,7 @@ void Chorus::process (double& left, double& right, const ChorusParams& p) noexce
     const double depth = depthS.next (std::clamp (p.depth, 0.0, 2.0));
     const double width = widthS.next (std::clamp (p.width, 0.0, 1.5));
     const double rateMul = rateS.next (std::clamp (p.rate, 0.25, 4.0));
-    const double toneHz = 2500.0 * std::pow (6.0, std::clamp (p.tone, 0.0, 1.0)); // 2.5 .. 15 kHz
+    const double toneHz = 2500.0 * std::pow (6.0, toneS.next (std::clamp (p.tone, 0.0, 1.0))); // 2.5 .. 15 kHz
     const double hiss = std::clamp (p.hiss, 0.0, 1.0);
     const double mono = 0.5 * (left + right);
     double wetL = 0.0, wetR = 0.0, dryL = left, dryR = right;
@@ -142,6 +145,7 @@ void Chorus::process (double& left, double& right, const ChorusParams& p) noexce
     const double mid = 0.5 * (wetL + wetR), side = 0.5 * (wetL - wetR) * width;
     wetL = mid + side;
     wetR = mid - side;
+    monoBass.process (wetL, wetR);
     // Constant-power blend: at 50 % dry and wet are equal, as on the Juno's output summing.
     const double gd = std::cos (0.5 * pi * mix), gw = std::sin (0.5 * pi * mix);
     left = dryL * gd + wetL * gw;

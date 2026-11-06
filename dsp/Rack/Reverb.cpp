@@ -51,7 +51,10 @@ void Reverb::prepare (double sampleRate, std::uint64_t seed)
     mixS.prepare (sr, 0.02);
     widthS.prepare (sr, 0.05);
     sizeS.prepare (sr, 0.3);
+    predelayS.prepare (sr, 0.05);
+    lowCutS.prepare (sr, 0.05);
     sizeS.snap (1.0);
+    monoBass.prepare (sr);
     for (int i = 0; i < lines; ++i)
         fdnPhase[static_cast<size_t> (i)] = rng.uniform();
     reset();
@@ -79,6 +82,7 @@ void Reverb::reset() noexcept
     lfoPhase = shiftPhase = 0.0;
     lowCutL.reset();
     lowCutR.reset();
+    monoBass.reset();
 }
 
 // Pitch shifter for the shimmer: two read heads sweeping a 60 ms window in opposite phase, Hann-faded, so the
@@ -220,7 +224,7 @@ void Reverb::process (double& left, double& right, const ReverbParams& p) noexce
 
     preL.write (left);
     preR.write (right);
-    const double pd = std::clamp (p.predelayMs, 0.0, 500.0) * 0.001 * sr;
+    const double pd = predelayS.next (std::clamp (p.predelayMs, 0.0, 500.0)) * 0.001 * sr;
     const double inL = p.freeze && p.type == ReverbType::plate ? 0.0 : preL.read (std::max (1.0, pd));
     const double inR = p.freeze && p.type == ReverbType::plate ? 0.0 : preR.read (std::max (1.0, pd));
 
@@ -236,13 +240,15 @@ void Reverb::process (double& left, double& right, const ReverbParams& p) noexce
     else
         fdn (inL, inR, wL, wR, p, p.type == ReverbType::room);
 
-    lowCutL.setCutoff (std::clamp (p.lowCutHz, 20.0, 1000.0), sr);
-    lowCutR.setCutoff (std::clamp (p.lowCutHz, 20.0, 1000.0), sr);
+    const double lowCut = lowCutS.next (std::clamp (p.lowCutHz, 20.0, 1000.0));
+    lowCutL.setCutoff (lowCut, sr);
+    lowCutR.setCutoff (lowCut, sr);
     wL = lowCutL.hp (wL);
     wR = lowCutR.hp (wR);
     const double mid = 0.5 * (wL + wR), side = 0.5 * (wL - wR) * width;
     wL = mid + side;
     wR = mid - side;
+    monoBass.process (wL, wR);
 
     const double gd = std::cos (0.5 * pi * mix), gw = std::sin (0.5 * pi * mix);
     left = left * gd + wL * gw;

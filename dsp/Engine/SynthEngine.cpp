@@ -67,6 +67,9 @@ void SynthEngine::prepare (double hostSampleRate, std::uint64_t unitSeed, int ov
     fuzz.prepare (internalRate);
 
     dcCoeff = static_cast<float> (1.0 - std::exp (-2.0 * 3.14159265358979 * 6.0 / hostSampleRate));
+    voiceBass.prepare (hostSampleRate);
+    panCoeff = 1.0 - std::exp (-1.0 / (0.02 * hostSampleRate));
+    stackStep = 1.0 / (0.02 * hostSampleRate);
     fxCoeff = static_cast<float> (1.0 - std::exp (-(controlInterval / hostSampleRate) / 0.03));
     sig.sampleRate = internalRate;
 
@@ -93,6 +96,8 @@ void SynthEngine::reset() noexcept
     quadL.reset();
     quadR.reset();
     dcL = dcR = 0.0f;
+    voiceBass.reset();
+    outputStageFresh = true; // (the parameters here may still be the previous sound's)
     rack.reset();
     fuzz.reset();
     fuzzActive = false;
@@ -364,6 +369,8 @@ void SynthEngine::clearTails() noexcept
     quadL.reset();
     quadR.reset();
     dcL = dcR = 0.0f;
+    voiceBass.reset();
+    outputStageFresh = true;
 }
 
 void SynthEngine::monoTrigger (int note, float velocity, bool retrigger) noexcept
@@ -804,6 +811,16 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
     }
 
     const float floorAmp = 1.6e-5f * params.analogAge;
+    const double panTarget = (std::clamp (params.voicePan, -1.0f, 1.0f) + 1.0) * 0.25 * 3.14159265358979;
+    const double stackTarget = params.unison || params.voiceMode == 1 ? 1.0 : 0.0; // UNISON or DUO
+    if (outputStageFresh)
+    {
+        outputStageFresh = false;
+        panAngle = panTarget;
+        panAxisL = std::cos (panAngle);
+        panAxisR = std::sin (panAngle);
+        stackBlend = stackTarget;
+    }
     for (int k = 0; k < numSamples; ++k)
     {
         const auto kk = static_cast<size_t> (k);
@@ -828,8 +845,25 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
         // DC blocker (AC-coupled output) + a whisper of analog noise floor.
         dcL += (l - dcL) * dcCoeff;
         dcR += (r - dcR) * dcCoeff;
-        left[k] = l - dcL + floorAmp * floorNoise.nextBipolar();
-        right[k] = r - dcR + floorAmp * floorNoise.nextBipolar();
+        double ol = l - dcL + floorAmp * floorNoise.nextBipolar();
+        double orr = r - dcR + floorAmp * floorNoise.nextBipolar();
+        if (panAngle != panTarget)
+        {
+            panAngle = std::abs (panTarget - panAngle) < 1.0e-6 ? panTarget : panAngle + panCoeff * (panTarget - panAngle);
+            panAxisL = std::cos (panAngle);
+            panAxisR = std::sin (panAngle);
+        }
+        double ml = ol, mr = orr;
+        voiceBass.process (ml, mr, panAxisL, panAxisR); // always running: no state to catch up when it fades in
+        if (stackBlend != stackTarget)
+            stackBlend = stackTarget > stackBlend ? std::min (stackTarget, stackBlend + stackStep) : std::max (stackTarget, stackBlend - stackStep);
+        if (stackBlend > 0.0)
+        {
+            ol += stackBlend * (ml - ol);
+            orr += stackBlend * (mr - orr);
+        }
+        left[k] = static_cast<float> (ol);
+        right[k] = static_cast<float> (orr);
     }
 
     // Effects rack (any order), one stereo sample at a time; each unit costs nothing while switched off.

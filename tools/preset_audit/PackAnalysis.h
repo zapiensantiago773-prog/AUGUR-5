@@ -145,7 +145,8 @@ inline std::vector<Event> patternFor (const juce::String& role, int root)
 
 inline std::vector<float> fingerprint (const std::vector<float>& L, const std::vector<float>& R, size_t offSample, double sr, double width);
 
-inline Metrics analyse (Augur5Processor& proc, const juce::String& role, int root, double seconds, const juce::File& wavFile = {})
+// Plays the role's pattern through the processor into L / R (48 kHz); returns the time of the last note-off.
+inline double renderRole (Augur5Processor& proc, const juce::String& role, int root, double seconds, std::vector<float>& L, std::vector<float>& R)
 {
     constexpr double sr = 48000.0;
     constexpr int block = 256;
@@ -156,7 +157,8 @@ inline Metrics analyse (Augur5Processor& proc, const juce::String& role, int roo
             lastOff = std::max (lastOff, e.time);
 
     const int total = static_cast<int> (seconds * sr);
-    std::vector<float> L (static_cast<size_t> (total)), R (L.size());
+    L.assign (static_cast<size_t> (total), 0.0f);
+    R.assign (L.size(), 0.0f);
     juce::AudioBuffer<float> buffer (2, block);
     for (int pos = 0; pos < total; pos += block)
     {
@@ -177,6 +179,14 @@ inline Metrics analyse (Augur5Processor& proc, const juce::String& role, int roo
             R[static_cast<size_t> (pos + i)] = buffer.getSample (1, i);
         }
     }
+    return lastOff;
+}
+
+inline Metrics analyse (Augur5Processor& proc, const juce::String& role, int root, double seconds, const juce::File& wavFile = {})
+{
+    constexpr double sr = 48000.0;
+    std::vector<float> L, R;
+    const double lastOff = renderRole (proc, role, root, seconds, L, R);
 
     Metrics m;
     double peak = 0.0, sumMid = 0.0, sumSide = 0.0, sumDc = 0.0;

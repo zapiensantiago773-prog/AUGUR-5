@@ -50,7 +50,7 @@ private:
     double sr = 48000.0, phase = 0.0, env = 0.0, envCoeffA = 0.0, envCoeffR = 0.0;
     std::array<Chain, 2> chain;
     std::array<double, 2> lastHz { 600.0, 600.0 };
-    Smooth mixS, fbS, depthS, centreS;
+    Smooth mixS, fbS, depthS, centreS, spreadS;
 };
 
 } // namespace augur::rack

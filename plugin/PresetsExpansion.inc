@@ -19,7 +19,7 @@
             { "fuzz_on", 1.0f }, { "fuzz_sustain", 0.55f }, { "fuzz_tone", 0.35f }, { "fuzz_volume", 0.6f }, { "fuzz_mix", 0.6f },
             { "phaser_on", 1.0f }, { "phaser_rate", 0.08f }, { "phaser_depth", 0.6f }, { "phaser_fb", 0.3f }, { "phaser_mix", 0.35f },
             { "voice_spread", 0.8f }, { "analog_age", 0.5f },
-            { "reverb_on", 1.0f }, { "reverb_type", 1.0f }, { "reverb_size", 0.85f }, { "reverb_decay", 7.0f }, { "reverb_mix", 0.4f }, { "amp_level", 2.2f } }, "Signature" },
+            { "reverb_on", 1.0f }, { "reverb_type", 1.0f }, { "reverb_size", 0.85f }, { "reverb_decay", 7.0f }, { "reverb_mix", 0.4f }, { "amp_level", 1.8f } }, "Signature" },
 
         { "Grey Skies Lead", {
             { "mix_osc1", 1.0f }, { "mix_osc2", 0.5f }, { "osc2_freq", -12.0f }, { "osc2_fine", 4.0f }, { "flt_cutoff", 2200.0f },
