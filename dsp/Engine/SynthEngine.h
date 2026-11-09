@@ -164,6 +164,12 @@ private:
 
     // Output stage
     std::array<float, ChunkSignals::maxSamples> busL {}, busR {};
+    // The voices' front halves for one SIMD group, four lanes per sample (see SynthVoice::renderFront).
+    struct alignas (16) FrontBuffers
+    {
+        std::array<float, ChunkSignals::maxSamples * 4> bus {}, cutoffOct {}, resonance {}, gain {}, panL {}, panR {};
+    };
+    FrontBuffers front;
     HalfbandDecimator decimL, decimR;
     HalfbandDownsampler<27> quadL, quadR; // DIVINE: 4x -> 2x before the main decimator
     float dcL = 0.0f, dcR = 0.0f, dcCoeff = 0.0f;

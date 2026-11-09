@@ -364,18 +364,22 @@ int checkAugury()
         std::printf ("%-64s %s\n", what, ok ? "ok" : "FAIL");
         failures += ok ? 0 : 1;
     };
+    // Every parameter but the bird (MORPH X / Y): where the bird sits is checked on its own.
     const auto snapshotOf = [] (juce::AudioProcessor& p) {
         std::vector<float> v;
         for (auto* param : p.getParameters())
-            v.push_back (param->getValue());
+            if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (param); rp == nullptr || ! rp->getParameterID().startsWith ("morph_"))
+                v.push_back (param->getValue());
         return v;
     };
     const auto valueOf = [] (Augur5Processor& p, const char* id) { return p.getParameters().getParameter (id)->getValue(); };
-    // Every parameter but the voice structure, which a flight leaves as played.
+    // Every parameter of the sound but the voice structure, which a flight leaves as played (instrument settings
+    // such as MASTER and the bird itself are not part of a sound).
     const auto soundOf = [] (juce::AudioProcessor& p) {
         std::vector<float> v;
         for (auto* param : p.getParameters())
-            if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (param); rp != nullptr && ! augur5::AuguryModel::isVoiceStructure (rp->getParameterID()))
+            if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (param); rp != nullptr && ! augur5::AuguryModel::isVoiceStructure (rp->getParameterID())
+                                                                             && ! augur5::PresetManager::isGlobalSetting (rp->getParameterID()))
                 v.push_back (param->getValue());
         return v;
     };
@@ -555,6 +559,160 @@ int checkAugury()
         pb.getPresets().loadFactory (pb.getPresets().findFactory ("Sync Lead"));
         expect (sb.filledCount() == 2, "a sound without a scene leaves the corners as they were");
         file.deleteFile();
+    }
+
+    // MORPH X / Y moved as a host automates them: the audio plays the blend from that very block, with no message
+    // thread running (an offline render), and it is the blend the editor's drag writes. Two identical instances fly
+    // from A (Warm Horizon) to D (Brass Section) in 2 s with a chord held: one by the drag, one by automation.
+    {
+        constexpr double sr = 48000.0;
+        constexpr int block = 256;
+        std::unique_ptr<juce::AudioProcessor> o1 (createPluginFilter()), o2 (createPluginFilter());
+        auto& gui = *dynamic_cast<Augur5Processor*> (o1.get());
+        auto& host = *dynamic_cast<Augur5Processor*> (o2.get());
+        for (auto* q : { &gui, &host })
+        {
+            q->setPlayConfigDetails (0, 2, sr, block);
+            q->getPresets().loadFactory (q->getPresets().findFactory ("Warm Horizon"));
+            q->getAugury().capture (0, "Warm Horizon");
+            q->getPresets().loadFactory (q->getPresets().findFactory ("Brass Section"));
+            q->getAugury().capture (3, "Brass Section");
+            q->getPresets().loadFactory (q->getPresets().findFactory ("Warm Horizon"));
+            q->prepareToPlay (sr, block);
+        }
+        const auto fly = [&] (Augur5Processor& q, bool byHost) {
+            auto* px = q.getParameters().getParameter (augur5::params::morph_x);
+            auto* py = q.getParameters().getParameter (augur5::params::morph_y);
+            std::vector<float> out;
+            juce::AudioBuffer<float> buf (2, block);
+            if (! byHost)
+                q.getAugury().beginMorph();
+            for (int pos = 0; pos < static_cast<int> (3.0 * sr); pos += block)
+            {
+                const float u = juce::jlimit (0.0f, 1.0f, static_cast<float> ((pos / sr - 0.5) / 2.0));
+                if (byHost)
+                {
+                    px->setValueNotifyingHost (u);
+                    py->setValueNotifyingHost (u);
+                }
+                else
+                {
+                    q.getAugury().setPosition ({ u, u });
+                }
+                juce::MidiBuffer midi;
+                if (pos == 0)
+                    for (const int n : { 57, 60, 64, 67 })
+                        midi.addEvent (juce::MidiMessage::noteOn (1, n, static_cast<juce::uint8> (100)), 0);
+                buf.clear();
+                q.processBlock (buf, midi);
+                for (int i = 0; i < block; ++i)
+                {
+                    out.push_back (buf.getSample (0, i));
+                    out.push_back (buf.getSample (1, i));
+                }
+            }
+            if (! byHost)
+                q.getAugury().endMorph();
+            return out;
+        };
+        expect (host.getAugury().unboundParameters().isEmpty(), "every morphable parameter reaches the engine through the binding");
+        const float cutA = valueOf (host, augur5::params::flt_cutoff);
+        const auto byDrag = fly (gui, false);
+        const auto byAutomation = fly (host, true);
+        // Compared as heard: level and brightness in 50 ms windows. (Sample by sample the two part slowly: the drag
+        // writes each parameter in steps of 1e-5 of its range, automation plays the exact blend, and a hair of tuning
+        // or LFO rate moves the phases. Until the flight starts the two are identical to the bit.)
+        const auto windows = [sr] (const std::vector<float>& x) {
+            std::vector<std::pair<double, double>> w; // level dB, centroid Hz
+            constexpr size_t n = 2048;
+            for (size_t s0 = 0; (s0 + n) * 2 <= x.size(); s0 += 2400)
+            {
+                std::vector<std::complex<double>> a (n);
+                double e = 0.0;
+                for (size_t i = 0; i < n; ++i)
+                {
+                    const double m = 0.5 * (x[(s0 + i) * 2] + x[(s0 + i) * 2 + 1]);
+                    e += m * m;
+                    a[i] = m * (0.5 - 0.5 * std::cos (2.0 * 3.14159265358979 * static_cast<double> (i) / n));
+                }
+                packaudit::fft (a);
+                double num = 0.0, den = 0.0;
+                for (size_t k = 1; k < n / 2; ++k)
+                {
+                    num += std::norm (a[k]) * static_cast<double> (k) * sr / n;
+                    den += std::norm (a[k]);
+                }
+                w.push_back ({ 10.0 * std::log10 (e / n + 1.0e-30), den > 0.0 ? num / den : 0.0 });
+            }
+            return w;
+        };
+        const auto wd = windows (byDrag), wa = windows (byAutomation);
+        double worstLevel = 0.0, worstBright = 0.0;
+        for (size_t i = 0; i < wd.size(); ++i)
+        {
+            worstLevel = std::max (worstLevel, std::abs (wd[i].first - wa[i].first));
+            worstBright = std::max (worstBright, std::abs (std::log2 (wd[i].second / wa[i].second)) * 1200.0);
+        }
+        bool sameStart = true;
+        for (size_t i = 0; i < static_cast<size_t> (0.5 * sr) * 2; ++i)
+            sameStart = sameStart && byDrag[i] == byAutomation[i];
+        std::printf ("    automated vs dragged flight, 50 ms windows: level within %.3f dB, brightness within %.1f cents\n", worstLevel,
+                     worstBright);
+        expect (sameStart && worstLevel < 0.1 && worstBright < 10.0, "automating MORPH X / Y plays the same flight as dragging the bird");
+        expect (valueOf (host, augur5::params::flt_cutoff) == cutA, "the audio played it before the parameters moved (offline)");
+        host.getAugury().mirror();
+        const auto a1 = soundOf (gui), a2 = soundOf (host);
+        float worst = 0.0f;
+        for (size_t i = 0; i < a1.size(); ++i)
+            worst = std::max (worst, std::abs (a1[i] - a2[i]));
+        expect (worst < 2.0e-5f && host.getAugury().audioOverride().count == 0,
+                "the editor then writes that blend into the parameters, and they play again");
+        host.getParameters().getParameter (augur5::params::flt_cutoff)->setValueNotifyingHost (0.3f);
+        expect (host.getAugury().audioOverride().count == 0, "a knob turned after the flight is heard (no morph on top)");
+
+        // Undo, a preset and a session move the bird with their own sound, never a blend over it.
+        auto* px = host.getParameters().getParameter (augur5::params::morph_x);
+        px->setValueNotifyingHost (0.3f);
+        host.getAugury().mirror();
+        host.getPresets().loadFactory (host.getPresets().findFactory ("Sync Lead"));
+        std::unique_ptr<juce::AudioProcessor> o3 (createPluginFilter());
+        auto& fresh = *dynamic_cast<Augur5Processor*> (o3.get());
+        fresh.getPresets().loadFactory (fresh.getPresets().findFactory ("Sync Lead"));
+        expect (soundOf (host) == soundOf (fresh) && host.getAugury().audioOverride().count == 0,
+                "a preset loaded with the bird away from the centre plays the preset");
+        px->setValueNotifyingHost (0.7f);
+        host.getAugury().mirror();
+        const auto flown = snapshotOf (host);
+        juce::MemoryBlock session;
+        host.getStateInformation (session);
+        std::unique_ptr<juce::AudioProcessor> o4 (createPluginFilter());
+        auto& reopened = *dynamic_cast<Augur5Processor*> (o4.get());
+        reopened.setStateInformation (session.getData(), static_cast<int> (session.getSize()));
+        expect (snapshotOf (reopened) == flown && reopened.getAugury().getPosition() == host.getAugury().getPosition()
+                    && reopened.getAugury().audioOverride().count == 0,
+                "a session saved mid-flight reopens with its sound and its bird");
+        // A 1.5 session (no MORPH X / Y): the bird where its AUGURY scene had it, the sound as saved.
+        auto xml = juce::AudioProcessor::getXmlFromBinary (session.getData(), static_cast<int> (session.getSize()));
+        for (auto* e = xml->getFirstChildElement(); e != nullptr;)
+        {
+            auto* next = e->getNextElement();
+            if (e->getStringAttribute ("id").startsWith ("morph_"))
+                xml->removeChildElement (e, true);
+            e = next;
+        }
+        if (auto* scene = xml->getChildByName ("AUGURY"))
+        {
+            scene->setAttribute ("x", 0.25);
+            scene->setAttribute ("y", 0.6);
+        }
+        juce::MemoryBlock old;
+        juce::AudioProcessor::copyXmlToBinary (*xml, old);
+        std::unique_ptr<juce::AudioProcessor> o5 (createPluginFilter());
+        auto& legacy = *dynamic_cast<Augur5Processor*> (o5.get());
+        legacy.setStateInformation (old.getData(), static_cast<int> (old.getSize()));
+        expect (legacy.getAugury().getPosition() == juce::Point<float> (0.25f, 0.6f) && soundOf (legacy) == soundOf (reopened)
+                    && legacy.getAugury().audioOverride().count == 0,
+                "a 1.5 session puts the bird where its scene had it, sound as saved");
     }
 
     std::printf ("%s\n", failures == 0 ? "AUGURY: all checks passed" : "AUGURY: FAILURES");
@@ -1196,7 +1354,9 @@ int auguryScene (const juce::File& out, const std::array<juce::File, 4>& files)
     auto xml = juce::XmlDocument::parse (files[0]);
     if (xml == nullptr || ! xml->hasTagName ("AUGUR5_PRESET"))
         return 2;
-    const auto [role, note] = roleOfPreset (*xml);
+    const auto played = roleOfPreset (*xml); // (plain variables: older Apple clang cannot capture structured bindings)
+    const juce::String role = played.first;
+    const int note = played.second;
     std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
     auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
     proc.setPlayConfigDetails (0, 2, sr, 256);
@@ -1258,7 +1418,9 @@ int auguryFlight (const juce::File& scene, const juce::File& wavFile)
     auto xml = juce::XmlDocument::parse (scene);
     if (xml == nullptr)
         return 2;
-    const auto [role, note] = roleOfPreset (*xml);
+    const auto played = roleOfPreset (*xml); // (plain variables: older Apple clang cannot capture structured bindings)
+    const juce::String role = played.first;
+    const int note = played.second;
     std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
     auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
     proc.setPlayConfigDetails (0, 2, sr, block);
@@ -1437,10 +1599,11 @@ int checkAuguryGui()
         return 1;
 
     auto& presets = proc.getPresets();
-    const auto values = [&proc] {
+    const auto values = [&proc] { // the sound: every parameter but the bird (MORPH X / Y)
         std::vector<float> v;
         for (auto* p : proc.AudioProcessor::getParameters())
-            v.push_back (p->getValue());
+            if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (p); rp == nullptr || ! rp->getParameterID().startsWith ("morph_"))
+                v.push_back (p->getValue());
         return v;
     };
     const auto cutoff = [&proc] { return proc.getParameters().getParameter (augur5::params::flt_cutoff)->getValue(); };
@@ -1514,10 +1677,10 @@ int checkAuguryGui()
     pump();
 
     // UNDO: the whole flight is one step back, to the sound that was playing before it.
-    proc.getUndoManager().undo();
+    proc.undo();
     pump();
     expect (values() == valuesD, "UNDO takes the whole flight back in one step");
-    proc.getUndoManager().redo();
+    proc.redo();
     pump();
     expect (values() == middle, "REDO brings the blend back");
 

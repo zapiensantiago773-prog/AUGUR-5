@@ -666,8 +666,8 @@ void Augur5Editor::buildUi()
     canvas->onCategory = [this] (const juce::String& c) { browser->openOnCategory (c); };
     canvas->prevPreset->onClick = [&presets] { presets.previous(); };
     canvas->nextPreset->onClick = [&presets] { presets.next(); };
-    canvas->undo->onClick = [this] { processor.getUndoManager().undo(); };
-    canvas->redo->onClick = [this] { processor.getUndoManager().redo(); };
+    canvas->undo->onClick = [this] { processor.undo(); };
+    canvas->redo->onClick = [this] { processor.redo(); };
     canvas->settings->onClick = [this] { settingsPanel->open(); };
 
     // Overlay panels inside the scaled canvas: sharp and proportional at every size.

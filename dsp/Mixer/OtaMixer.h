@@ -21,16 +21,13 @@ inline constexpr float kPulse = 12.9f * 330.0f / 200330.0f / twoVt; // x per pul
 inline constexpr float kTriPerVolt = 330.0f / 150330.0f / twoVt;    // x per volt of level-shifted triangle
 
 // Output normalised so a lone full-level saw peaks at 1.
-inline float norm() noexcept
-{
-    static const float n = 1.0f / std::tanh (kSaw);
-    return n;
-}
+inline const float normValue = 1.0f / std::tanh (kSaw); // computed once at load (no per-sample static guard)
+inline float norm() noexcept { return normValue; }
 
-inline float mix (float saw, float tri, float pulse, float gSaw, float gTri, float gPulse) noexcept
+AUGUR_INLINE float mix (float saw, float tri, float pulse, float gSaw, float gTri, float gPulse) noexcept
 {
     const float x = kSaw * gSaw * saw + kTriPerVolt * gTri * (10.0f * tri - 5.0f) - kPulse * gPulse * pulse;
-    return fastmath::tanh (x) * norm();
+    return fastmath::tanh (x) * normValue;
 }
 
 namespace detail

@@ -880,3 +880,32 @@ Pedido del usuario: "revisa augury y pónselo a unos 10 presets para saber cómo
   - Eclipse se cambió por Fifth of Dusk: su phaser a 0.04 Hz hacía que el nivel dependiera del punto del barrido (−4.9 dB en una esquina).
 - **Comprobaciones:** 93 tests, `--check-augury` (con la escena en un preset y los 440 OMEN), `--check-augury-gui` (acorde sostenido en vuelo; la pestaña muestra la escena de un preset cargado), `--check-migration`, `--check-skins`, `--check-preset-clicks`, auditoría de fábrica y pluginval estricto.
 - La guía (`installer/win/guide.html`) explica qué no se vuela y que los presets guardan la escena. La versión la decide el usuario: los instaladores 1.5.0 no incluyen esto.
+
+## D-059 · Versión 1.6.0: AUGURY automatizable, CPU medida por piezas e icono blanco (2026-11-09)
+Pedido del usuario: "CPU" y "AUGURY automatizable"; "compila la nueva versión para Windows y Mac con todo en el escritorio y quita lo viejo"; el logo blanco. Eligió el símbolo AUGUR blanco y la versión 1.6.0.
+- **MORPH X / MORPH Y** (`morph_x`, `morph_y`; IDs nuevos con version hint 2, al final del layout):
+  - Son la posición del ave: automatizables y asignables a un control MIDI desde el DAW. Son ajustes del instrumento, como MASTER: un preset no los cambia. La escena AUGURY de un preset trae su propia posición.
+  - **Hilo de audio:** si X/Y cambiaron y los parámetros aún no tienen esa mezcla, `AuguryModel::audioOverride()` la calcula en ese mismo bloque y `ParameterBinding::fill` la pone sobre los valores (cada parámetro pasa por una copia por bloque). Sin reservas de memoria; las esquinas se leen de una copia con `SpinLock` que el audio solo intenta tomar (si está ocupada, suena la mezcla anterior un bloque más). Funciona en exportación offline, sin hilo de mensajes.
+  - **Hilo de mensajes:** `mirror()` a 10 Hz escribe la mezcla en los parámetros, sin gesto (el host movió el ave). Desde ahí suenan los parámetros: un control girado después se oye.
+  - **Arrastrar el ave** escribe la mezcla y X/Y en un solo gesto (un UNDO), como antes.
+  - **Sin mezcla:** UNDO/REDO (`Augur5Processor::undo/redo`), presets, sesiones, RECALL y OMEN (`changeSound`) mueven el ave con su propio sonido (`ScopedNoMorph`). Las sesiones 1.5 ponen el ave donde la tenía su escena.
+  - **Medido** (`--check-augury`):
+    - dos instancias vuelan de A a D con un acorde: una arrastrando, otra con automatización y sin hilo de mensajes;
+    - idénticas al bit hasta que el ave se mueve; durante el vuelo, nivel a 0.021 dB y brillo a 6.8 cents en ventanas de 50 ms;
+    - muestra a muestra se desfasan poco a poco: el arrastre escribe en escalones de 1e-5 y la automatización toca la mezcla exacta; con el espejo antes de cada bloque, las dos son idénticas al bit;
+    - además: el espejo deja los mismos parámetros que el arrastre; un control girado después se oye; un preset con el ave fuera del centro suena como el preset; una sesión guardada a mitad de vuelo reabre con su sonido y su ave.
+- **CPU, medida por piezas:**
+  - Un perfilador por muestreo hecho para esto: un hilo suspende el motor miles de veces por segundo y resuelve la línea con el PDB (322 870 muestras). Con 5 voces en ECO:
+    - parte delantera de la voz (CV, matriz, mezcla), 18 %;
+    - filtro (ya SIMD), 14 %;
+    - osciladores, 15 %;
+    - `fastmath::exp2` 10 % y `fastmath::tanh` 7 %, **sin integrar** aunque se llaman en cada muestra;
+    - drift de las 16 voces, 4 %; envolventes, 3.5 %.
+  - **Hecho:**
+    - las funciones por muestra se integran siempre (`AUGUR_INLINE`); `ota::norm` sin `static` local;
+    - cada voz calcula su parte delantera de corrido para el segmento, en búferes por carril que el filtro SIMD lee directo.
+  - **Resultado:** 30 renders idénticos byte a byte (5 sonidos × 3 calidades × 2 sample rates). Ciclos de CPU del hilo (`QueryThreadCycleTime`, la máquina estaba al 88 % de carga por otros procesos): entre 2 y 7 % menos, unos 4 % de media. LTO no se distingue del ruido y no se activó.
+  - **Lo que no se hizo:** vectorizar el oscilador entre voces. Sus eventos caen en instantes exactos dentro de cada muestra, con ramas por voz; reescribirlo arriesga la forma de onda del Prophet. El filtro ya usaba SIMD por grupos de 4 voces, así que la ganancia grande que se había estimado no estaba disponible sin tocar el VCO.
+- **Icono:** vuelve el símbolo AUGUR sobre papel blanco de D-040 (`plugin/resources/brand/augur5-app-icon.png`, de `4e0664f`). Es el icono de la app, de la carpeta VST3 (`ICON_BIG`) y del instalador de Windows (`icon.ico`, `wizard_small`). La marca TONAL LAB sigue en el panel y en el instalador.
+- **Comprobaciones:** 93 tests, renders idénticos, `--check-augury`, `--check-augury-gui`, `--check-migration`, `--check-skins`, `--check-preset-clicks`, auditoría de fábrica, headroom de acordes en los tres packs y pluginval estricto.
+- Notas de la versión: `docs/release_notes_1.6.0.md`.

@@ -1,11 +1,11 @@
 # AUGUR-5 brand art for the Windows installer (run from anywhere):
 #   powershell -ExecutionPolicy Bypass -File installer\win\art\make_art.ps1
 # Writes, next to this script:
-#   icon.ico (16..256 px)                               - installer / uninstaller icon: the TONAL LAB app icon
+#   icon.ico (16..256 px)                               - installer / uninstaller icon: AUGUR's own white app icon
 #   wizard.bmp / wizard@2x.bmp (164x314, 328x628)       - installer side panel: AUGUR's paper, its type-only name
 #                                                         and the TONAL LAB stacked logo (light-background colouring)
 #   wizard_small.bmp / wizard_small@2x.bmp (55, 110 px) - installer header mark
-# Sources: plugin/resources/brand/tonal_lab/tonal-lab-app-icon.png, docs/brand/tonal_lab/*.png,
+# Sources: plugin/resources/brand/augur5-app-icon.png, docs/brand/tonal_lab/*.png,
 # fonts (OFL) from plugin/resources/fonts.
 Add-Type -AssemblyName System.Drawing
 $ErrorActionPreference = 'Stop'
@@ -44,7 +44,7 @@ function Resample($img, $size, $background) {
 }
 
 # ---------------------------------------------------------------- icon (the app's own icon: plugin/CMakeLists.txt ICON_BIG)
-$appIcon = [System.Drawing.Image]::FromFile((Join-Path $root 'plugin\resources\brand\tonal_lab\tonal-lab-app-icon.png'))
+$appIcon = [System.Drawing.Image]::FromFile((Join-Path $root 'plugin\resources\brand\augur5-app-icon.png'))
 # ICO with PNG-compressed entries (Windows Vista+).
 $sizes = 16, 24, 32, 48, 64, 128, 256
 $pngs = @()

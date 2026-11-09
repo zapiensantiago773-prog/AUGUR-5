@@ -468,6 +468,22 @@ void SynthVoice::tick (const ChunkSignals& sig, size_t i, float& left, float& ri
     right += out * f.panR;
 }
 
+void SynthVoice::renderFront (const ChunkSignals& sig, size_t start, int count, const FrontLanes& out, int lane) noexcept
+{
+    for (int j = 0; j < count; ++j)
+    {
+        Front f;
+        tickFront (sig, start + static_cast<size_t> (j), f);
+        const auto o = static_cast<size_t> (j) * 4 + static_cast<size_t> (lane);
+        out.bus[o] = f.bus;
+        out.cutoffOct[o] = f.cutoffOct;
+        out.resonance[o] = f.resonance;
+        out.gain[o] = f.gain;
+        out.panL[o] = f.panL;
+        out.panR[o] = f.panR;
+    }
+}
+
 void SynthVoice::tickFront (const ChunkSignals& sig, size_t i, Front& front) noexcept
 {
     const SynthParams& p = *sig.params;

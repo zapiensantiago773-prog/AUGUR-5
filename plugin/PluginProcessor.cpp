@@ -24,6 +24,8 @@ Augur5Processor::Augur5Processor()
     presets.onPresetLoaded = [this] { warmUpEngine(); };
     presets.soundChange = [this] (const std::function<void()>& apply) { changeSound (apply); };
     augury.soundChange = [this] (const std::function<void()>& apply) { changeSound (apply); };
+    augury.setBindingSlots ([this] (const juce::String& id) { return binding.slotOf (id); });
+    morphMirror.startTimerHz (10);
     undoManager.clearUndoHistory();
     qualityParam = parameters.getRawParameterValue (augur5::params::quality);
     offlineQualityParam = parameters.getRawParameterValue (augur5::params::offline_quality);
@@ -31,6 +33,7 @@ Augur5Processor::Augur5Processor()
 
 Augur5Processor::~Augur5Processor()
 {
+    morphMirror.stopTimer();
     cancelPendingUpdate();
 }
 
@@ -102,7 +105,7 @@ void Augur5Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
             triggerAsyncUpdate();
     }
 
-    fillSnapshot();
+    fillSnapshot (true);
     engine->setParams (snapshot);
 
     if (auto* ph = getPlayHead())
@@ -213,7 +216,10 @@ void Augur5Processor::changeSound (const std::function<void()>& apply)
         }
     }
 
-    apply(); // in silence
+    {
+        const augur5::AuguryModel::ScopedNoMorph still (augury); // a new sound and its bird, no morph
+        apply(); // in silence
+    }
 
     inSoundChange = false;
     if (prepared)
@@ -236,9 +242,19 @@ void Augur5Processor::changeSound (const std::function<void()>& apply)
     soundGain = 1.0f;
 }
 
-void Augur5Processor::fillSnapshot() noexcept
+void Augur5Processor::fillSnapshot (bool withMorph) noexcept
 {
-    binding.fill (snapshot);
+    // On the audio thread, MORPH X / Y moved by the host or a controller play their blend from this block on, before
+    // the editor has written it into the parameters (offline renders included).
+    if (const auto morph = withMorph ? augury.audioOverride() : augur5::AuguryModel::Values {}; morph.count > 0)
+    {
+        const augur5::ParameterBinding::Override o { morph.slots, morph.plain, morph.count };
+        binding.fill (snapshot, &o);
+    }
+    else
+    {
+        binding.fill (snapshot);
+    }
     for (size_t i = 0; i < fxOrder.size(); ++i)
         snapshot.fx.order[i] = fxOrder[i].load (std::memory_order_relaxed);
 }
@@ -367,6 +383,18 @@ void Augur5Processor::handleMidi (const juce::uint8* data, int numBytes) noexcep
     }
 }
 
+void Augur5Processor::undo()
+{
+    const augur5::AuguryModel::ScopedNoMorph still (augury);
+    undoManager.undo();
+}
+
+void Augur5Processor::redo()
+{
+    const augur5::AuguryModel::ScopedNoMorph still (augury);
+    undoManager.redo();
+}
+
 void Augur5Processor::getStateInformation (juce::MemoryBlock& destData)
 {
     auto state = parameters.copyState();
@@ -408,11 +436,16 @@ void Augur5Processor::restoreState (const void* data, int sizeInBytes)
             augur5::completeOlderSettings (saved);
             // Plugin state that is not a parameter: rack order and the AUGURY corners.
             fxOrderFromString (tree.getProperty ("fxOrder").toString());
-            augury.fromTree (tree.getChildWithName ("AUGURY"));
+            const auto scene = tree.getChildWithName ("AUGURY").createCopy();
+            augury.fromTree (scene);
             for (auto old = tree.getChildWithName ("AUGURY"); old.isValid(); old = tree.getChildWithName ("AUGURY"))
                 tree.removeChild (old, nullptr);
             uiScaleChosen = static_cast<bool> (tree.getProperty ("uiScaleChosen", false));
             parameters.replaceState (tree);
+            // Sessions saved before 1.6 have no MORPH X / Y: the bird goes where their AUGURY scene had it.
+            if (std::none_of (saved.begin(), saved.end(), [] (const auto& s) { return s.first == augur5::params::morph_x; })
+                && scene.isValid())
+                augury.placeBird ({ static_cast<float> (scene.getProperty ("x", 0.5)), static_cast<float> (scene.getProperty ("y", 0.5)) });
             for (auto k = savedCount; k < saved.size(); ++k)
                 if (auto* p = parameters.getParameter (saved[k].first))
                     p->setValueNotifyingHost (p->convertTo0to1 (saved[k].second));

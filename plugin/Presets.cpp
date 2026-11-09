@@ -673,7 +673,8 @@ void PresetManager::setParam (const juce::String& id, float value)
 bool PresetManager::isGlobalSetting (const juce::String& id)
 {
     // Instrument-wide settings that stay where the user left them when a sound is loaded.
-    return id == params::master_volume || id == params::quality || id == params::offline_quality;
+    return id == params::master_volume || id == params::quality || id == params::offline_quality || id == params::morph_x
+           || id == params::morph_y;
 }
 
 void PresetManager::resetToDefaults()

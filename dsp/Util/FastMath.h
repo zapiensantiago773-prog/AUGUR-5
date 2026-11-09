@@ -5,13 +5,21 @@
 #include <cstdint>
 #include <cstring>
 
+// Per-sample helpers are always inlined: left as calls, exp2 and tanh alone took 17 % of the engine's time at ECO
+// (D-059). Inlining does not change a single result (the same operations in the same order).
+#if defined(_MSC_VER)
+ #define AUGUR_INLINE __forceinline
+#else
+ #define AUGUR_INLINE inline __attribute__ ((always_inline))
+#endif
+
 namespace augur::fastmath
 {
 
 inline constexpr float pi = 3.14159265358979f;
 
 // Padé [7/6] tanh. Max error ~1e-6 for |x| < 4.9, clamped outside. Used by every analog nonlinearity.
-inline float tanh (float x) noexcept
+AUGUR_INLINE float tanh (float x) noexcept
 {
     x = std::clamp (x, -4.97f, 4.97f);
     const float x2 = x * x;
@@ -22,7 +30,7 @@ inline float tanh (float x) noexcept
 
 // tanh(x) / x, the secant gain used to linearise nonlinear stages inside the implicit filter solver.
 // Same Padé approximant with the x factored out: one division, no special case near 0.
-inline float tanhRatio (float x) noexcept
+AUGUR_INLINE float tanhRatio (float x) noexcept
 {
     const float ax = std::abs (x);
     if (ax > 4.97f)
@@ -32,7 +40,7 @@ inline float tanhRatio (float x) noexcept
 }
 
 // Padé tan, accurate for 0 <= x <= 1.45 (cutoff prewarping up to 0.46 * fs).
-inline float tan (float x) noexcept
+AUGUR_INLINE float tan (float x) noexcept
 {
     x = std::clamp (x, 0.0f, 1.45f);
     const float x2 = x * x;
@@ -42,7 +50,7 @@ inline float tan (float x) noexcept
 }
 
 // 2^x with ~1e-7 relative error (0.0002 cents): centred 6th-order polynomial + exponent bits.
-inline float exp2 (float x) noexcept
+AUGUR_INLINE float exp2 (float x) noexcept
 {
     x = x < -126.0f ? -126.0f : (x > 126.0f ? 126.0f : x);
     // floor() without a library call: truncate, then step down for negative non-integers.
@@ -57,7 +65,7 @@ inline float exp2 (float x) noexcept
 }
 
 // log2(x) for x > 0, ~1e-7 absolute error: exponent bits + atanh series on the mantissa in [0.707, 1.414).
-inline float log2 (float x) noexcept
+AUGUR_INLINE float log2 (float x) noexcept
 {
     x = x < 1.0e-30f ? 1.0e-30f : x;
     std::int32_t bits;
@@ -76,7 +84,7 @@ inline float log2 (float x) noexcept
     return static_cast<float> (e) + ln * 1.44269504f;
 }
 
-inline float semitonesToHz (float midiPitch) noexcept
+AUGUR_INLINE float semitonesToHz (float midiPitch) noexcept
 {
     return 440.0f * exp2 ((midiPitch - 69.0f) * (1.0f / 12.0f));
 }

@@ -710,9 +710,9 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
     std::fill_n (busR.begin(), iCount, 0.0f);
 
     // Active voices are processed in groups of four: each voice runs its front half (oscillators, CV path,
-    // modulation, mixer) and the group runs the back half (drive, filter, coupling capacitor, VCA, pan)
-    // with one voice per SIMD lane. Filter state and coupling charge are loaded per segment and written
-    // back, so the scalar voice objects stay the reference state.
+    // modulation, mixer) over the whole segment into the group's lane buffers, then the group runs the back half
+    // (drive, filter, coupling capacitor, VCA, pan) with one voice per SIMD lane. Filter state and coupling charge
+    // are loaded per segment and written back, so the scalar voice objects stay the reference state.
     std::array<SynthVoice*, maxVoices> active {};
     int numActive = 0;
     for (auto& voice : voices)
@@ -749,25 +749,33 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
         F4 dc = load (charge);
         const F4 coeff = splat (group[0]->couplingCoeff());
 
+        const SynthVoice::FrontLanes lanesOut { front.bus.data(), front.cutoffOct.data(), front.resonance.data(),
+                                                front.gain.data(), front.panL.data(), front.panR.data() };
+        for (int k = 0; k < lanes; ++k)
+            group[static_cast<size_t> (k)]->renderFront (sig, static_cast<size_t> (iStart), iCount, lanesOut, k);
+        for (int k = lanes; k < 4; ++k) // idle lanes: silence
+            for (int j = 0; j < iCount; ++j)
+            {
+                const auto o = static_cast<size_t> (j) * 4 + static_cast<size_t> (k);
+                front.bus[o] = front.cutoffOct[o] = front.resonance[o] = front.gain[o] = front.panL[o] = front.panR[o] = 0.0f;
+            }
+
         for (int j = 0; j < iCount; ++j)
         {
             const auto i = static_cast<size_t> (iStart + j);
-            SynthVoice::Front fr[4];
-            for (int k = 0; k < lanes; ++k)
-                group[static_cast<size_t> (k)]->tickFront (sig, i, fr[k]);
-
-            const F4 bus = set (fr[0].bus, fr[1].bus, fr[2].bus, fr[3].bus);
+            const auto o = static_cast<size_t> (j) * 4;
+            const F4 bus = load (front.bus.data() + o);
             const F4 pre = bus * splat (0.9f + 3.0f * sig.drive[i]);
             const F4 x = simd::tanh (pre * splat (0.5f)) * splat (2.0f);
-            const F4 fc = simd::exp2 (min (set (fr[0].cutoffOct, fr[1].cutoffOct, fr[2].cutoffOct, fr[3].cutoffOct), splat (15.0f)));
-            const F4 yRaw = filters[0]->process4 (state, x, fc, set (fr[0].resonance, fr[1].resonance, fr[2].resonance, fr[3].resonance));
+            const F4 fc = simd::exp2 (min (load (front.cutoffOct.data() + o), splat (15.0f)));
+            const F4 yRaw = filters[0]->process4 (state, x, fc, load (front.resonance.data() + o));
             const F4 y = yRaw - dc;
             dc = dc + y * coeff;
-            const F4 out = simd::tanh (y * set (fr[0].gain, fr[1].gain, fr[2].gain, fr[3].gain) * splat (0.6f)) * splat (outScale / 0.6f);
+            const F4 out = simd::tanh (y * load (front.gain.data() + o) * splat (0.6f)) * splat (outScale / 0.6f);
 
             alignas (16) float l[4], r[4];
-            store (l, out * set (fr[0].panL, fr[1].panL, fr[2].panL, fr[3].panL));
-            store (r, out * set (fr[0].panR, fr[1].panR, fr[2].panR, fr[3].panR));
+            store (l, out * load (front.panL.data() + o));
+            store (r, out * load (front.panR.data() + o));
             const auto jj = static_cast<size_t> (j);
             for (int k = 0; k < lanes; ++k)
             {

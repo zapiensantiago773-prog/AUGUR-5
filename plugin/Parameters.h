@@ -198,4 +198,10 @@ namespace augur5::params
     inline constexpr auto arp_gate  = "arp_gate";  // 0.02..1 of a step
     inline constexpr auto arp_swing = "arp_swing"; // 0..0.5 of a step
     inline constexpr auto arp_latch = "arp_latch"; // bool
+
+    // ---------- AUGURY (1.6) ----------
+    // Where the bird is on the morph pad: automatable and MIDI-assignable. Instrument settings like MASTER: a sound
+    // loaded from a preset leaves them alone (a preset's AUGURY scene carries its own bird position).
+    inline constexpr auto morph_x = "morph_x"; // 0..1, left .. right
+    inline constexpr auto morph_y = "morph_y"; // 0..1, top .. bottom
 }

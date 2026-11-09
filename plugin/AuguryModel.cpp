@@ -62,6 +62,35 @@ AuguryModel::AuguryModel (juce::AudioProcessorValueTreeState& s) : state (s)
             discrete.push_back (isDiscrete (rp));
             structure.push_back (isVoiceStructure (rp->getParameterID()));
         }
+    xParam = state.getParameter (P::morph_x);
+    yParam = state.getParameter (P::morph_y);
+    xRaw = state.getRawParameterValue (P::morph_x);
+    yRaw = state.getRawParameterValue (P::morph_y);
+    jassert (xParam != nullptr && yParam != nullptr && xRaw != nullptr && yRaw != nullptr);
+    // Everything the audio thread touches is allocated here, once.
+    rtValues.assign (static_cast<size_t> (numCorners) * params.size(), 0.0f);
+    rtNorm.assign (params.size(), 0.0f);
+    rtPlain.assign (params.size(), 0.0f);
+    rtSlots.assign (params.size(), -1);
+    bindingSlot.assign (params.size(), -1);
+    markMirrored();
+}
+
+void AuguryModel::setBindingSlots (const std::function<int (const juce::String&)>& slotOf)
+{
+    const juce::SpinLock::ScopedLockType sl (rtLock);
+    for (size_t i = 0; i < params.size(); ++i)
+        bindingSlot[i] = slotOf (params[i]->getParameterID());
+    rtRevision = -1; // recompute
+}
+
+juce::StringArray AuguryModel::unboundParameters() const
+{
+    juce::StringArray ids;
+    for (size_t i = 0; i < params.size(); ++i)
+        if (bindingSlot[i] < 0)
+            ids.add (params[i]->getParameterID());
+    return ids;
 }
 
 bool AuguryModel::isFilled (int corner) const
@@ -76,6 +105,21 @@ juce::String AuguryModel::getName (int corner) const
     return corners[static_cast<size_t> (juce::jlimit (0, numCorners - 1, corner))].name;
 }
 
+void AuguryModel::publish()
+{
+    // Called with `lock` held. The copy is all the audio thread reads of the corners; it only ever tries this lock.
+    const juce::SpinLock::ScopedLockType sl (rtLock);
+    for (int c = 0; c < numCorners; ++c)
+    {
+        const auto& corner = corners[static_cast<size_t> (c)];
+        rtFilled[static_cast<size_t> (c)] = corner.filled && corner.values.size() == params.size();
+        if (rtFilled[static_cast<size_t> (c)])
+            std::copy (corner.values.begin(), corner.values.end(),
+                       rtValues.begin() + static_cast<std::ptrdiff_t> (static_cast<size_t> (c) * params.size()));
+    }
+    ++revision;
+}
+
 void AuguryModel::capture (int corner, const juce::String& soundName)
 {
     const juce::ScopedLock sl (lock);
@@ -85,7 +129,7 @@ void AuguryModel::capture (int corner, const juce::String& soundName)
         c.values[i] = params[i]->getValue();
     c.name = soundName;
     c.filled = true;
-    ++revision;
+    publish();
 }
 
 void AuguryModel::clear (int corner)
@@ -93,7 +137,7 @@ void AuguryModel::clear (int corner)
     const juce::ScopedLock sl (lock);
     auto& c = corners[static_cast<size_t> (juce::jlimit (0, numCorners - 1, corner))];
     c = Corner {};
-    ++revision;
+    publish();
 }
 
 int AuguryModel::filledCount() const
@@ -105,16 +149,55 @@ int AuguryModel::filledCount() const
     return n;
 }
 
-void AuguryModel::setNormalised (size_t index, float v)
+void AuguryModel::setNormalised (size_t index, float v, bool gesture)
 {
     auto* p = params[index];
     if (std::abs (p->getValue() - v) < 1.0e-5f)
         return;
-    if (! inGesture)
+    if (gesture && ! inGesture)
         p->beginChangeGesture();
     p->setValueNotifyingHost (v);
-    if (! inGesture)
+    if (gesture && ! inGesture)
         p->endChangeGesture();
+}
+
+juce::Point<float> AuguryModel::getPosition() const
+{
+    return { xRaw->load (std::memory_order_relaxed), yRaw->load (std::memory_order_relaxed) };
+}
+
+void AuguryModel::setBird (juce::Point<float> p)
+{
+    const std::pair<juce::RangedAudioParameter*, float> axes[] { { xParam, p.x }, { yParam, p.y } };
+    for (const auto& [param, v] : axes)
+    {
+        const float n = param->convertTo0to1 (juce::jlimit (0.0f, 1.0f, v));
+        if (param->getValue() != n)
+            param->setValueNotifyingHost (n);
+    }
+}
+
+void AuguryModel::placeBird (juce::Point<float> p)
+{
+    const ScopedNoMorph still (*this);
+    setBird (p);
+}
+
+void AuguryModel::markMirrored() noexcept
+{
+    mirroredX.store (xRaw->load (std::memory_order_relaxed), std::memory_order_release);
+    mirroredY.store (yRaw->load (std::memory_order_relaxed), std::memory_order_release);
+}
+
+AuguryModel::ScopedNoMorph::ScopedNoMorph (AuguryModel& m) noexcept : model (m)
+{
+    model.noMorph.fetch_add (1, std::memory_order_acq_rel);
+}
+
+AuguryModel::ScopedNoMorph::~ScopedNoMorph()
+{
+    model.markMirrored(); // whatever moved the bird also set the sound that goes with it
+    model.noMorph.fetch_sub (1, std::memory_order_acq_rel);
 }
 
 void AuguryModel::recall (int corner)
@@ -127,11 +210,13 @@ void AuguryModel::recall (int corner)
         if (! c.filled || c.values.size() != params.size())
             return;
         target = c.values;
-        position = { corner % 2 == 0 ? 0.0f : 1.0f, corner < 2 ? 0.0f : 1.0f };
     }
-    const auto apply = [this, &target] {
+    const juce::Point<float> at (corner % 2 == 0 ? 0.0f : 1.0f, corner < 2 ? 0.0f : 1.0f);
+    const auto apply = [this, &target, at] {
+        const ScopedNoMorph still (*this);
         for (size_t i = 0; i < params.size(); ++i)
-            setNormalised (i, target[i]);
+            setNormalised (i, target[i], true);
+        setBird (at);
     };
     if (soundChange)
         soundChange (apply);
@@ -139,15 +224,13 @@ void AuguryModel::recall (int corner)
         apply();
 }
 
-std::array<float, AuguryModel::numCorners> AuguryModel::weights() const
+std::array<float, AuguryModel::numCorners> AuguryModel::weightsAt (float x, float y, const std::array<bool, numCorners>& filled) noexcept
 {
-    const juce::ScopedLock sl (lock);
-    const float x = position.x, y = position.y;
     std::array<float, numCorners> w { (1.0f - x) * (1.0f - y), x * (1.0f - y), (1.0f - x) * y, x * y };
     float sum = 0.0f;
     for (int i = 0; i < numCorners; ++i)
     {
-        if (! corners[static_cast<size_t> (i)].filled)
+        if (! filled[static_cast<size_t> (i)])
             w[static_cast<size_t> (i)] = 0.0f;
         sum += w[static_cast<size_t> (i)];
     }
@@ -155,10 +238,11 @@ std::array<float, AuguryModel::numCorners> AuguryModel::weights() const
     {
         // The point sits on an empty corner's side: inverse-distance weights of the filled ones.
         sum = 0.0f;
+        const juce::Point<float> position (x, y);
         for (int i = 0; i < numCorners; ++i)
         {
             const juce::Point<float> c (i % 2 == 0 ? 0.0f : 1.0f, i < 2 ? 0.0f : 1.0f);
-            w[static_cast<size_t> (i)] = corners[static_cast<size_t> (i)].filled ? 1.0f / (0.01f + position.getDistanceFrom (c)) : 0.0f;
+            w[static_cast<size_t> (i)] = filled[static_cast<size_t> (i)] ? 1.0f / (0.01f + position.getDistanceFrom (c)) : 0.0f;
             sum += w[static_cast<size_t> (i)];
         }
     }
@@ -168,12 +252,76 @@ std::array<float, AuguryModel::numCorners> AuguryModel::weights() const
     return w;
 }
 
+std::array<float, AuguryModel::numCorners> AuguryModel::weights() const
+{
+    std::array<bool, numCorners> filled {};
+    {
+        const juce::ScopedLock sl (lock);
+        for (int c = 0; c < numCorners; ++c)
+            filled[static_cast<size_t> (c)] = corners[static_cast<size_t> (c)].filled;
+    }
+    const auto p = getPosition();
+    return weightsAt (p.x, p.y, filled);
+}
+
+void AuguryModel::blendInto (float x, float y, const std::array<bool, numCorners>& filled, const float* const* values,
+                             float* out) const noexcept
+{
+    // The one blend, on both threads: the editor's drag, the mirror and the audio thread give the same values.
+    const auto w = weightsAt (x, y, filled);
+    int strongest = 0;
+    for (int i = 1; i < numCorners; ++i)
+        if (w[static_cast<size_t> (i)] > w[static_cast<size_t> (strongest)])
+            strongest = i;
+    for (size_t i = 0; i < params.size(); ++i)
+    {
+        if (structure[i])
+            continue; // stays as played
+        if (discrete[i])
+        {
+            out[i] = values[strongest][i];
+            continue;
+        }
+        float v = 0.0f;
+        for (int c = 0; c < numCorners; ++c)
+            if (w[static_cast<size_t> (c)] > 0.0f)
+                v += w[static_cast<size_t> (c)] * values[c][i];
+        out[i] = v;
+    }
+}
+
+void AuguryModel::applyBlend (float x, float y, bool gesture)
+{
+    std::vector<float> target (params.size());
+    {
+        const juce::ScopedLock sl (lock);
+        std::array<bool, numCorners> filled {};
+        std::array<const float*, numCorners> values {};
+        int n = 0;
+        for (int c = 0; c < numCorners; ++c)
+        {
+            const auto& corner = corners[static_cast<size_t> (c)];
+            filled[static_cast<size_t> (c)] = corner.filled && corner.values.size() == params.size();
+            values[static_cast<size_t> (c)] = filled[static_cast<size_t> (c)] ? corner.values.data() : nullptr;
+            n += filled[static_cast<size_t> (c)] ? 1 : 0;
+        }
+        if (n < 2)
+            return;
+        blendInto (x, y, filled, values.data(), target.data());
+    }
+    for (size_t i = 0; i < params.size(); ++i)
+        if (! structure[i])
+            setNormalised (i, target[i], gesture);
+}
+
 void AuguryModel::beginMorph()
 {
     if (inGesture)
         return;
     for (auto* p : params)
         p->beginChangeGesture();
+    xParam->beginChangeGesture();
+    yParam->beginChangeGesture();
     inGesture = true;
 }
 
@@ -183,41 +331,71 @@ void AuguryModel::endMorph()
         return;
     for (auto* p : params)
         p->endChangeGesture();
+    xParam->endChangeGesture();
+    yParam->endChangeGesture();
     inGesture = false;
 }
 
 void AuguryModel::setPosition (juce::Point<float> p)
 {
-    std::vector<float> target (params.size());
+    p = { juce::jlimit (0.0f, 1.0f, p.x), juce::jlimit (0.0f, 1.0f, p.y) };
+    // The blend first, then the bird: the audio thread never sees the bird ahead of the sound it means.
+    applyBlend (p.x, p.y, true);
+    setBird (p);
+    markMirrored();
+}
+
+void AuguryModel::mirror()
+{
+    if (noMorph.load (std::memory_order_acquire) > 0)
+        return;
+    const auto p = getPosition();
+    if (p.x == mirroredX.load (std::memory_order_acquire) && p.y == mirroredY.load (std::memory_order_acquire))
+        return;
+    applyBlend (p.x, p.y, false); // the host moved it: no gesture
+    mirroredX.store (p.x, std::memory_order_release);
+    mirroredY.store (p.y, std::memory_order_release);
+}
+
+AuguryModel::Values AuguryModel::audioOverride() noexcept
+{
+    if (noMorph.load (std::memory_order_acquire) > 0)
+        return {};
+    const float x = xRaw->load (std::memory_order_relaxed), y = yRaw->load (std::memory_order_relaxed);
+    if (x == mirroredX.load (std::memory_order_acquire) && y == mirroredY.load (std::memory_order_acquire))
+        return {}; // the parameters hold this sound
+    const int rev = revision.load (std::memory_order_acquire);
+    if (x != rtX || y != rtY || rev != rtRevision)
     {
-        const juce::ScopedLock sl (lock);
-        position = { juce::jlimit (0.0f, 1.0f, p.x), juce::jlimit (0.0f, 1.0f, p.y) };
-        if (filledCount() < 2)
-            return;
-        const auto w = weights();
-        int strongest = 0;
-        for (int i = 1; i < numCorners; ++i)
-            if (w[static_cast<size_t> (i)] > w[static_cast<size_t> (strongest)])
-                strongest = i;
-        for (size_t i = 0; i < params.size(); ++i)
+        const juce::SpinLock::ScopedTryLockType tl (rtLock);
+        if (tl.isLocked())
         {
-            if (structure[i])
-                continue; // stays as played
-            if (discrete[i])
-            {
-                target[i] = corners[static_cast<size_t> (strongest)].values[i];
-                continue;
-            }
-            float v = 0.0f;
+            std::array<const float*, numCorners> values {};
+            int n = 0;
             for (int c = 0; c < numCorners; ++c)
-                if (w[static_cast<size_t> (c)] > 0.0f)
-                    v += w[static_cast<size_t> (c)] * corners[static_cast<size_t> (c)].values[i];
-            target[i] = v;
+            {
+                values[static_cast<size_t> (c)] = rtValues.data() + static_cast<size_t> (c) * params.size();
+                n += rtFilled[static_cast<size_t> (c)] ? 1 : 0;
+            }
+            rtCount = 0;
+            if (n >= 2)
+            {
+                blendInto (x, y, rtFilled, values.data(), rtNorm.data());
+                for (size_t i = 0; i < params.size(); ++i)
+                    if (! structure[i] && bindingSlot[i] >= 0)
+                    {
+                        rtSlots[static_cast<size_t> (rtCount)] = bindingSlot[i];
+                        rtPlain[static_cast<size_t> (rtCount)] = params[i]->convertFrom0to1 (rtNorm[i]);
+                        ++rtCount;
+                    }
+            }
+            rtX = x;
+            rtY = y;
+            rtRevision = rev;
         }
+        // (not locked: the corners are changing this instant; the last blend plays one more block)
     }
-    for (size_t i = 0; i < params.size(); ++i)
-        if (! structure[i])
-            setNormalised (i, target[i]);
+    return { rtSlots.data(), rtPlain.data(), rtCount };
 }
 
 juce::uint32 AuguryModel::castOmen (float amount, juce::uint32 lockedGroups, juce::uint32 seed)
@@ -374,8 +552,9 @@ juce::uint32 AuguryModel::castOmen (float amount, juce::uint32 lockedGroups, juc
             next[i] = before[i];
 
     const auto apply = [this, &next] {
+        const ScopedNoMorph still (*this); // the bird stays where it is, with the new sound
         for (size_t i = 0; i < params.size(); ++i)
-            setNormalised (i, next[i]);
+            setNormalised (i, next[i], true);
     };
     if (soundChange)
         soundChange (apply);
@@ -386,6 +565,7 @@ juce::uint32 AuguryModel::castOmen (float amount, juce::uint32 lockedGroups, juc
 
 juce::ValueTree AuguryModel::toTree() const
 {
+    const auto position = getPosition();
     const juce::ScopedLock sl (lock);
     juce::ValueTree tree ("AUGURY");
     tree.setProperty ("x", position.x, nullptr);
@@ -413,13 +593,25 @@ juce::ValueTree AuguryModel::toTree() const
 
 void AuguryModel::fromTree (const juce::ValueTree& tree)
 {
-    const juce::ScopedLock sl (lock);
-    ++revision;
+    {
+        const juce::ScopedLock sl (lock);
+        loadCorners (tree);
+        publish();
+    }
+    // The bird where the scene had it, with the sound that came with it (no morph).
+    if (tree.hasType ("AUGURY"))
+    {
+        const ScopedNoMorph still (*this);
+        setBird ({ static_cast<float> (tree.getProperty ("x", 0.5)), static_cast<float> (tree.getProperty ("y", 0.5)) });
+    }
+}
+
+void AuguryModel::loadCorners (const juce::ValueTree& tree)
+{
     for (auto& c : corners)
         c = Corner {};
     if (! tree.hasType ("AUGURY"))
         return;
-    position = { static_cast<float> (tree.getProperty ("x", 0.5)), static_cast<float> (tree.getProperty ("y", 0.5)) };
     lastSeed = static_cast<juce::uint32> (static_cast<juce::int64> (tree.getProperty ("seed", 0)));
     for (const auto& node : tree)
     {

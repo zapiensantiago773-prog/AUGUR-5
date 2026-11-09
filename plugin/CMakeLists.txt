@@ -14,7 +14,7 @@ juce_add_plugin(Augur5
     PLUGIN_MANUFACTURER_CODE Tnlb
     PLUGIN_CODE Au53
     FORMATS ${AUGUR_FORMATS}
-    ICON_BIG resources/brand/tonal_lab/tonal-lab-app-icon.png
+    ICON_BIG resources/brand/augur5-app-icon.png
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE

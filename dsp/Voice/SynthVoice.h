@@ -84,6 +84,15 @@ public:
     };
     void tickFront (const ChunkSignals& sig, size_t i, Front& front) noexcept;
 
+    // The front half for a run of internal samples, as one lane of a four-voice SIMD group: sample j of a field goes
+    // to field[j * 4 + lane]. One voice at a time over the whole run keeps its state in registers (the voices are
+    // independent, so the result is the same as interleaving them sample by sample).
+    struct FrontLanes
+    {
+        float *bus, *cutoffOct, *resonance, *gain, *panL, *panR;
+    };
+    void renderFront (const ChunkSignals& sig, size_t start, int count, const FrontLanes& out, int lane) noexcept;
+
     // State the SIMD back half works on (loaded per segment, written back afterwards).
     LadderFilter& getFilter() noexcept { return filter; }
     float& couplingCharge() noexcept { return filterDc; }

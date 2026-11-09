@@ -1,6 +1,8 @@
 #include "ParameterLayout.h"
 #include "Parameters.h"
 
+#include <deque>
+
 namespace augur5
 {
 
@@ -413,6 +415,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (toggle (P::wm_pw_b, "Wheel-Mod PW B", false));
     layout.add (toggle (P::wm_filter, "Wheel-Mod Filter", false));
 
+    // 1.6: the AUGURY bird, automatable (version hint 2: added after the first release).
+    layout.add (std::make_unique<APF> (juce::ParameterID { P::morph_x, 2 }, "Morph X", Range (0.0f, 1.0f), 0.5f,
+                                       juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatPercent)));
+    layout.add (std::make_unique<APF> (juce::ParameterID { P::morph_y, 2 }, "Morph Y", Range (0.0f, 1.0f), 0.5f,
+                                       juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatPercent)));
+
     return layout;
 }
 
@@ -420,6 +428,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
 struct ParameterBinding::Raw
 {
+    // Every member points at the binding's own copy of a parameter (a slot); fill() refreshes the copies from the
+    // APVTS once per block and then lays any override on top, so the rest reads one consistent set.
+    std::vector<const std::atomic<float>*> sources;
+    std::deque<std::atomic<float>> values; // stable addresses
+    std::vector<juce::String> ids;
+
     using A = std::atomic<float>*;
     A osc1Freq, osc1Fine, osc1Pw, osc1Saw, osc1Pulse, osc1Sync;
     A osc2Freq, osc2Fine, osc2Pw, osc2Saw, osc2Tri, osc2Pulse, osc2LoFreq, osc2Kbd, oscModel;
@@ -479,12 +493,18 @@ struct ParameterBinding::Raw
 ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw (std::make_unique<Raw>())
 {
     namespace P = params;
-    const auto get = [&s] (const juce::String& id) {
+    auto& r = *raw;
+    const auto get = [&s, &r] (const juce::String& id) -> std::atomic<float>* {
+        for (size_t k = 0; k < r.ids.size(); ++k)
+            if (r.ids[k] == id)
+                return &r.values[k];
         auto* p = s.getRawParameterValue (id);
         jassert (p != nullptr);
-        return p;
+        r.sources.push_back (p);
+        r.ids.push_back (id);
+        r.values.emplace_back (p->load());
+        return &r.values.back();
     };
-    auto& r = *raw;
     r.osc1Freq = get (P::osc1_freq); r.osc1Fine = get (P::osc1_fine); r.osc1Pw = get (P::osc1_pw);
     r.osc1Saw = get (P::osc1_saw); r.osc1Pulse = get (P::osc1_pulse); r.osc1Sync = get (P::osc1_sync);
     r.osc2Freq = get (P::osc2_freq); r.osc2Fine = get (P::osc2_fine); r.osc2Pw = get (P::osc2_pw);
@@ -570,9 +590,22 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
 
 ParameterBinding::~ParameterBinding() = default;
 
-void ParameterBinding::fill (augur::SynthParams& p) noexcept
+int ParameterBinding::slotOf (const juce::String& id) const
+{
+    for (size_t k = 0; k < raw->ids.size(); ++k)
+        if (raw->ids[k] == id)
+            return static_cast<int> (k);
+    return -1;
+}
+
+void ParameterBinding::fill (augur::SynthParams& p, const Override* override) noexcept
 {
     auto& r = *raw;
+    for (size_t k = 0; k < r.sources.size(); ++k)
+        r.values[k].store (r.sources[k]->load (std::memory_order_relaxed), std::memory_order_relaxed);
+    if (override != nullptr)
+        for (int n = 0; n < override->count; ++n)
+            r.values[static_cast<size_t> (override->slots[n])].store (override->plain[n], std::memory_order_relaxed);
     const auto f = [] (std::atomic<float>* a) { return a->load (std::memory_order_relaxed); };
     const auto b = [&f] (std::atomic<float>* a) { return f (a) > 0.5f; };
     const auto i = [&f] (std::atomic<float>* a) { return juce::roundToInt (f (a)); };

@@ -46,6 +46,9 @@ public:
 
     juce::AudioProcessorValueTreeState& getParameters() noexcept { return parameters; }
     juce::UndoManager& getUndoManager() noexcept { return undoManager; }
+    // UNDO / REDO restore the sound and the AUGURY bird together: no morph on the way (message thread).
+    void undo();
+    void redo();
     augur5::PresetManager& getPresets() noexcept { return presets; }
     float getVoiceLevel (int v) const noexcept { return engine->getVoiceLevel (v); }
     const augur::SynthEngine& getEngine() const noexcept { return *engine; }
@@ -89,7 +92,7 @@ private:
     void handleMidi (const juce::uint8* data, int numBytes) noexcept;
     void applySoundFade (juce::AudioBuffer<float>& buffer, int numSamples) noexcept; // audio thread
     void restoreState (const void* data, int sizeInBytes);                             // setStateInformation's work
-    void fillSnapshot() noexcept; // parameters + rack order -> snapshot
+    void fillSnapshot (bool withMorph = false) noexcept; // parameters + rack order -> snapshot (+ AUGURY on the audio thread)
 
     // Quality (oversampling) changes rebuild the voices: done off the audio thread with processing
     // suspended, or directly while the host renders offline (no deadline there).
@@ -104,6 +107,13 @@ private:
     augur5::ParameterBinding binding;
     augur5::PresetManager presets;
     augur5::AuguryModel augury;
+    // MORPH X / Y moved by the host or a controller: the blend goes into the parameters ~10 times a second.
+    struct MorphMirror final : juce::Timer
+    {
+        explicit MorphMirror (augur5::AuguryModel& m) : model (m) {}
+        void timerCallback() override { model.mirror(); }
+        augur5::AuguryModel& model;
+    } morphMirror { augury };
     augur5::AudioTap audioTap;
     augur5::UiMidiQueue uiMidi;
     std::array<std::atomic<int>, 8> fxOrder;

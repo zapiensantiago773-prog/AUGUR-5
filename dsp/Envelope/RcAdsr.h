@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "Util/FastMath.h"
+
 namespace augur
 {
 
@@ -59,7 +61,7 @@ public:
             stage = Stage::Release;
     }
 
-    float next() noexcept
+    AUGUR_INLINE float next() noexcept
     {
         switch (stage)
         {
