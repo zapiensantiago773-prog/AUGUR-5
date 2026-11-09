@@ -31,6 +31,11 @@ const char* AuguryModel::groupName (int g)
     return names[juce::jlimit (0, numGroups - 1, g)];
 }
 
+bool AuguryModel::isVoiceStructure (const juce::String& id)
+{
+    return id == P::voice_count || id == P::unison || id == P::voice_mode || id == P::arp_on || id == P::arp_latch;
+}
+
 int AuguryModel::groupOf (const juce::String& id)
 {
     if (id.startsWith ("osc") || id == P::sub_oct)
@@ -55,6 +60,7 @@ AuguryModel::AuguryModel (juce::AudioProcessorValueTreeState& s) : state (s)
         {
             params.push_back (rp);
             discrete.push_back (isDiscrete (rp));
+            structure.push_back (isVoiceStructure (rp->getParameterID()));
         }
 }
 
@@ -79,6 +85,7 @@ void AuguryModel::capture (int corner, const juce::String& soundName)
         c.values[i] = params[i]->getValue();
     c.name = soundName;
     c.filled = true;
+    ++revision;
 }
 
 void AuguryModel::clear (int corner)
@@ -86,6 +93,7 @@ void AuguryModel::clear (int corner)
     const juce::ScopedLock sl (lock);
     auto& c = corners[static_cast<size_t> (juce::jlimit (0, numCorners - 1, corner))];
     c = Corner {};
+    ++revision;
 }
 
 int AuguryModel::filledCount() const
@@ -193,6 +201,8 @@ void AuguryModel::setPosition (juce::Point<float> p)
                 strongest = i;
         for (size_t i = 0; i < params.size(); ++i)
         {
+            if (structure[i])
+                continue; // stays as played
             if (discrete[i])
             {
                 target[i] = corners[static_cast<size_t> (strongest)].values[i];
@@ -206,7 +216,8 @@ void AuguryModel::setPosition (juce::Point<float> p)
         }
     }
     for (size_t i = 0; i < params.size(); ++i)
-        setNormalised (i, target[i]);
+        if (! structure[i])
+            setNormalised (i, target[i]);
 }
 
 juce::uint32 AuguryModel::castOmen (float amount, juce::uint32 lockedGroups, juce::uint32 seed)
@@ -221,10 +232,10 @@ juce::uint32 AuguryModel::castOmen (float amount, juce::uint32 lockedGroups, juc
         return rng.nextFloat() + rng.nextFloat() + rng.nextFloat() - 1.5f;
     };
 
-    std::vector<float> next (params.size());
+    std::vector<float> next (params.size()), before (params.size());
     for (size_t i = 0; i < params.size(); ++i)
     {
-        next[i] = params[i]->getValue();
+        next[i] = before[i] = params[i]->getValue();
         const auto id = params[i]->getParameterID();
         const int group = groupOf (id);
         // Draw the random numbers for every parameter, so a seed means the same variation whatever is locked.
@@ -233,6 +244,12 @@ juce::uint32 AuguryModel::castOmen (float amount, juce::uint32 lockedGroups, juc
             continue;
         if (id.endsWith ("_on") || id == P::fx_reverb_freeze || id == P::amp_level)
             continue; // the effects that are in stay in; no frozen tanks; the loudness match stays
+        // The modulation patching stays (OMEN varies the amounts, it does not re-patch: a route moved away from the
+        // cutoff left the filter closed in 9 of the 30 near-silent omens measured), and OSC B stays an audible,
+        // tracking oscillator (LO FREQ takes it out of the audio, KBD off leaves it on one pitch).
+        // The filter keeps its mode: the classic filter is a low-pass, and HP / BP took the fundamental of basses away.
+        if (id.endsWith ("_src") || id.endsWith ("_dst") || id == P::osc2_lofreq || id == P::osc2_kbd || id == P::flt_mode)
+            continue;
         if (discrete[i])
         {
             if (r2 < 0.22f * amount)
@@ -272,6 +289,68 @@ juce::uint32 AuguryModel::castOmen (float amount, juce::uint32 lockedGroups, juc
                              P::fx_reverb_mix, P::fuzz_mix })
         clampPlain (mix, 0.0f, 0.6f);
     clampPlain (P::fx_reverb_decay, 0.2f, 8.0f);
+
+    // Guards measured on 20 omens in a row at 100 % (augur_preset_audit --check-augury): what took a sound close to
+    // silence. The rule is "not worse than the sound was": a sound that already had it keeps it.
+    const auto plain = [&] (const juce::String& id, const std::vector<float>& v) {
+        const int i = indexOf (id.toRawUTF8());
+        return i < 0 ? 0.0f : params[static_cast<size_t> (i)]->getNormalisableRange().convertFrom0to1 (v[static_cast<size_t> (i)]);
+    };
+    const auto setPlain = [&] (const juce::String& id, float value) {
+        if (const int i = indexOf (id.toRawUTF8()); i >= 0)
+            next[static_cast<size_t> (i)] = params[static_cast<size_t> (i)]->getNormalisableRange().convertTo0to1 (value);
+    };
+    // A sustained sound keeps sustaining: the amp sustain stays at 40 % or more (-8 dB) unless it was lower.
+    if (const float s = plain (P::aenv_s, before); plain (P::aenv_s, next) < std::min (s, 0.4f))
+        setPlain (P::aenv_s, std::min (s, 0.4f));
+    // A percussive sound (attack up to 30 ms) stays percussive: a long attack silences short notes and arpeggios.
+    // (30 ms read back from its normalised value is a hair above 30 ms: the test has a margin.)
+    for (const char* id : { P::aenv_a, P::fenv_a })
+        if (plain (id, before) <= 0.031f && plain (id, next) > 0.03f)
+            setPlain (id, 0.03f);
+    // HP and BP keep a cutoff where they let sound through (or where the sound had it).
+    if (const int mode = juce::roundToInt (plain (P::flt_mode, next)); mode == 1 || mode == 2)
+    {
+        const float was = plain (P::flt_cutoff, before);
+        const float lo = mode == 2 ? 180.0f : 300.0f, hi = mode == 2 ? 1500.0f : 2500.0f;
+        float cut = juce::jlimit (std::min (lo, was), std::max (hi, was), plain (P::flt_cutoff, next));
+        if (mode == 1)
+        {
+            // A band-pass's centre is its colour: it moves an octave per omen at most, and velocity does not push it
+            // further up than the sound did (30 %).
+            cut = juce::jlimit (0.5f * was, 2.0f * was, cut);
+            if (const float v = std::max (0.3f, plain (P::flt_velocity, before)); plain (P::flt_velocity, next) > v)
+                setPlain (P::flt_velocity, v);
+        }
+        setPlain (P::flt_cutoff, cut);
+    }
+    // An inverted filter envelope may pull the cutoff down to 180 Hz at its peak (7 octaves at ENV AMT -1), no further.
+    {
+        const float cut = plain (P::flt_cutoff, next);
+        const float floorAmt = -std::log2 (std::max (1.0f, cut / 180.0f)) / 7.0f;
+        const float amt = std::max (plain (P::flt_env_amt, next), std::min (floorAmt, plain (P::flt_env_amt, before)));
+        setPlain (P::flt_env_amt, amt);
+        // The high-pass stays an octave below the lowest point of the low-pass (and below 400 Hz unless it was higher).
+        const float lowest = cut * std::exp2 (7.0f * std::min (0.0f, amt));
+        const float hpfMax = std::min (0.5f * lowest, std::max (400.0f, plain (P::hpf_cutoff, before)));
+        if (plain (P::hpf_cutoff, next) > hpfMax)
+            setPlain (P::hpf_cutoff, std::max (10.0f, hpfMax));
+    }
+    // Matrix routes into the cutoff and the levels do not pull further down than they did, and an empty slot (amount 0)
+    // stays empty: OMEN varies the patch, it does not add routes.
+    for (int k = 1; k <= 8; ++k)
+    {
+        const auto slot = "mm" + juce::String (k);
+        if (std::abs (plain (slot + "_amt", before)) < 1.0e-4f)
+        {
+            setPlain (slot + "_amt", 0.0f);
+            continue;
+        }
+        const int dst = juce::roundToInt (plain (slot + "_dst", next));
+        if (dst == 4 || dst == 6 || dst == 12 || dst == 13) // FILTER CUTOFF, AMP LEVEL, OSC 1 LEVEL, OSC 2 LEVEL
+            setPlain (slot + "_amt", std::max (plain (slot + "_amt", next), std::min (0.0f, plain (slot + "_amt", before))));
+    }
+
     const auto on = [&] (const char* id) {
         const int i = indexOf (id);
         return i >= 0 && next[static_cast<size_t> (i)] > 0.5f;
@@ -289,6 +368,10 @@ juce::uint32 AuguryModel::castOmen (float amount, juce::uint32 lockedGroups, juc
         if (a >= 0 && b >= 0 && next[static_cast<size_t> (a)] < 0.3f && next[static_cast<size_t> (b)] < 0.3f)
             next[static_cast<size_t> (a)] = 0.7f;
     }
+    // A locked group does not move, guards included.
+    for (size_t i = 0; i < params.size(); ++i)
+        if (const int group = groupOf (params[i]->getParameterID()); group >= 0 && (lockedGroups >> group & 1u) != 0)
+            next[i] = before[i];
 
     const auto apply = [this, &next] {
         for (size_t i = 0; i < params.size(); ++i)
@@ -331,6 +414,7 @@ juce::ValueTree AuguryModel::toTree() const
 void AuguryModel::fromTree (const juce::ValueTree& tree)
 {
     const juce::ScopedLock sl (lock);
+    ++revision;
     for (auto& c : corners)
         c = Corner {};
     if (! tree.hasType ("AUGURY"))

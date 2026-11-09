@@ -51,6 +51,11 @@ public:
     // The effects rack order is plugin state, not a parameter: user presets carry it, factory sounds use the default.
     std::function<juce::String()> saveFxOrder;
     std::function<void (const juce::String&)> loadFxOrder; // "" = default order
+    // AUGURY scene (the four corners and the bird): a user preset carries it when a corner is filled. Loading a preset
+    // that carries one replaces the corners; a preset without one leaves them as they are, so sounds can be captured
+    // from one preset after another. Earlier versions read only PARAMS and ignore the scene.
+    std::function<juce::ValueTree()> saveAugury;            // an invalid tree = no scene to save
+    std::function<void (const juce::ValueTree&)> loadAugury;
     void setCurrentName (const juce::String& n) { currentName = n; }
 
 private:

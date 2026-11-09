@@ -354,8 +354,9 @@ int levelPack (const juce::File& folder, bool toPackScale)
 } // namespace
 
 // --check-augury: the AUGURY tools and the plugin state they add, measured.
-//   corners reproduce their sounds exactly; the centre is the mean of continuous values; an OMEN seed gives the same
-//   variation every time; locked groups do not move; corners and the rack order survive a session save / load.
+//   corners reproduce their sounds exactly (the voice structure stays as played; RECALL applies it); the centre is the
+//   mean of continuous values; an OMEN seed gives the same variation every time; locked groups do not move; 20 OMEN in
+//   a row stay audible; corners and the rack order survive a session save / load, and a user preset carries its scene.
 int checkAugury()
 {
     int failures = 0;
@@ -370,6 +371,14 @@ int checkAugury()
         return v;
     };
     const auto valueOf = [] (Augur5Processor& p, const char* id) { return p.getParameters().getParameter (id)->getValue(); };
+    // Every parameter but the voice structure, which a flight leaves as played.
+    const auto soundOf = [] (juce::AudioProcessor& p) {
+        std::vector<float> v;
+        for (auto* param : p.getParameters())
+            if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (param); rp != nullptr && ! augur5::AuguryModel::isVoiceStructure (rp->getParameterID()))
+                v.push_back (param->getValue());
+        return v;
+    };
 
     std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
     auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
@@ -378,22 +387,33 @@ int checkAugury()
 
     presets.loadFactory (presets.findFactory ("Warm Horizon"));
     const auto a = snapshotOf (proc);
-    const float cutA = valueOf (proc, augur5::params::flt_cutoff);
+    const auto soundA = soundOf (proc);
+    const float cutA = valueOf (proc, augur5::params::flt_cutoff), voicesA = valueOf (proc, augur5::params::voice_count);
     augury.capture (0, presets.getCurrentName());
-    presets.loadFactory (presets.findFactory ("Savanna Horn Lead"));
+    presets.loadFactory (presets.findFactory ("Savanna Horn Lead")); // UNISON, 4 voices (Warm Horizon: POLY, 5)
     const auto d = snapshotOf (proc);
+    const auto soundD = soundOf (proc);
     const float cutD = valueOf (proc, augur5::params::flt_cutoff);
     augury.capture (3, presets.getCurrentName());
 
+    presets.loadFactory (presets.findFactory ("Warm Horizon"));
     augury.beginMorph();
     augury.setPosition ({ 0.0f, 0.0f });
     expect (snapshotOf (proc) == a, "corner A reproduces its sound exactly");
     augury.setPosition ({ 1.0f, 1.0f });
-    expect (snapshotOf (proc) == d, "corner D reproduces its sound exactly");
+    expect (soundOf (proc) == soundD, "corner D reproduces its sound exactly (all but the voice structure)");
+    expect (valueOf (proc, augur5::params::unison) < 0.5f && valueOf (proc, augur5::params::voice_count) == voicesA,
+            "flying to D keeps the voice structure as played (POLY, 5 voices)");
     augury.setPosition ({ 0.5f, 0.5f });
     const float mid = valueOf (proc, augur5::params::flt_cutoff);
     expect (std::abs (mid - 0.5f * (cutA + cutD)) < 1.0e-4f, "centre = mean of the corners (normalised cutoff)");
     augury.endMorph();
+    augury.recall (3);
+    expect (snapshotOf (proc) == d, "RECALL D gives sound D exactly, its UNISON and VOICES included");
+    augury.beginMorph();
+    augury.setPosition ({ 0.0f, 0.0f });
+    augury.endMorph();
+    expect (soundOf (proc) == soundA && valueOf (proc, augur5::params::unison) > 0.5f, "flying back to A keeps UNISON as played");
 
     presets.loadFactory (presets.findFactory ("Warm Horizon"));
     augury.castOmen (0.6f, 0u, 4242u);
@@ -409,6 +429,80 @@ int checkAugury()
     expect (valueOf (proc, augur5::params::flt_reso) == res0 && valueOf (proc, augur5::params::flt_env_amt) == env0,
             "a locked group (FILTER) does not move");
 
+    // OMEN cast again and again (20 times in a row at 100 %, as a user hunting for a sound does) on every 8th factory
+    // sound: the variation may move the level, but it must stay a playable sound, never close to silent.
+    {
+        proc.setPlayConfigDetails (0, 2, 48000.0, 256);
+        const auto roleOf = [] (const juce::String& category) -> std::pair<const char*, int> {
+            if (category == "Bass" || category == "Drums") return { "bass", 36 };
+            if (category == "Lead") return { "lead", 60 };
+            if (category == "Pluck" || category == "Arp") return { "pluck", 60 };
+            return { "pad", 57 };
+        };
+        double worstDrop = 0.0;
+        int nearSilent = 0, casts = 0;
+        juce::String worstName;
+        const auto only = juce::SystemStats::getEnvironmentVariable ("AUGUR_OMEN_ONLY", {}); // DIAG: one sound
+        for (int index = 0; index < presets.getNumFactoryPresets(); index += 8)
+        {
+            if (only.isNotEmpty() && presets.getFactoryName (index) != only)
+                continue;
+            const auto [role, root] = roleOf (presets.getFactoryCategory (index));
+            presets.loadFactory (index);
+            proc.prepareToPlay (48000.0, 256);
+            const double base = packaudit::analyse (proc, role, root, 3.0).loudDb;
+            double lowest = base;
+            std::vector<float> original;
+            for (auto* p : proc.AudioProcessor::getParameters())
+                original.push_back (p->getValue());
+            for (juce::uint32 k = 1; k <= 20; ++k)
+            {
+                augury.castOmen (1.0f, 0u, 7000u + 37u * static_cast<juce::uint32> (index) + k);
+                proc.prepareToPlay (48000.0, 256);
+                const double level = packaudit::analyse (proc, role, root, 3.0).loudDb;
+                lowest = std::min (lowest, level);
+                nearSilent += level < base - 24.0 ? 1 : 0;
+                ++casts;
+                if (level < base - 24.0 && juce::SystemStats::getEnvironmentVariable ("AUGUR_OMEN_DIAG", {}).isNotEmpty())
+                {
+                    // DIAG: which single parameter, put back to the preset's value, brings the sound back the most.
+                    const auto& all = proc.AudioProcessor::getParameters();
+                    std::vector<float> now;
+                    for (auto* p : all)
+                        now.push_back (p->getValue());
+                    std::vector<std::pair<double, int>> gains;
+                    for (size_t i = 0; i < all.size(); ++i)
+                    {
+                        if (std::abs (now[i] - original[i]) < 1.0e-6f)
+                            continue;
+                        all[i]->setValueNotifyingHost (original[i]);
+                        proc.prepareToPlay (48000.0, 256);
+                        gains.push_back ({ packaudit::analyse (proc, role, root, 1.5).loudDb - level, static_cast<int> (i) });
+                        all[i]->setValueNotifyingHost (now[i]);
+                    }
+                    std::sort (gains.rbegin(), gains.rend());
+                    std::printf ("      cast %u: %.1f dB;", k, level);
+                    for (size_t g = 0; g < 4 && g < gains.size(); ++g)
+                    {
+                        auto* rp = dynamic_cast<juce::RangedAudioParameter*> (all[static_cast<size_t> (gains[g].second)]);
+                        std::printf ("  %s %s->%s (+%.0f)", rp->getParameterID().toRawUTF8(),
+                                     rp->getText (original[static_cast<size_t> (gains[g].second)], 12).toRawUTF8(),
+                                     rp->getCurrentValueAsText().toRawUTF8(), gains[g].first);
+                    }
+                    std::printf ("\n");
+                }
+            }
+            if (base - lowest > worstDrop)
+            {
+                worstDrop = base - lowest;
+                worstName = presets.getFactoryName (index);
+            }
+            std::printf ("    %-24s level %6.1f dB, lowest after 20 OMEN %6.1f dB\n", presets.getFactoryName (index).toRawUTF8(), base, lowest);
+        }
+        std::printf ("    worst drop %.1f dB (%s); %d of %d omens more than 24 dB down\n", worstDrop, worstName.toRawUTF8(), nearSilent, casts);
+        expect (nearSilent == 0, "20 OMEN in a row at 100 % never leave a sound close to silent");
+    }
+
     proc.setFxOrder ({ 7, 6, 5, 4, 3, 2, 1, 0 });
     juce::MemoryBlock state;
     proc.getStateInformation (state);
@@ -421,6 +515,47 @@ int checkAugury()
     expect (restored.getFxOrder() == std::array<int, 8> { 7, 6, 5, 4, 3, 2, 1, 0 }, "the rack order survives a session save / load");
     proc.getPresets().loadFactory (0);
     expect (proc.getFxOrder() == std::array<int, 8> { 0, 1, 2, 3, 4, 5, 6, 7 }, "a factory sound restores the default rack order");
+
+    // A user preset carries its AUGURY scene (corners, names, the bird); loading a preset without a scene leaves the
+    // corners alone (sounds are captured from one preset after another). The file is temporary.
+    {
+        std::unique_ptr<juce::AudioProcessor> ownerA (createPluginFilter()), ownerB (createPluginFilter());
+        auto& pa = *dynamic_cast<Augur5Processor*> (ownerA.get());
+        auto& pb = *dynamic_cast<Augur5Processor*> (ownerB.get());
+        pa.getPresets().loadFactory (pa.getPresets().findFactory ("Warm Horizon"));
+        pa.getAugury().capture (0, "Warm Horizon");
+        pa.getPresets().loadFactory (pa.getPresets().findFactory ("Brass Section"));
+        pa.getAugury().capture (3, "Brass Section");
+        pa.getAugury().beginMorph();
+        pa.getAugury().setPosition ({ 0.3f, 0.6f });
+        pa.getAugury().endMorph();
+        const auto blend = snapshotOf (pa);
+        // (a preset file stores plain values as text: equal to well within a step of any control)
+        const auto near = [] (const std::vector<float>& x, const std::vector<float>& y) {
+            if (x.size() != y.size())
+                return false;
+            for (size_t i = 0; i < x.size(); ++i)
+                if (std::abs (x[i] - y[i]) > 1.0e-5f)
+                    return false;
+            return true;
+        };
+        const juce::String name ("zz AUGURY scene check");
+        const bool saved = pa.getPresets().saveUser (name);
+        const auto file = augur5::PresetManager::getUserFolder().getChildFile (name + ".augur5");
+        pb.getPresets().loadUser (file);
+        const auto& sb = pb.getAugury();
+        expect (saved && sb.isFilled (0) && sb.isFilled (3) && ! sb.isFilled (1) && ! sb.isFilled (2) && sb.getName (3) == "Brass Section",
+                "a user preset carries its AUGURY corners and their names");
+        expect (near (snapshotOf (pb), blend) && sb.getPosition() == juce::Point<float> (0.3f, 0.6f), "and plays the sound it was saved with, the bird where it was");
+        pb.getAugury().beginMorph();
+        pb.getAugury().setPosition ({ 1.0f, 1.0f });
+        pb.getAugury().endMorph();
+        pa.getPresets().loadFactory (pa.getPresets().findFactory ("Brass Section"));
+        expect (near (snapshotOf (pb), snapshotOf (pa)), "its corner D is the captured sound");
+        pb.getPresets().loadFactory (pb.getPresets().findFactory ("Sync Lead"));
+        expect (sb.filledCount() == 2, "a sound without a scene leaves the corners as they were");
+        file.deleteFile();
+    }
 
     std::printf ("%s\n", failures == 0 ? "AUGURY: all checks passed" : "AUGURY: FAILURES");
     return failures == 0 ? 0 : 1;
@@ -1000,6 +1135,252 @@ int checkMigration()
     return failures == 0 ? 0 : 1;
 }
 
+// A preset's playing role and note (the META the pack tools write), "pad" on A3 when it has none.
+std::pair<juce::String, int> roleOfPreset (const juce::XmlElement& preset)
+{
+    if (const auto* meta = preset.getChildByName ("META"))
+        return { meta->getStringAttribute ("role", "pad"), meta->getIntAttribute ("note", 57) };
+    return { "pad", 57 };
+}
+
+// Sounds that hold their notes in a flight (the others loop their phrase).
+bool holdsNotes (const juce::String& role)
+{
+    return role == "pad" || role == "drone" || role == "fx" || role == "texture" || role == "arp";
+}
+
+// A held sound's level once it has settled: the role's notes held 12 s, measured over the last 4 s (its reverb full,
+// its envelopes at rest), and the peak of the whole take.
+packaudit::Metrics settledLevel (Augur5Processor& proc, const juce::String& role, int note)
+{
+    constexpr double sr = 48000.0;
+    constexpr int block = 256, total = static_cast<int> (12.0 * sr), from = static_cast<int> (8.0 * sr);
+    proc.prepareToPlay (sr, block);
+    juce::AudioBuffer<float> buffer (2, block);
+    double energy = 0.0, peak = 0.0;
+    packaudit::Metrics m;
+    for (int pos = 0; pos < total; pos += block)
+    {
+        juce::MidiBuffer midi;
+        if (pos == 0)
+            for (const auto& e : packaudit::patternFor (role, note))
+                if (e.on)
+                    midi.addEvent (juce::MidiMessage::noteOn (1, e.note, static_cast<juce::uint8> (100)), 0);
+        buffer.clear();
+        proc.processBlock (buffer, midi);
+        for (int i = 0; i < block; ++i)
+            for (int ch = 0; ch < 2; ++ch)
+            {
+                const double x = buffer.getSample (ch, i);
+                m.finite = m.finite && std::isfinite (x);
+                peak = std::max (peak, std::abs (x));
+                if (pos + i >= from)
+                    energy += x * x;
+            }
+    }
+    juce::MidiBuffer off;
+    off.addEvent (juce::MidiMessage::allNotesOff (1), 0);
+    buffer.clear();
+    proc.processBlock (buffer, off);
+    m.loudDb = 10.0 * std::log10 (energy / (2.0 * (total - from)) + 1.0e-30);
+    m.peakDb = 20.0 * std::log10 (peak + 1.0e-30);
+    return m;
+}
+
+// --augury-scene <out.augur5> <A> <B> <C> <D>: an AUGURY scene preset made of four presets. A is the sound the preset
+// plays (its file is kept as it is, with the scene added); B, C and D are captured into their corners level-matched to
+// A (AMP LEVEL; a phrase of the preset's role, or a held sound once settled), so a flight moves the sound, not the volume.
+int auguryScene (const juce::File& out, const std::array<juce::File, 4>& files)
+{
+    constexpr double sr = 48000.0;
+    auto xml = juce::XmlDocument::parse (files[0]);
+    if (xml == nullptr || ! xml->hasTagName ("AUGUR5_PRESET"))
+        return 2;
+    const auto [role, note] = roleOfPreset (*xml);
+    std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+    auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+    proc.setPlayConfigDetails (0, 2, sr, 256);
+    auto& augury = proc.getAugury();
+    auto* level = proc.getParameters().getParameter (augur5::params::amp_level);
+    const auto measure = [&] {
+        if (holdsNotes (role))
+            return settledLevel (proc, role, note);
+        proc.prepareToPlay (sr, 256);
+        return packaudit::analyse (proc, role, note, 3.0);
+    };
+    const auto nudge = [level] (double db) {
+        const float plain = juce::jlimit (-60.0f, 6.0f, level->convertFrom0to1 (level->getValue()) + static_cast<float> (db));
+        level->setValueNotifyingHost (level->convertTo0to1 (plain));
+    };
+    double target = 0.0;
+    for (int c = 0; c < augur5::AuguryModel::numCorners; ++c)
+    {
+        auto cornerXml = juce::XmlDocument::parse (files[static_cast<size_t> (c)]);
+        if (cornerXml == nullptr)
+            return 2;
+        proc.getPresets().loadUser (files[static_cast<size_t> (c)]);
+        auto m = measure();
+        if (c == 0)
+            target = m.loudDb;
+        for (int pass = 0; c > 0 && pass < 4 && std::abs (target - m.loudDb) > 0.1; ++pass)
+        {
+            nudge (target - m.loudDb);
+            m = measure();
+        }
+        // ...and its peaks below -1.5 dBFS (the packs keep chords below -1 dBFS; a flight blends the corners).
+        if (c > 0 && m.peakDb > -1.5)
+        {
+            nudge (-1.5 - m.peakDb);
+            m = measure();
+        }
+        const double loud = m.loudDb;
+        const auto name = cornerXml->getStringAttribute ("name", files[static_cast<size_t> (c)].getFileNameWithoutExtension());
+        augury.capture (c, name);
+        std::printf ("  %c  %-28s level %6.1f dB  peak %5.1f dBFS  (AMP LEVEL %+.1f dB)\n", "ABCD"[c], name.toRawUTF8(), loud, m.peakDb,
+                     level->convertFrom0to1 (level->getValue()));
+    }
+    augury.recall (0);
+    while (auto* old = xml->getChildByName ("AUGURY"))
+        xml->removeChildElement (old, true);
+    xml->addChildElement (augury.toTree().createXml().release());
+    out.getParentDirectory().createDirectory();
+    return xml->writeTo (out) ? 0 : 1;
+}
+
+// --augury-flight <scene.augur5> <out.wav>: the scene played while the bird flies around the pad, as a user would
+// fly it: 2 s on A, to B, 2 s on B, to D, on D, to C, on C, to the centre, on the centre (2 s per move), then the
+// release. Pads, drones, textures, effects and arpeggios hold their notes; basses, leads, plucks, keys and brass
+// loop their phrase. Prints, on each stop, the level against sound A held just as long (the bird left on A).
+int auguryFlight (const juce::File& scene, const juce::File& wavFile)
+{
+    constexpr double sr = 48000.0;
+    constexpr int block = 256;
+    auto xml = juce::XmlDocument::parse (scene);
+    if (xml == nullptr)
+        return 2;
+    const auto [role, note] = roleOfPreset (*xml);
+    std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+    auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+    proc.setPlayConfigDetails (0, 2, sr, block);
+    proc.prepareToPlay (sr, block);
+    proc.getPresets().loadUser (scene);
+    auto& augury = proc.getAugury();
+    if (augury.filledCount() < 2)
+        return 3;
+    proc.prepareToPlay (sr, block);
+
+    struct Key { double t; float x, y; };
+    const Key path[] { { 0, 0, 0 }, { 2, 0, 0 }, { 4, 1, 0 }, { 6, 1, 0 }, { 8, 1, 1 }, { 10, 1, 1 }, { 12, 0, 1 }, { 14, 0, 1 }, { 16, 0.5f, 0.5f }, { 18, 0.5f, 0.5f } };
+    const auto birdAt = [&path] (double t) {
+        for (size_t k = 1; k < std::size (path); ++k)
+            if (t <= path[k].t)
+            {
+                const auto& a = path[k - 1];
+                const auto& b = path[k];
+                const float u = static_cast<float> ((t - a.t) / (b.t - a.t));
+                return juce::Point<float> (a.x + u * (b.x - a.x), a.y + u * (b.y - a.y));
+            }
+        return juce::Point<float> (path[std::size (path) - 1].x, path[std::size (path) - 1].y);
+    };
+    constexpr double playEnd = 18.0, total = 22.0;
+    const bool hold = holdsNotes (role);
+    const auto phrase = packaudit::patternFor (role, note);
+    double phraseEnd = 0.0;
+    for (const auto& e : phrase)
+        phraseEnd = std::max (phraseEnd, e.time);
+    const double beat = 60.0 / 122.0, period = beat * std::ceil (phraseEnd / beat + 1.0e-6);
+
+    // One take: the bird flies (or stays on A, the reference: a long note changes by itself as its reverb builds up and
+    // its envelopes move, and the flight is measured against it, time for time). Returns the 100 ms window levels.
+    const auto take = [&] (bool fly, std::vector<float>& L, std::vector<float>& R) {
+        std::vector<double> windowDb;
+        double acc = 0.0;
+        int accN = 0;
+        juce::AudioBuffer<float> buffer (2, block);
+        augury.beginMorph();
+        augury.setPosition ({ 0.0f, 0.0f });
+        proc.prepareToPlay (sr, block);
+        L.clear();
+        R.clear();
+        for (int pos = 0; pos < static_cast<int> (total * sr); pos += block)
+        {
+            const double t = pos / sr;
+            if (fly && t <= playEnd)
+                augury.setPosition (birdAt (t));
+            juce::MidiBuffer midi;
+            const auto add = [&] (double when, int n, bool on) {
+                const int s = static_cast<int> (std::llround (when * sr));
+                if (s >= pos && s < pos + block)
+                    midi.addEvent (on ? juce::MidiMessage::noteOn (1, n, static_cast<juce::uint8> (100)) : juce::MidiMessage::noteOff (1, n), s - pos);
+            };
+            if (hold)
+            {
+                for (const auto& e : phrase)
+                    if (e.on)
+                    {
+                        add (0.0, e.note, true);
+                        add (playEnd, e.note, false);
+                    }
+            }
+            else
+            {
+                for (double start = 0.0; start < playEnd - 0.5; start += period)
+                    for (const auto& e : phrase)
+                        if (! e.on || start + e.time < playEnd)
+                            add (std::min (start + e.time, playEnd), e.note, e.on);
+            }
+            buffer.clear();
+            proc.processBlock (buffer, midi);
+            for (int i = 0; i < block; ++i)
+            {
+                L.push_back (buffer.getSample (0, i));
+                R.push_back (buffer.getSample (1, i));
+                acc += static_cast<double> (L.back()) * L.back() + static_cast<double> (R.back()) * R.back();
+                if (++accN == 4800)
+                {
+                    windowDb.push_back (10.0 * std::log10 (acc / (2.0 * accN) + 1.0e-30));
+                    acc = 0.0;
+                    accN = 0;
+                }
+            }
+        }
+        augury.endMorph();
+        return windowDb;
+    };
+    std::vector<float> L, R, stillL, stillR;
+    const auto still = take (false, stillL, stillR);
+    const auto flight = take (true, L, R);
+    packaudit::writeWav (wavFile, L, R, sr);
+
+    double peak = 0.0;
+    bool finite = true;
+    for (size_t i = 0; i < L.size(); ++i)
+    {
+        finite = finite && std::isfinite (L[i]) && std::isfinite (R[i]);
+        peak = std::max ({ peak, static_cast<double> (std::abs (L[i])), static_cast<double> (std::abs (R[i])) });
+    }
+    const auto meanDb = [] (const std::vector<double>& windowDb, double from, double to) {
+        double e = 0.0;
+        int n = 0;
+        for (size_t w = static_cast<size_t> (from * 10); w < static_cast<size_t> (to * 10) && w < windowDb.size(); ++w, ++n)
+            e += std::pow (10.0, windowDb[w] / 10.0);
+        return 10.0 * std::log10 (e / std::max (1, n) + 1.0e-30);
+    };
+    // On each stop: the flight's level, and how far it is from sound A at the same moment of the note.
+    const double stops[][2] { { 4.5, 6.0 }, { 8.5, 10.0 }, { 12.5, 14.0 }, { 16.5, 18.0 } };
+    const char* names[] { "B", "D", "C", "centre" };
+    double worst = 0.0;
+    std::printf ("  flight vs sound A held as long:");
+    for (size_t s = 0; s < std::size (stops); ++s)
+    {
+        const double d = meanDb (flight, stops[s][0], stops[s][1]) - meanDb (still, stops[s][0], stops[s][1]);
+        worst = std::max (worst, std::abs (d));
+        std::printf ("  %s %+.1f", names[s], d);
+    }
+    std::printf (" dB   peak %.1f dBFS%s\n", 20.0 * std::log10 (peak + 1.0e-30), finite ? "" : "   NON-FINITE");
+    return finite && peak < 1.0 && worst < 3.0 ? 0 : 1; // no clipping; no stop more than 3 dB from sound A
+}
+
 // --check-augury-gui: the AUGURY tab driven as a user drives it (its buttons, and the mouse on the morph pad of the real
 // editor), and what that does to the parameters, to the sound and to UNDO.
 int checkAuguryGui()
@@ -1081,7 +1462,7 @@ int checkAuguryGui()
     const float cutA = cutoff();
     const auto soundA = measure();
     capture[0]->onClick();
-    presets.loadFactory (presets.findFactory ("Savanna Horn Lead"));
+    presets.loadFactory (presets.findFactory ("Brass Section")); // POLY like A (a flight keeps the voice structure as played)
     pump();
     const auto valuesD = values();
     const float cutD = cutoff();
@@ -1140,6 +1521,68 @@ int checkAuguryGui()
     pump();
     expect (values() == middle, "REDO brings the blend back");
 
+    // A chord held while the bird flies (2 s) from A (a POLY pad) to C (a UNISON lead), then 1 s on C: the chord must
+    // keep sounding all the way. Measured in 50 ms windows against its level before the flight.
+    {
+        presets.loadFactory (presets.findFactory ("Savanna Horn Lead"));
+        pump();
+        capture[2]->onClick();
+        recall[0]->onClick(); // sound A, POLY
+        const auto c0 = at (0.0f, 0.0f);
+        pad->mouseDown (event (c0, c0, false));
+        proc.prepareToPlay (sr, 256);
+        constexpr int block = 256, window = 2400;
+        juce::AudioBuffer<float> buffer (2, block);
+        std::vector<double> level;
+        double acc = 0.0;
+        int accN = 0;
+        float lastU = 0.0f;
+        for (int pos = 0; pos < static_cast<int> (4.0 * sr); pos += block)
+        {
+            const double t = pos / sr;
+            if (const float u = static_cast<float> (juce::jlimit (0.0, 1.0, (t - 1.0) / 2.0)); u != lastU)
+            {
+                pad->mouseDrag (event (at (0.0f, u), c0, true));
+                lastU = u;
+            }
+            juce::MidiBuffer midi;
+            if (pos == 0)
+                for (const int n : { 57, 60, 64, 67 })
+                    midi.addEvent (juce::MidiMessage::noteOn (1, n, static_cast<juce::uint8> (100)), 0);
+            buffer.clear();
+            proc.processBlock (buffer, midi);
+            for (int i = 0; i < block; ++i)
+            {
+                acc += static_cast<double> (buffer.getSample (0, i)) * buffer.getSample (0, i) + static_cast<double> (buffer.getSample (1, i)) * buffer.getSample (1, i);
+                if (++accN == window)
+                {
+                    level.push_back (10.0 * std::log10 (acc / (2.0 * window) + 1.0e-30));
+                    acc = 0.0;
+                    accN = 0;
+                }
+            }
+        }
+        pad->mouseUp (event (at (0.0f, 1.0f), c0, true));
+        juce::MidiBuffer off;
+        off.addEvent (juce::MidiMessage::allNotesOff (1), 0);
+        buffer.clear();
+        proc.processBlock (buffer, off);
+        pump();
+        // windows: 20 per second; before = 0.5..1 s, the flight = 1..3 s, on C = 3..4 s
+        double before = 0.0;
+        for (size_t w = 10; w < 20; ++w)
+            before += level[w] / 10.0;
+        double lowest = 1.0e9;
+        for (size_t w = 20; w < level.size(); ++w)
+            lowest = std::min (lowest, level[w]);
+        std::printf ("    held chord, level every 0.25 s (dB):");
+        for (size_t w = 0; w < level.size(); w += 5)
+            std::printf (" %.0f", level[w]);
+        std::printf ("\n    before the flight %.1f dB, lowest during the flight and on C %.1f dB\n", before, lowest);
+        expect (lowest > before - 20.0, "a chord held during a flight from a POLY corner to a UNISON one keeps sounding");
+        clear[2]->onClick();
+    }
+
     // RECALL, OMEN, CLEAR.
     recall[0]->onClick();
     expect (values() == valuesA && proc.getAugury().getPosition() == juce::Point<float> (0.0f, 0.0f), "RECALL A plays sound A and puts the bird there");
@@ -1153,6 +1596,24 @@ int checkAuguryGui()
     pad->mouseDrag (event (at (0.7f, 0.3f), at (1.0f, 1.0f), true));
     pad->mouseUp (event (at (0.7f, 0.3f), at (1.0f, 1.0f), true));
     expect (values() == beforeLone, "with a single corner left, flying the bird changes nothing");
+
+    // A preset with an AUGURY scene, loaded while the tab is open: the tab shows its corners (no reopening).
+    {
+        presets.loadFactory (presets.findFactory ("Brass Section"));
+        pump();
+        capture[1]->onClick();
+        const juce::String name ("zz AUGURY tab check");
+        const bool saved = presets.saveUser (name);
+        const auto file = augur5::PresetManager::getUserFolder().getChildFile (name + ".augur5");
+        for (auto* b : clear)
+            b->onClick();
+        const bool emptied = ! recall[0]->isEnabled() && ! recall[1]->isEnabled();
+        presets.loadUser (file);
+        pump(); // the editor's timer polls the tab
+        expect (saved && emptied && recall[0]->isEnabled() && recall[1]->isEnabled() && ! recall[2]->isEnabled() && ! recall[3]->isEnabled(),
+                "loading a preset with a scene shows its corners in the open tab");
+        file.deleteFile();
+    }
 
     base->editorBeingDeleted (editor);
     delete editor;
@@ -1372,6 +1833,12 @@ int main (int argc, char** argv)
     if (argc >= 3 && std::strcmp (argv[1], "--factory-wav") == 0)
         return factoryWav (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String::fromUTF8 (argv[2])),
                            argc >= 4 ? juce::String::fromUTF8 (argv[3]) : juce::String());
+    if (argc >= 7 && std::strcmp (argv[1], "--augury-scene") == 0)
+        return auguryScene (juce::File::getCurrentWorkingDirectory().getChildFile (argv[2]),
+                            { juce::File::getCurrentWorkingDirectory().getChildFile (argv[3]), juce::File::getCurrentWorkingDirectory().getChildFile (argv[4]),
+                              juce::File::getCurrentWorkingDirectory().getChildFile (argv[5]), juce::File::getCurrentWorkingDirectory().getChildFile (argv[6]) });
+    if (argc >= 4 && std::strcmp (argv[1], "--augury-flight") == 0)
+        return auguryFlight (juce::File::getCurrentWorkingDirectory().getChildFile (argv[2]), juce::File::getCurrentWorkingDirectory().getChildFile (argv[3]));
     if (argc >= 2 && std::strcmp (argv[1], "--check-augury-gui") == 0)
         return checkAuguryGui();
     if (argc >= 2 && std::strcmp (argv[1], "--check-skins") == 0)

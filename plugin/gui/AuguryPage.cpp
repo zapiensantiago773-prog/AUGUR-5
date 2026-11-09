@@ -244,6 +244,7 @@ AuguryPage::~AuguryPage() = default;
 
 void AuguryPage::refresh()
 {
+    shownRevision = model.getRevision();
     for (int c = 0; c < AuguryModel::numCorners; ++c)
     {
         recallButtons[static_cast<size_t> (c)]->setEnabled (model.isFilled (c));
@@ -255,6 +256,8 @@ void AuguryPage::refresh()
 
 void AuguryPage::poll()
 {
+    if (model.getRevision() != shownRevision)
+        refresh(); // the corners changed elsewhere (a preset with an AUGURY scene, a session)
     pad->poll();
 }
 

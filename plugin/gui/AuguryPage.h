@@ -31,6 +31,7 @@ private:
     std::array<LedToggle*, AuguryModel::numGroups> locks {};
     juce::Slider amount;
     juce::String shownSeed;
+    int shownRevision = -1;
 };
 
 } // namespace augur5::ui

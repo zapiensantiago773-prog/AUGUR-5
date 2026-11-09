@@ -839,3 +839,44 @@ Origen: `TAREA_MEJORAS_DESDE_MANTIS/TAREA.md`, medido desde MANTIS-37. Condicion
 - **Comprobaciones:** 93 tests (10 nuevos en `tests/test_bass_phase.cpp`; el del ping-pong mide ahora por encima del corte), pluginval estricto, auditoría de fábrica, `--check-migration`, `--check-augury`, `--check-augury-gui`, `--check-skins`, `--check-preset-clicks` y `--chord-headroom --check` en los tres packs.
 - **Herramientas nuevas:** `augur_preset_audit --stereo-report`, `tools/pack/stereo_ab.py`, `tools/pack/relevel_moved.py`.
 - **No hecho:** el §5 de la tarea (ajustar etapas a grabaciones del original) espera una grabación libre del instrumento; el WAV de la raíz del repositorio es de otro sintetizador. La versión la decide el usuario: los instaladores 1.5.0 no lo incluyen.
+
+## D-058 · AUGURY revisado: el morph ya no corta notas, OMEN ya no enmudece, y los presets guardan su escena (2026-11-09)
+Pedido del usuario: "revisa augury y pónselo a unos 10 presets para saber cómo suena con el augury". El motor no cambia: todo es AUGURY (`plugin/AuguryModel.*`), el formato del preset y herramientas.
+- **El morph cortaba las notas sostenidas** (lo que el usuario describía como "pierdo el sonido"):
+  - El vuelo también movía VOICES, UNISON, POLY/DUO, ARP y LATCH, que siguen a la esquina más cercana. Al cruzar la mitad, `SynthEngine::syncMode()` soltaba todas las voces (y con ARP olvidaba las teclas pisadas).
+  - Medido (`--check-augury-gui`, acorde sostenido de A = pad POLY a C = lead UNISON en 2 s): el acorde a −17 dB caía a −68 dB al pasar la mitad.
+  - **Corrección:** esos cinco controles no se vuelan (`AuguryModel::isVoiceStructure`); quedan como se tocaban. RECALL sí los aplica (un sonido nuevo entero, con su fundido).
+  - Después: el acorde sigue sonando todo el vuelo (lo más bajo, −21 dB, por el sonido de C, no por un corte). La prueba de la interfaz usa ahora un D POLY ("Brass Section") para comparar esquinas exactas.
+- **OMEN repetido podía dejar el sonido casi mudo:**
+  - Medido: 20 OMEN seguidos al 100 % sobre uno de cada 8 sonidos de fábrica (22 sonidos, 440 OMEN). 30 quedaban más de 24 dB por debajo del original, hasta −89.6 dB (Hollow Sync Lead, −105 dB).
+  - Un diagnóstico nuevo devuelve cada parámetro a su valor original, de uno en uno, y ordena los culpables (`AUGUR_OMEN_DIAG=1 augur_preset_audit --check-augury`; `AUGUR_OMEN_ONLY="<sonido>"` para uno solo). Culpables:
+    - el HPF subiendo hasta 2 kHz;
+    - la envolvente del filtro invertida hasta −100 % con el cutoff abajo;
+    - ruteos de la matriz que cambiaban de destino (el que abría el filtro se iba a otro lado) o que se activaban desde 0;
+    - el modo del filtro cambiando a HP o BP en bajos;
+    - OSC B pasando a LO FREQ;
+    - ataques de 1.2 s en arps y plucks;
+    - el sustain al 15 % en pads.
+  - **Guardas nuevas.** La regla es "no peor de lo que el sonido estaba": lo que el sonido ya tenía, lo conserva.
+    - OMEN no cambia el patch de la matriz (orígenes, destinos, ranuras vacías), ni FILTER MODE, ni OSC B LO FREQ y KBD.
+    - La envolvente invertida baja el cutoff como mucho a 180 Hz en su pico (7 octavas con ENV AMT −1). El HPF queda una octava por debajo de ese punto, y por debajo de 400 Hz salvo que ya estuviera más arriba.
+    - Las rutas de la matriz hacia el cutoff y los niveles no tiran más abajo que antes.
+    - Un sonido percusivo (ataque ≤ 30 ms) sigue percusivo; un sonido sostenido conserva al menos 40 % de sustain.
+    - En BP, el centro se mueve como mucho una octava por OMEN, entre 300 Hz y 2.5 kHz, y la velocidad no lo empuja más del 30 %.
+    - Un grupo bloqueado no se mueve, ni siquiera por una guarda.
+  - Un detalle encontrado al medir: un ataque dejado en 30 ms se leía de vuelta como 30.0001 ms y la guarda percusiva ya no lo reconocía. La comparación tiene margen.
+  - Después: **0 de 440** más de 24 dB abajo; la peor caída, 23.1 dB (Velvet Horizon, un pad en BP), audible.
+- **Los presets guardan su escena AUGURY:**
+  - Un preset de usuario lleva un hijo `<AUGURY>` (esquinas, nombres, posición del ave) si hay alguna esquina llena.
+  - Cargar un preset con escena reemplaza las esquinas; uno sin escena las deja como están (se sigue pudiendo capturar de un preset tras otro).
+  - `formatVersion` sigue en 1: las versiones anteriores leen solo PARAMS y cargan el sonido de la esquina A.
+  - La pestaña AUGURY se entera sola: el modelo cuenta sus cambios (`getRevision`) y la página se refresca al verlo.
+- **AUGURY Scenes** (`packs/AUGURY Scenes`, 10 presets; `tools/pack/make_augury_scenes.py`; zip en `packs/dist`):
+  - Diez sonidos de AUSPICE, uno por categoría: Golden Hour Strings, Augury Rubber, Herald of Dawn, Harbor Lights, Warm Poly Keys, Copper Anthem, Silver Augury, Fifth of Dusk, Phase Wind y White Horizon.
+  - La esquina A es el sonido de AUSPICE, idéntico (0.000 dB en todas las bandas, `--stereo-report`). B, C y D son variaciones con nombre (p. ej. Bloom / Night / Pulse).
+  - Entre esquinas solo cambian controles continuos: un interruptor que salta a mitad de vuelo es un salto, no un morph. Si una esquina necesita una ruta que A no usa, A la lleva con cantidad 0.
+  - `augur_preset_audit --augury-scene` arma cada preset con el plugin real, nivela B, C y D contra A (sus frases; los sonidos sostenidos, ya asentados tras 12 s) y deja sus picos bajo −1.5 dBFS.
+  - `--augury-flight` toca la escena mientras el ave recorre A → B → D → C → centro y la compara con el sonido A sostenido lo mismo. En cada parada, a menos de 1.8 dB de A; picos a −0.7 dBFS como máximo. Los WAV quedan en `build/augury_wav`.
+  - Eclipse se cambió por Fifth of Dusk: su phaser a 0.04 Hz hacía que el nivel dependiera del punto del barrido (−4.9 dB en una esquina).
+- **Comprobaciones:** 93 tests, `--check-augury` (con la escena en un preset y los 440 OMEN), `--check-augury-gui` (acorde sostenido en vuelo; la pestaña muestra la escena de un preset cargado), `--check-migration`, `--check-skins`, `--check-preset-clicks`, auditoría de fábrica y pluginval estricto.
+- La guía (`installer/win/guide.html`) explica qué no se vuela y que los presets guardan la escena. La versión la decide el usuario: los instaladores 1.5.0 no incluyen esto.

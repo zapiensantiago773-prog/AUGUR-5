@@ -17,6 +17,8 @@ Augur5Processor::Augur5Processor()
     // User presets carry the rack order; factory sounds use the default one.
     presets.saveFxOrder = [this] { return fxOrderToString(); };
     presets.loadFxOrder = [this] (const juce::String& text) { fxOrderFromString (text); };
+    presets.saveAugury = [this] { return augury.filledCount() > 0 ? augury.toTree() : juce::ValueTree(); };
+    presets.loadAugury = [this] (const juce::ValueTree& scene) { augury.fromTree (scene); };
     // A fresh instance opens on the showcase patch, not a bare init sound.
     presets.loadFactory (presets.findFactory ("Warm Horizon"));
     presets.onPresetLoaded = [this] { warmUpEngine(); };

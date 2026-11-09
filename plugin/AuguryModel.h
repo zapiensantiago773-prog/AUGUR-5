@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include <array>
+#include <atomic>
 #include <vector>
 
 namespace augur5
@@ -14,6 +15,8 @@ namespace augur5
 //  * MORPH: four sounds captured into the corners of an XY field. Moving the point blends them: continuous
 //    parameters by bilinear weights in their normalised (skewed) range, so a cutoff glides in octaves, not Hz;
 //    switches and choices follow the corner with the largest weight. Empty corners drop out of the blend.
+//    The voice structure (VOICES, UNISON, POLY / DUO, ARP, LATCH) is not flown: switching it re-assigns the voices
+//    and would cut the notes being held. It stays as played; RECALL (a whole new sound) applies the corner's.
 //  * OMEN: a reproducible variation of the current sound. Every unlocked group moves by a seeded random walk
 //    whose size is AMOUNT; a few guards keep the result playable (cutoff floor, attack ceiling, resonance below
 //    self-oscillation, effects mixes within reason, at least one audible oscillator wave).
@@ -57,6 +60,10 @@ public:
     juce::uint32 castOmen (float amount, juce::uint32 lockedGroups, juce::uint32 seed = 0);
     juce::uint32 getLastSeed() const { return lastSeed; }
 
+    // Changes whenever the corners change (capture, clear, a session or a preset's scene loaded): the page polls it.
+    int getRevision() const noexcept { return revision.load(); }
+    static bool isVoiceStructure (const juce::String& id); // kept out of the morph (see above)
+
     // RECALL and OMEN replace the whole sound: the processor wraps them as a preset load (fade out / in).
     std::function<void (const std::function<void()>&)> soundChange;
 
@@ -75,11 +82,12 @@ private:
 
     juce::AudioProcessorValueTreeState& state;
     std::vector<juce::RangedAudioParameter*> params; // morphable parameters (sound, not instrument settings)
-    std::vector<bool> discrete;
+    std::vector<bool> discrete, structure;
     std::array<Corner, numCorners> corners;
     juce::Point<float> position { 0.5f, 0.5f };
     juce::uint32 lastSeed = 0;
     bool inGesture = false;
+    std::atomic<int> revision { 0 };
     // Hosts may save or restore the session from another thread than the editor's (never the audio thread).
     mutable juce::CriticalSection lock;
 };

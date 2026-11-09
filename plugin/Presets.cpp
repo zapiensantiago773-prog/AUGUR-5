@@ -815,6 +815,9 @@ void PresetManager::loadUserNow (const juce::File& file)
 
     if (loadFxOrder)
         loadFxOrder (xml->getStringAttribute ("fxOrder"));
+    if (loadAugury)
+        if (auto* scene = xml->getChildByName ("AUGURY"))
+            loadAugury (juce::ValueTree::fromXml (*scene));
     currentUserFile = file;
     currentName = file.getFileNameWithoutExtension();
     if (onPresetLoaded)
@@ -842,6 +845,10 @@ bool PresetManager::saveUser (const juce::String& name)
             e->setAttribute ("value", rp->convertFrom0to1 (rp->getValue()));
         }
     }
+    if (saveAugury)
+        if (const auto scene = saveAugury(); scene.isValid())
+            if (auto sceneXml = scene.createXml())
+                root.addChildElement (sceneXml.release());
 
     const auto folder = getUserFolder();
     folder.createDirectory();
