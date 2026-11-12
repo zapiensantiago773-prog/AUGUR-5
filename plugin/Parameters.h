@@ -204,4 +204,9 @@ namespace augur5::params
     // loaded from a preset leaves them alone (a preset's AUGURY scene carries its own bird position).
     inline constexpr auto morph_x = "morph_x"; // 0..1, left .. right
     inline constexpr auto morph_y = "morph_y"; // 0..1, top .. bottom
+
+    // ---------- VOICE SPREAD MODE (1.7) ----------
+    // choice: CENTRED (the POLY image stays centred, D-060), BY VOICE (each voice in a fixed place, as up to 1.6).
+    // Presets without it load CENTRED; sessions saved before it keep BY VOICE, so they sound as they did.
+    inline constexpr auto spread_mode = "spread_mode";
 }

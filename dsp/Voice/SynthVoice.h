@@ -37,6 +37,7 @@ public:
         bool glide = false;          // slide from the current pitch
         float unisonOffset = 0.0f;   // semitones
         float panPosition = 0.0f;    // -1..1 before VOICE SPREAD
+        float panShift = 0.0f;       // SPREAD CENTRED: the shift that centres the voices with this note in
         std::uint64_t order = 0;     // allocation timestamp
         double lfo2Phase = 0.0;      // engine's free-running LFO 2 phase (used when not retriggered)
     };
@@ -106,6 +107,23 @@ public:
     std::uint64_t getOrder() const noexcept { return order; }
     float getLevel() const noexcept { return ampEnv.getLevel(); }
 
+    // SPREAD CENTRED: where this voice sits before the common shift (pan units, its fingerprint included) and how
+    // much energy it is expected to carry: its level, counted at full while it is still rising (a note that has
+    // just started weighs as much as it will sound), times its velocity gain. Nothing from the voice's last
+    // computeConstants() (a voice that has not sounded yet has none): the result depends only on the notes played.
+    // The ...At forms are for a note about to start on this voice.
+    float panPlace (const SynthParams& p) const noexcept { return panPlaceAt (p, panPosition); }
+    float panPlaceAt (const SynthParams& p, float position) const noexcept { return position * p.voiceSpread + fp.pan * 0.02f; }
+    float panWeight (const SynthParams& p) const noexcept
+    {
+        return panWeightAt (p, velocity, ampEnv.getStage() == RcAdsr::Stage::Attack ? 1.0f : ampEnv.getLevel());
+    }
+    float panWeightAt (const SynthParams& p, float noteVelocity, float level = 1.0f) const noexcept
+    {
+        const float g = level * (1.0f - p.ampVelocity + p.ampVelocity * noteVelocity);
+        return g * g;
+    }
+
     // Testing/inspection: the autotune table of oscillator 0 (A) or 1 (B) for the current model.
     const AutotuneTable& getTuning (int osc) const noexcept { return tuning[static_cast<size_t> (osc)]; }
     double staticFrequency (int osc, double pitch) const noexcept;
@@ -158,6 +176,8 @@ private:
     bool hasPitch = false;
     float unisonOffset = 0.0f;
     float panPosition = 0.0f;
+    float panShift = 0.0f;  // SPREAD CENTRED: common shift, gliding with the chunk signals' panCentre
+    bool panFresh = false;  // started from silence: takes the next chunk's centre at once instead of gliding
     float polyPressure = 0.0f;
     float lfoDelayGain = 1.0f, lfoDelayInc = 1.0f;
     float lastOscB = 0.0f;   // OSC B mixer signal (AC), matrix source

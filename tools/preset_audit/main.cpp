@@ -1288,6 +1288,45 @@ int checkMigration()
         file.deleteFile();
         expect (natural (proc, augur5::params::pb_down) == 7.0f, "1.2 preset: bend range 7 -> BEND DOWN 7");
         expect (static_cast<int> (natural (proc, augur5::params::lfo_div)) == div1, "1.2 preset: synced LFO keeps the division of RATE 8 Hz");
+        expect (natural (proc, augur5::params::spread_mode) == 0.0f, "preset without SPREAD MODE: CENTRED");
+    }
+
+    // SPREAD MODE (1.7, D-060): a session saved before it keeps BY VOICE; one saved with it keeps what it had; a new
+    // instance, a factory preset and a pack preset start CENTRED.
+    {
+        const auto session = [sr] (bool withMode, float mode) {
+            std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+            auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+            proc.setPlayConfigDetails (0, 2, sr, 256);
+            proc.prepareToPlay (sr, 256);
+            if (auto* p = proc.getParameters().getParameter (augur5::params::spread_mode))
+                p->setValueNotifyingHost (p->convertTo0to1 (mode));
+            auto tree = proc.getParameters().copyState();
+            if (! withMode)
+                tree.removeChild (tree.getChildWithProperty ("id", augur5::params::spread_mode), nullptr);
+            juce::MemoryBlock data;
+            if (auto xml = tree.createXml())
+                juce::AudioProcessor::copyXmlToBinary (*xml, data);
+            std::unique_ptr<juce::AudioProcessor> other (createPluginFilter());
+            auto& loaded = *dynamic_cast<Augur5Processor*> (other.get());
+            loaded.setPlayConfigDetails (0, 2, sr, 256);
+            loaded.prepareToPlay (sr, 256);
+            loaded.setStateInformation (data.getData(), static_cast<int> (data.getSize()));
+            return loaded.getParameters().getRawParameterValue (augur5::params::spread_mode)->load();
+        };
+        expect (session (false, 0.0f) == 1.0f, "1.6 session (no SPREAD MODE): BY VOICE, as it sounded");
+        expect (session (true, 0.0f) == 0.0f, "1.7 session saved CENTRED: CENTRED");
+        expect (session (true, 1.0f) == 1.0f, "1.7 session saved BY VOICE: BY VOICE");
+
+        std::unique_ptr<juce::AudioProcessor> base (createPluginFilter());
+        auto& proc = *dynamic_cast<Augur5Processor*> (base.get());
+        proc.setPlayConfigDetails (0, 2, sr, 256);
+        proc.prepareToPlay (sr, 256);
+        expect (natural (proc, augur5::params::spread_mode) == 0.0f, "new instance: CENTRED");
+        if (auto* p = proc.getParameters().getParameter (augur5::params::spread_mode))
+            p->setValueNotifyingHost (1.0f);
+        proc.getPresets().loadFactory (3);
+        expect (natural (proc, augur5::params::spread_mode) == 0.0f, "factory preset after BY VOICE: CENTRED");
     }
     std::printf ("%s\n", failures == 0 ? "migration: all checks passed" : "migration: FAILURES");
     return failures == 0 ? 0 : 1;

@@ -10,6 +10,7 @@ add_executable(augur_tests
     test_effects.cpp
     test_rack.cpp
     test_bass_phase.cpp
+    test_spread.cpp
     RackMeasure.h
 )
 target_link_libraries(augur_tests PRIVATE augur_dsp augur_warnings Catch2::Catch2WithMain)

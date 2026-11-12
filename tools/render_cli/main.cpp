@@ -7,7 +7,7 @@
 // --set names: osc1_semi osc1_fine osc1_pw osc1_saw osc1_pulse osc1_sync osc2_semi osc2_fine osc2_pw
 //   osc2_saw osc2_tri osc2_pulse osc2_lofreq osc2_kbd osc_model mix_osc1 mix_osc2 mix_noise mix_drive
 //   cutoff reso env_amt flt_model keytrack fenv_a fenv_d fenv_s fenv_r aenv_a aenv_d aenv_s aenv_r
-//   pm_on pm_fenv pm_osc2 pm_freqa pm_pwa pm_filter age detune spread unison glide level
+//   pm_on pm_fenv pm_osc2 pm_freqa pm_pwa pm_filter age detune spread spread_mode unison glide level
 //   chorus delay reverb
 
 #include "Engine/SynthEngine.h"
@@ -90,6 +90,7 @@ const std::map<std::string, Setter>& setters()
         { "age", [] (P& p, float v) { p.analogAge = v; } },
         { "detune", [] (P& p, float v) { p.voiceDetune = v; } },
         { "spread", [] (P& p, float v) { p.voiceSpread = v; } },
+        { "spread_mode", [] (P& p, float v) { p.spreadMode = v > 0.5f ? 1 : 0; } }, // 0 CENTRED, 1 BY VOICE
         { "unison", [] (P& p, float v) { p.unison = v > 0.5f; } },
         { "glide", [] (P& p, float v) { p.glide = v; } },
         { "level", [] (P& p, float v) { p.levelDb = v; } },

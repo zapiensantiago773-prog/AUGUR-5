@@ -71,6 +71,7 @@ void SynthEngine::prepare (double hostSampleRate, std::uint64_t unitSeed, int ov
     panCoeff = 1.0 - std::exp (-1.0 / (0.02 * hostSampleRate));
     stackStep = 1.0 / (0.02 * hostSampleRate);
     fxCoeff = static_cast<float> (1.0 - std::exp (-(controlInterval / hostSampleRate) / 0.03));
+    panGlide = static_cast<float> (1.0 - std::exp (-(controlInterval / hostSampleRate) / 0.03));
     sig.sampleRate = internalRate;
 
     paramsInitialised = false;
@@ -81,6 +82,7 @@ void SynthEngine::reset() noexcept
 {
     for (auto& v : voices)
         v.reset();
+    inChunk.fill (false);
     for (auto& l : voiceLevels)
         l.store (0.0f, std::memory_order_relaxed);
 
@@ -307,6 +309,11 @@ void SynthEngine::triggerNote (int note, float velocity) noexcept
         else
         {
             on.panPosition = panPositionFor (chosen, count);
+            if (spreadCentred (pending))
+            {
+                const auto& v = voices[static_cast<size_t> (chosen)];
+                on.panShift = panCentreFor (pending, &v, v.panPlaceAt (pending, on.panPosition), v.panWeightAt (pending, velocity));
+            }
         }
         on.order = ++noteCounter;
         on.lfo2Phase = lfo2PhaseNow();
@@ -316,8 +323,63 @@ void SynthEngine::triggerNote (int note, float velocity) noexcept
     }
 }
 
+float SynthEngine::panCentreFor (const SynthParams& p, const SynthVoice* skip, float extraPlace, float extraWeight) const noexcept
+{
+    // Constant-power law: a voice at pan x puts cos^2 / sin^2 of (x + 1) * pi/4 of its energy left / right, so
+    // left - right = -sin (x * pi/2). The voices sit at PAN + place + d; the shift d makes the image's balance that of
+    // one source at PAN: f (d) = sum w sin ((P + q + d) pi/2) - sum w sin (P pi/2) = 0. With S = sum w sin (q pi/2),
+    // C = sum w cos (q pi/2): sum w sin (q pi/2 + phi) = R sin (phi + atan2 (S, C)), which gives d exactly (at PAN 0,
+    // d = -(2/pi) atan2 (S, C)) while no voice is pushed past a side. A voice pushed past one (wide SPREAD, a lone note
+    // against a cluster) stops there, as its own pan does; f stays monotonic in d, so a safeguarded Newton search
+    // finishes the job (usually no step at all).
+    constexpr double halfPi = 1.57079632679489662;
+    std::array<double, maxVoices + 1> w {}, q {};
+    int n = 0;
+    double s = 0.0, c = 0.0, total = 0.0;
+    const auto add = [&] (double weight, double place) {
+        w[static_cast<size_t> (n)] = weight;
+        q[static_cast<size_t> (n++)] = place;
+        s += weight * std::sin (place * halfPi);
+        c += weight * std::cos (place * halfPi);
+        total += weight;
+    };
+    if (extraWeight > 0.0f)
+        add (extraWeight, extraPlace);
+    for (const auto& v : voices)
+        if (&v != skip && v.isActive())
+            add (v.panWeight (p), v.panPlace (p));
+    if (total < 1.0e-12)
+        return 0.0f; // nothing sounding: nothing to centre
+
+    // The voice clamps PAN + place + shift to -1..1.
+    const double pan = std::clamp (static_cast<double> (p.voicePan), -1.0, 1.0);
+    const double target = total * std::sin (pan * halfPi);
+    const double r = std::sqrt (s * s + c * c);
+    const double phi = (r > 1.0e-12 ? std::asin (std::clamp (target / r, -1.0, 1.0)) : 0.0) - std::atan2 (s, c);
+    double d = phi / halfPi - pan, lo = -3.0, hi = 3.0;
+    for (int it = 0; it < 12; ++it)
+    {
+        double f = -target, slope = 0.0;
+        for (int k = 0; k < n; ++k)
+        {
+            const double x = pan + q[static_cast<size_t> (k)] + d;
+            const double xc = std::clamp (x, -1.0, 1.0);
+            f += w[static_cast<size_t> (k)] * std::sin (xc * halfPi);
+            if (x > -1.0 && x < 1.0)
+                slope += w[static_cast<size_t> (k)] * std::cos (xc * halfPi) * halfPi;
+        }
+        if (std::abs (f) <= 1.0e-6 * total)
+            break;
+        (f > 0.0 ? hi : lo) = d;
+        const double next = slope > 1.0e-9 ? d - f / slope : 0.5 * (lo + hi);
+        d = next > lo && next < hi ? next : 0.5 * (lo + hi);
+    }
+    return static_cast<float> (d);
+}
+
 void SynthEngine::startVoice (SynthVoice& voice, const SynthVoice::NoteOn& on) noexcept
 {
+    inChunk[static_cast<size_t> (&voice - voices.data())] = true;
     if (! voice.isActive())
         for (const auto& other : voices)
             if (&other != &voice && other.isActive())
@@ -488,6 +550,7 @@ void SynthEngine::allSoundOff() noexcept
     allNotesOff();
     for (auto& v : voices)
         v.reset();
+    inChunk.fill (false);
 }
 
 void SynthEngine::syncMode() noexcept
@@ -696,8 +759,15 @@ void SynthEngine::controlUpdate() noexcept
         sig.wmodSq[i] = source * depth * depth;
     }
 
-    for (auto& v : voices)
-        v.updateControl (sig);
+    // SPREAD CENTRED: where the POLY voices' common shift should be now (0 otherwise: the voices glide back).
+    sig.panCentre = spreadCentred (params) ? panCentreFor (params, nullptr, 0.0f, 0.0f) : 0.0f;
+    sig.panGlide = panGlide;
+
+    for (size_t v = 0; v < voices.size(); ++v)
+    {
+        voices[v].updateControl (sig);
+        inChunk[v] = voices[v].isActive();
+    }
 
     // Effect send levels fade in/out instead of switching.
 }
@@ -715,11 +785,11 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
     // are loaded per segment and written back, so the scalar voice objects stay the reference state.
     std::array<SynthVoice*, maxVoices> active {};
     int numActive = 0;
-    for (auto& voice : voices)
-        if (voice.isActive())
+    for (size_t v = 0; v < voices.size(); ++v)
+        if (voices[v].isActive() || inChunk[v])
         {
-            voice.beginRender (sig);
-            active[static_cast<size_t> (numActive++)] = &voice;
+            voices[v].beginRender (sig);
+            active[static_cast<size_t> (numActive++)] = &voices[v];
         }
 
     using namespace simd;

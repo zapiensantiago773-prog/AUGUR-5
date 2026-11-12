@@ -446,6 +446,10 @@ void Augur5Processor::restoreState (const void* data, int sizeInBytes)
             if (std::none_of (saved.begin(), saved.end(), [] (const auto& s) { return s.first == augur5::params::morph_x; })
                 && scene.isValid())
                 augury.placeBird ({ static_cast<float> (scene.getProperty ("x", 0.5)), static_cast<float> (scene.getProperty ("y", 0.5)) });
+            // Sessions saved before 1.7 placed the POLY voices by voice: they keep it, so a project sounds as it did
+            // (presets and new instances start CENTRED, D-060).
+            if (std::none_of (saved.begin(), saved.end(), [] (const auto& s) { return s.first == augur5::params::spread_mode; }))
+                saved.push_back ({ augur5::params::spread_mode, 1.0f });
             for (auto k = savedCount; k < saved.size(); ++k)
                 if (auto* p = parameters.getParameter (saved[k].first))
                     p->setValueNotifyingHost (p->convertTo0to1 (saved[k].second));

@@ -212,7 +212,9 @@ Stereo hold (SynthEngine& e, int note, double seconds)
 
 TEST_CASE ("POLY voices keep their pan at every frequency (each is a mono source panned in phase)", "[engine][bassphase]")
 {
+    const int mode = GENERATE (1, 0); // BY VOICE: each voice in its place; CENTRED: a note alone sits in the middle
     auto p = bassPatch();
+    p.spreadMode = mode;
     p.voiceSpread = 0.5f; // no voice panned hard: the empty side would only show the noise floor
     SynthEngine e;
     e.prepare (sr, SynthEngine::defaultUnitSeed, 1);
@@ -226,10 +228,13 @@ TEST_CASE ("POLY voices keep their pan at every frequency (each is a mono source
         widest = std::max (widest, std::abs (highBand.balanceDb()));
         CHECK (lowBand.corr() > 0.999);
     }
-    WARN ("POLY, VOICE SPREAD 0.5: a voice's balance differs by " << worst << " dB at most between its bass, 200-600 Hz and 2-6 kHz; "
-          "the voices spread up to " << widest << " dB");
+    WARN ("POLY, VOICE SPREAD 0.5, " << (mode == 1 ? "BY VOICE" : "CENTRED") << ": a voice's balance differs by " << worst
+                                     << " dB at most between its bass, 200-600 Hz and 2-6 kHz; the voices spread up to " << widest << " dB");
     CHECK (worst < 0.3);
-    CHECK (widest > 3.0);
+    if (mode == 1)
+        CHECK (widest > 3.0);
+    else
+        CHECK (widest < 0.05);
 }
 
 TEST_CASE ("UNISON and DUO: the bass sits where PAN puts the instrument, the spread stays above", "[engine][bassphase]")

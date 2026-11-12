@@ -231,6 +231,7 @@ public:
         main.knob (P::at_amount, "AFTERTOUCH", 36, 1354, 684);
         main.knob (P::voice_spread, "SPREAD", 36, 1442, 512, slate);
         main.knob (P::voice_pan, "PAN", 36, 1442, 598, slate);
+        main.toggle (P::spread_mode, "BY VOICE", 1404, 670, 76, slate); // off: the POLY image stays centred (D-060)
 
         pages[0]->painter = [] (juce::Graphics& g) {
             drawSection (g, { 52, 116, 540, 299 }, "OSCILLATORS", colours::accent);
@@ -254,6 +255,8 @@ public:
             drawSubSection (g, { 692, 472, 258, 262 }, "FILTER", colours::accent);
             drawSubSection (g, { 962, 472, 258, 262 }, "AMPLIFIER", colours::slate);
             drawSection (g, { 1248, 428, 236, 320 }, "AMPLIFIER", colours::accent);
+            drawTracked (g, "SPREAD", { 1404.0f, 706.0f, 76.0f, 12.0f }, Fonts::jost (8.5f, true, 0.24f), colours::caption,
+                         juce::Justification::centred);
         };
 
         // ================================================================ MOD

@@ -909,3 +909,39 @@ Pedido del usuario: "CPU" y "AUGURY automatizable"; "compila la nueva versión p
 - **Icono:** vuelve el símbolo AUGUR sobre papel blanco de D-040 (`plugin/resources/brand/augur5-app-icon.png`, de `4e0664f`). Es el icono de la app, de la carpeta VST3 (`ICON_BIG`) y del instalador de Windows (`icon.ico`, `wizard_small`). La marca TONAL LAB sigue en el panel y en el instalador.
 - **Comprobaciones:** 93 tests, renders idénticos, `--check-augury`, `--check-augury-gui`, `--check-migration`, `--check-skins`, `--check-preset-clicks`, auditoría de fábrica, headroom de acordes en los tres packs y pluginval estricto.
 - Notas de la versión: `docs/release_notes_1.6.0.md`.
+
+## D-060 · SPREAD centrado: el estéreo de las voces POLY ya no salta de lado (2026-11-12)
+Pedido del usuario: "a veces se panea de un lado y después del otro, bastante evidente, como 2 o 3 dB… ¿habrá una forma de que no haya tanto juego en el paneo?". Eligió **centro estable** y un interruptor para volver al paneo clásico, con los proyectos viejos sonando igual.
+- **La causa, medida:** con VOICE SPREAD cada voz POLY tiene un lugar fijo (voz 1 a la izquierda … voz 5 a la derecha) y el asignador rota entre voces. Una nota cae en la siguiente voz y una tríada en tres voces seguidas, así que la imagen se carga a un lado y luego al otro.
+  - Notas sueltas, de una a otra: 8.7 dB de vaivén con SPREAD 0.3 (el valor inicial), 19.8 dB con 0.6, 37.7 dB con 0.85.
+  - Tríadas largas, de un acorde a otro: 4.3 / 8.2 / 10.8 / 11.8 dB con SPREAD 0.3 / 0.6 / 0.85 / 1.
+  - Casi todos los presets POLY de los packs usan SPREAD ≥ 0.3 (mediana 0.6–0.8): SUN ATLAS 749 de 785, Anthology 328 de 328, AUSPICE 120 de 120.
+- **Modelo (CENTRED):** cada voz conserva su lugar respecto de las demás y el conjunto se desplaza para que la energía quede equilibrada donde PAN pone el instrumento.
+  - Con la ley de potencia constante, una voz en x reparte L − R = −sin(xπ/2). El desplazamiento d resuelve Σ w·sin((P + q + d)π/2) = Σ w·sin(Pπ/2) en forma cerrada (con PAN 0, d = −(2/π)·atan2(Σ w sin(qπ/2), Σ w cos(qπ/2))). Si una voz toca un borde, una búsqueda de Newton con salvaguarda termina el cálculo; la función es monótona.
+  - El peso de cada voz es su nivel de envolvente de amplitud (a tope mientras sube: una nota recién empezada pesa lo que va a sonar) por su ganancia de velocity. No se usa la salida medida: el batido entre osciladores movería toda la imagen al ritmo del batido.
+  - Una nota que empieza desde silencio (o por debajo de −20 dB) toma su lugar centrado al instante; las que ya suenan se deslizan hacia el nuevo centro con 30 ms. No hay saltos.
+  - Solo en POLY. UNISON, DUO y una voz ya son simétricos y quedan idénticos al bit.
+  - El cálculo es por bloque de control (32 muestras), sin reservas de memoria: unas decenas de senos por bloque. CPU (ECO, 5 voces, 48 kHz, tres rondas alternadas con la máquina cargada): BY VOICE 5.29–5.46 %, CENTRED 5.15–5.51 %; no se distingue del ruido. `augur_render --set spread_mode=0|1`.
+- **Parámetro `spread_mode`** (CENTRED / BY VOICE; ID nuevo con version hint 3, al final del layout). Interruptor **BY VOICE** bajo PAN, con la leyenda SPREAD.
+  - Presets (no lo traen) e instancias nuevas: CENTRED. Sesiones guardadas sin él: BY VOICE, así que suenan como antes. Una sesión nueva guarda lo que tenga.
+  - No se vuela en AUGURY ni lo toca OMEN: una escena de 1.6 no lo trae y, si se volara, pasaría un proyecto viejo a CENTRED.
+- **Medido** (`tests/test_spread.cpp`, 48 kHz; el balance es L/R en dB):
+
+| SPREAD | Notas sueltas BY VOICE → CENTRED | Tríadas BY VOICE → CENTRED | Lado/centro de las tríadas BY VOICE / CENTRED |
+|---|---|---|---|
+| 0.3 | 8.7 → 0.00001 dB | 4.3 → 0.33 dB | −16.3 / −17.9 dB |
+| 0.6 | 19.8 → 0.00001 dB | 8.2 → 0.62 dB | −10.0 / −11.7 dB |
+| 0.85 | 37.7 → 0.00001 dB | 10.8 → 0.74 dB | −6.8 / −8.8 dB |
+| 1 | 150 → 0.00001 dB | 11.8 → 0.75 dB | −5.2 / −7.8 dB |
+
+  - El lado que BY VOICE tiene de más es la propia inclinación de la imagen; la separación entre las voces de un acorde es la misma.
+  - Con PAN 0.5, cada nota suelta queda exactamente donde PAN pone una fuente (−7.7 dB).
+  - Lo que queda en acordes cortos (±1 dB en ventanas de 0.5 s) son armónicos que coinciden entre notas del acorde y suman en fase con distinto paneo; pasa igual en BY VOICE y se promedia en ventanas largas.
+  - En 8 presets reales (AUSPICE, SUN ATLAS; SPREAD 0.5–0.85), sin efectos: desequilibrio p95 en ventanas de 100 ms de 3.8–10.2 dB (BY VOICE) a 0.0–1.3 dB (CENTRED). Con sus efectos queda el movimiento propio de la reverb, el chorus o el phaser con SPREAD (2.6–6.6 dB en 100 ms para una reverb al 100 %; en el archivo completo, ±0.4 dB con mezcla al 20 %). El nivel no cambia (±0.3 dB).
+  - BY VOICE es idéntico al bit a 1.6.0: 81 renders (9 casos × 44.1 / 48 / 96 kHz × ECO / GREAT / DIVINE). En CENTRED, UNISON, DUO y mono también.
+  - A/B para escuchar: `build/spread_ab/A CENTRED` y `build/spread_ab/B BY VOICE`.
+- **Fallo encontrado al medir (también en 1.6.0):** el render dependía del tamaño de bloque del DAW. Una voz cuya release terminaba dentro de un segmento seguía calculándose hasta el final del segmento, no del bloque de control. Su ruido interno avanzaba un número de muestras distinto según cómo cortara el host, y la siguiente nota en esa voz salía distinta muestra a muestra (estadísticamente igual): −3.6 dB de diferencia entre bloques de 1 y de 512 muestras en una frase de prueba. Los tests de determinismo no lo veían porque ninguna voz se reutilizaba después de terminar.
+  - Arreglo: una voz que suena en algún momento de un bloque de control se calcula hasta el final de ese bloque (en silencio, con ganancia 0). Ahora los bloques de 1, 37 y 512 dan lo mismo, y es igual al bit al render de 1.6.0 con bloques de 512.
+- **Interfaz:** las capturas MAIN de `docs/skins/` (LIGHT, NEON, IMPERIAL) solo cambian en el rectángulo del interruptor nuevo (1404–1480 × 670–716); el resto es idéntico píxel a píxel.
+- **Comprobaciones:** 98 tests (5 nuevos en `test_spread.cpp`; el de la fase del grave cubre los dos modos), BY VOICE idéntico al bit a 1.6.0, `--check-migration` (sesión 1.6 → BY VOICE; sesiones 1.7 conservan su modo; instancia nueva, preset de fábrica y preset sin el parámetro → CENTRED), `--check-augury`, `--check-augury-gui`, `--check-skins`, `--check-preset-clicks` (0), auditoría de fábrica (0 fuera de rango), headroom de acordes (ningún acorde sobre −1 dBFS: SUN ATLAS −1.0, Anthology −1.4, AUSPICE −2.1, AUGURY Scenes −3.1) y pluginval estricto.
+- La versión la decide el usuario: los instaladores 1.6.0 no incluyen esto.

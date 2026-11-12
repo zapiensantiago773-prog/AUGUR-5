@@ -15,7 +15,10 @@ bool isMorphable (const juce::String& id)
 {
     if (PresetManager::isGlobalSetting (id))
         return false;
-    return ! (id.startsWith ("trim_") || id == P::pb_range || id == P::pb_down || id == P::osc_model || id == P::vintage_cv);
+    // SPREAD MODE is how the instrument places its voices, not a sound to fly to: a 1.6 scene (no value for it) would
+    // otherwise switch an old project to CENTRED in flight.
+    return ! (id.startsWith ("trim_") || id == P::pb_range || id == P::pb_down || id == P::osc_model || id == P::vintage_cv
+              || id == P::spread_mode);
 }
 
 bool isDiscrete (const juce::RangedAudioParameter* p)

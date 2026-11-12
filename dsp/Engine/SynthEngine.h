@@ -95,6 +95,16 @@ private:
     void triggerNote (int note, float velocity) noexcept; // voice assignment (keyboard or arpeggiator)
     void keyReleased (int note) noexcept;                 // a key (or the sustain pedal) let go
 
+    // SPREAD CENTRED (D-060): POLY voices keep their places relative to each other, shifted together so that the
+    // sounding energy is balanced left / right. panCentreFor() is that shift (pan units) for the active voices, leaving
+    // out `skip` (a voice being taken over) and adding a note about to start (its place and weight).
+    static bool spreadCentred (const SynthParams& p) noexcept
+    {
+        return p.spreadMode == 0 && ! p.unison && p.voiceCount > 1 && p.voiceMode == 0;
+    }
+    float panCentreFor (const SynthParams& p, const SynthVoice* skip, float extraPlace, float extraWeight) const noexcept;
+    float panGlide = 1.0f; // per control chunk: the sounding voices follow the centre over 30 ms
+
     // Arpeggiator. Its clock is derived from the absolute sample counter, so steps land on the same
     // samples however the host splits its blocks.
     Arpeggiator::Settings arpSettings() const noexcept;
@@ -118,6 +128,10 @@ private:
     float fadeInPos = 1.0f, fadeInStep = 1.0f;
     std::array<LadderFilter, 4> spareFilters; // idle lanes of a partly filled SIMD group
     std::array<std::atomic<float>, maxVoices> voiceLevels {};
+    // A voice that sounds at any point of a control chunk renders to the end of that chunk, also after its release ends
+    // (silent: its gain is 0). Its noise and oscillators then advance the same number of samples however the host
+    // slices its blocks; stopping at the end of the segment made the next note on that voice depend on the block sizes.
+    std::array<bool, maxVoices> inChunk {};
     std::uint64_t noteCounter = 0;
     int nextVoice = 0;
 

@@ -421,6 +421,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (std::make_unique<APF> (juce::ParameterID { P::morph_y, 2 }, "Morph Y", Range (0.0f, 1.0f), 0.5f,
                                        juce::AudioParameterFloatAttributes().withStringFromValueFunction (formatPercent)));
 
+    // 1.7: how VOICE SPREAD places the POLY voices (version hint 3).
+    layout.add (std::make_unique<APC> (juce::ParameterID { P::spread_mode, 3 }, "Spread Mode", juce::StringArray { "CENTRED", "BY VOICE" }, 0));
+
     return layout;
 }
 
@@ -446,7 +449,7 @@ struct ParameterBinding::Raw
     A pmOn, pmFenv, pmOsc2, pmFreqA, pmPwA, pmFilter;
     std::array<A, 8> mmSrc, mmDst, mmAmt;
     A mixRing, mixSub, subOct, xmod, lfo2Rate, lfo2Wave, lfo2Sync, lfo2Retrig, mA, mD, mS, mR;
-    A detune, spread, pan, voices, age;
+    A detune, spread, pan, voices, age, spreadMode;
     A dlOn, dlTime, dlFb, dlMix;
     A tune, glide, unison, legato, pbRange, pbDown, vintage;
     A arpOn, arpMode, arpOct, arpRate, arpGate, arpSwing, arpLatch;
@@ -529,7 +532,7 @@ ParameterBinding::ParameterBinding (juce::AudioProcessorValueTreeState& s) : raw
         r.mmAmt[static_cast<size_t> (i)] = get (P::mmAmt (i + 1));
     }
     r.detune = get (P::voice_detune); r.spread = get (P::voice_spread); r.pan = get (P::voice_pan);
-    r.voices = get (P::voice_count); r.age = get (P::analog_age);
+    r.voices = get (P::voice_count); r.age = get (P::analog_age); r.spreadMode = get (P::spread_mode);
     r.dlOn = get (P::delay_on); r.dlTime = get (P::delay_time); r.dlFb = get (P::delay_fb); r.dlMix = get (P::delay_mix);
     r.tune = get (P::master_tune); r.glide = get (P::glide); r.unison = get (P::unison); r.legato = get (P::legato);
     r.pbRange = get (P::pb_range); r.pbDown = get (P::pb_down);
@@ -634,7 +637,7 @@ void ParameterBinding::fill (augur::SynthParams& p, const Override* override) no
         p.matrix[k].amount = f (r.mmAmt[k]);
     }
     p.voiceDetune = f (r.detune); p.voiceSpread = f (r.spread); p.voicePan = f (r.pan);
-    p.voiceCount = i (r.voices); p.analogAge = f (r.age);
+    p.voiceCount = i (r.voices); p.analogAge = f (r.age); p.spreadMode = juce::jlimit (0, 1, i (r.spreadMode));
     p.masterTuneCents = f (r.tune); p.glide = f (r.glide); p.unison = b (r.unison); p.legato = b (r.legato);
     p.pitchBendRange = i (r.pbRange); p.pitchBendDown = i (r.pbDown);
     p.mixRing = f (r.mixRing); p.mixSub = f (r.mixSub); p.subOctave = i (r.subOct); p.crossMod = f (r.xmod);

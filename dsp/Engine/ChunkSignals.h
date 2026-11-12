@@ -36,6 +36,11 @@ struct ChunkSignals
     float bendSemitones = 0.0f;
     float tuneSemitones = 0.0f;
 
+    // SPREAD CENTRED: the pan shift (pan units) that centres the sounding POLY voices, and the per-chunk step of
+    // the voices that are already sounding towards it (0 in every other case: the voices glide back to their place).
+    float panCentre = 0.0f;
+    float panGlide = 1.0f;
+
     const SynthParams* params = nullptr;
 };
 

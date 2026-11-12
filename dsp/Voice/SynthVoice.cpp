@@ -113,6 +113,8 @@ void SynthVoice::reset() noexcept
     order = 0;
     pitch = pitchTarget = 60.0f;
     unisonOffset = 0.0f;
+    panShift = 0.0f;
+    panFresh = false;
     lfoDelayGain = 1.0f;
     lfo2RateMod = 0.0f;
     pinkState = 0.0f;
@@ -198,6 +200,13 @@ void SynthVoice::updateCvOffsets() noexcept
 
 void SynthVoice::noteOn (const NoteOn& n) noexcept
 {
+    // A voice that starts from silence (or almost: below -20 dB) takes its centred place at once; one taken over
+    // while it still sounds glides there with the others, so its old note's tail does not jump across the image.
+    if (! ampEnv.isActive() || ampEnv.getLevel() < 0.1f)
+    {
+        panShift = n.panShift;
+        panFresh = true;
+    }
     note = n.note;
     velocity = n.velocity;
     held = true;
@@ -298,7 +307,14 @@ void SynthVoice::updateControl (const ChunkSignals& sig) noexcept
     driftNow[2] = driftF.next() * (0.004f + 0.03f * age); // octaves
 
     if (isActive())
+    {
+        if (panFresh)
+            panShift = sig.panCentre;
+        else if (panShift != sig.panCentre)
+            panShift += (sig.panCentre - panShift) * sig.panGlide;
+        panFresh = false;
         computeConstants (sig);
+    }
     else
         constantsDirty = true;
 }
@@ -405,8 +421,9 @@ void SynthVoice::computeConstants (const ChunkSignals& sig) noexcept
     keytrack = p.keytrack == 0 ? 0.0f : (p.keytrack == 1 ? 0.5f : 1.0f);
     lfoDelayInc = p.lfoDelay <= 0.001f ? 1.0f : static_cast<float> (1.0 / (static_cast<double> (p.lfoDelay) * sampleRate));
 
-    // Constant-power pan: global pan + per-voice position * spread + a hint of unit variation.
-    const float pan = std::clamp (p.voicePan + panPosition * p.voiceSpread + fp.pan * 0.02f, -1.0f, 1.0f);
+    // Constant-power pan: global pan + per-voice position * spread + a hint of unit variation (+ the common shift
+    // that keeps the image centred with SPREAD CENTRED; exactly 0 with BY VOICE).
+    const float pan = std::clamp (p.voicePan + panPosition * p.voiceSpread + fp.pan * 0.02f + panShift, -1.0f, 1.0f);
     const float angle = (pan + 1.0f) * 0.25f * fastmath::pi;
     panL = panLTarget; // previous chunk's end point
     panR = panRTarget;

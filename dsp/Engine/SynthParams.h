@@ -134,6 +134,10 @@ struct SynthParams
 
     // Voices / vintage
     float voiceDetune = 0.3f, voiceSpread = 0.3f, voicePan = 0.0f;
+    // How VOICE SPREAD places the POLY voices (D-060). 0 = CENTRED: each voice keeps its place relative to the
+    // others, but the whole image is re-centred, so a note alone sits in the middle and no chord leans to a side.
+    // 1 = BY VOICE: each voice has a fixed place (1.6 and earlier); the rotating assigner moves notes side to side.
+    int spreadMode = 0;
     int voiceCount = 5;
     float analogAge = 0.35f;
     int voiceMode = 0; // 0 = POLY, 1 = DUO (two voices per note, detuned and spread)
