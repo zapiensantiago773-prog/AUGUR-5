@@ -38,7 +38,13 @@ struct Render
 
 Render play (const SynthParams& p, std::vector<Event> events, double seconds, int block = 32)
 {
-    std::sort (events.begin(), events.end(), [] (const Event& a, const Event& b) { return a.t < b.t; });
+    // Each event on one whole sample, worked out once: comparing t * sr with the position in one place and rounding
+    // t * sr - pos in another landed an event a sample apart between block sizes where the compiler fuses the
+    // multiply and the subtraction (Apple clang, arm64).
+    std::stable_sort (events.begin(), events.end(), [] (const Event& a, const Event& b) { return a.t < b.t; });
+    std::vector<size_t> at (events.size());
+    for (size_t i = 0; i < events.size(); ++i)
+        at[i] = static_cast<size_t> (std::llround (events[i].t * sr));
     auto e = std::make_unique<SynthEngine>();
     e->prepare (sr, SynthEngine::defaultUnitSeed, 1);
     e->setParams (p);
@@ -48,7 +54,7 @@ Render play (const SynthParams& p, std::vector<Event> events, double seconds, in
     size_t k = 0;
     for (size_t pos = 0; pos < total;)
     {
-        while (k < events.size() && events[k].t * sr <= static_cast<double> (pos))
+        while (k < events.size() && at[k] <= pos)
         {
             if (events[k].on)
                 e->noteOn (events[k].note, 0.8f);
@@ -59,7 +65,7 @@ Render play (const SynthParams& p, std::vector<Event> events, double seconds, in
         int n = block > 0 ? block : 1 + static_cast<int> (rng() % 300); // block 0: random sizes
         n = static_cast<int> (std::min<size_t> (static_cast<size_t> (n), total - pos));
         if (k < events.size()) // events land on their sample whatever the block size
-            n = static_cast<int> (std::min<double> (n, std::max (1.0, std::ceil (events[k].t * sr - static_cast<double> (pos)))));
+            n = static_cast<int> (std::min<size_t> (static_cast<size_t> (n), at[k] - pos));
         e->process (out.l.data() + pos, out.r.data() + pos, n);
         pos += static_cast<size_t> (n);
     }
