@@ -984,3 +984,6 @@ Pedido del usuario: "revisa todo el instrumento, si hace falta corregir algo haz
 - **Tests:** `tests/test_audit.cpp` (5 casos nuevos: 103 en total).
 - **Comprobaciones:** 103 tests, `--check-migration`, `--check-skins`, `--check-augury`, `--check-augury-gui`, `--check-preset-clicks` (0), auditoría de fábrica (0 fuera de rango), headroom de acordes en los cuatro packs (ninguno sobre −1 dBFS: SUN ATLAS −1.0, Anthology −1.4, AUSPICE −1.4, AUGURY Scenes −3.1) y pluginval estricto. CPU sin cambio: ECO 5.2 %, GREAT 10.7 %, DIVINE 20.3 %.
 - La versión la decide el usuario: los instaladores 1.6.0 no incluyen esto.
+
+## D-062 · Versión 1.7.0 (2026-11-13)
+El usuario pidió dejar el modelo mejorado: se publica como 1.7.0 con D-060 (SPREAD centrado, determinismo con el tamaño de bloque) y D-061 (auditoría del rack y del motor). Notas de la versión: `docs/release_notes_1.7.0.md`. 103 tests y pluginval estricto en verde con el binario 1.7.0. Los packs no cambian.
