@@ -105,6 +105,12 @@ private:
     float panCentreFor (const SynthParams& p, const SynthVoice* skip, float extraPlace, float extraWeight) const noexcept;
     float panGlide = 1.0f; // per control chunk: the sounding voices follow the centre over 30 ms
 
+    // Chunk-rate glides of PAN, SPREAD and the HPF, and the short dip of the voice bus around a filter switch.
+    float panNow = 0.0f, spreadNow = 0.3f, hpfOctNow = 0.0f;
+    std::array<int, 3> heldFilter { 0, 0, 0 }; // MODEL, slope, mode the voices are running
+    int duckState = 0;                         // 0 idle, 1 fading out, 2 fading back in
+    float duckFrom = 1.0f, duckTo = 1.0f;      // bus gain at the start / end of the current chunk
+
     // Arpeggiator. Its clock is derived from the absolute sample counter, so steps land on the same
     // samples however the host splits its blocks.
     Arpeggiator::Settings arpSettings() const noexcept;

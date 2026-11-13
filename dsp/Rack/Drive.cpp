@@ -247,6 +247,15 @@ void Drive::process (double& left, double& right, const DriveParams& p) noexcept
         const double c2 = ceiling * ceiling;
         compDb = -10.0 * std::log10 (g * g * (1.0 + c2) / (1.0 + c2 * g * g));
     }
+    if (p.model == DriveModel::fold)
+    {
+        // FOLD had no make-up: sin (pi/2 g x) passes a quiet signal at pi/2 x DRIVE (+15 dB at the default 12 dB) and
+        // settles at 0.707 rms once it folds. For a nominal line signal (0.1 rms) that level curve is
+        // (pi/2) g a / sqrt (1 + (k g)^2) with k = (pi/2) a / 0.707; its inverse keeps the level where it came in.
+        const double g = dbToGain (std::clamp (p.driveDb, 0.0, 48.0));
+        constexpr double k = 0.5 * pi * 0.1 / 0.70710678;
+        compDb = 20.0 * std::log10 (std::sqrt (1.0 + k * k * g * g) / (0.5 * pi * g));
+    }
     stageGain = driveGain;
     const double outGain = gainOut.next (dbToGain (p.outputDb + compDb));
     const double mix = mixS.next (std::clamp (p.mix, 0.0, 1.0));

@@ -945,3 +945,42 @@ Pedido del usuario: "a veces se panea de un lado y después del otro, bastante e
 - **Interfaz:** las capturas MAIN de `docs/skins/` (LIGHT, NEON, IMPERIAL) solo cambian en el rectángulo del interruptor nuevo (1404–1480 × 670–716); el resto es idéntico píxel a píxel.
 - **Comprobaciones:** 98 tests (5 nuevos en `test_spread.cpp`; el de la fase del grave cubre los dos modos), BY VOICE idéntico al bit a 1.6.0, `--check-migration` (sesión 1.6 → BY VOICE; sesiones 1.7 conservan su modo; instancia nueva, preset de fábrica y preset sin el parámetro → CENTRED), `--check-augury`, `--check-augury-gui`, `--check-skins`, `--check-preset-clicks` (0), auditoría de fábrica (0 fuera de rango), headroom de acordes (ningún acorde sobre −1 dBFS: SUN ATLAS −1.0, Anthology −1.4, AUSPICE −2.1, AUGURY Scenes −3.1) y pluginval estricto.
 - La versión la decide el usuario: los instaladores 1.6.0 no incluyen esto.
+
+## D-061 · Auditoría de todo el instrumento: rack y motor (2026-11-13)
+Pedido del usuario: "revisa todo el instrumento, si hace falta corregir algo hazlo; revisa que el rack de todos los efectos funcione correctamente".
+- **Método:** tres auditorías que pasan por el mismo código que el plugin (`FxRack`, `SynthEngine`), a 44.1 / 48 / 96 / 192 kHz.
+  - Rack, 38 configuraciones (cada unidad y cada modo): nivel, balance L/R (total y solo wet), pico, cola a 5 y 20 s, DC, clic al encender y apagar. Señal: ráfagas de ruido rosa centrado. Una primera pasada con tonos fijos dio inclinaciones falsas en DELAY y REVERB (los tonos resuenan distinto en cada línea de retardo); el ruido no engaña.
+  - Rack, 75 saltos con un tono sostenido: cada selector y cada control continuo de extremo a extremo. Medida: mayor segunda diferencia tras el salto sobre la mayor en régimen (≈1 = nada; > 4 = clic).
+  - Motor: nivel y afinación por sample rate y calidad, robo de voces, retrigger y 22 saltos con un acorde sostenido.
+- **Lo que estaba bien:** todo finito; sin DC; encender y apagar cualquier unidad, ≤ 1.3×; DELAY, PLATE y SPRING centrados; A4 a 0.03 dB y 0.06 cents entre los cinco sample rates y las tres calidades; robo de voces y retrigger ≤ 1.5×; los controles continuos del rack, ≈1×.
+- **Fallos corregidos:**
+
+| Fallo | Antes | Ahora |
+|---|---|---|
+| TAPE ECHO: el eco se iba a un lado según las cabezas (H1 sola, H3 sola; pares H1+H2, H2+H3) | ±2.7 dB; ±1.2 dB | 0.00–0.03 dB |
+| REVERB ROOM / HALL / SHIMMER inclinadas a la izquierda | +0.4 dB | +0.2 dB |
+| DRIVE FOLD sin compensación de nivel | +14.6 dB | +1.2 dB |
+| Clic al cambiar un selector del rack con una nota sonando (modelo de DRIVE, modo de CHORUS, etapas del PHASER, TZ del FLANGER, PING-PONG, cabezas del eco, tipo de REVERB) | 6–104× | 0.7–1.6× |
+| Clic al saltar el DECAY del HALL | 4.4× | 0.5× |
+| Clic al cambiar el MODEL del filtro / la pendiente 24–12 dB | 326× / 61× | 2.4× / 0.8× |
+| Escalones al mover HPF / PAN / SPREAD | 29× / 10× / 9× | 1.0× / 0.8× / 1.0× |
+| Tras cargar un sonido, los efectos entraban con un fundido de 10 ms: el ataque de la primera nota sonaba sin ellos | 10 ms | desde la primera muestra |
+
+- **Cómo:**
+  - **Eco:** las cabezas se panean alrededor del centro de las que suenan (una sola, al medio; un par, a ±WIDTH/2); conservan la distancia entre ellas y el centro se desliza al mover el selector.
+  - **Reverb:** las primeras reflexiones izquierdas llevaban 1.5 dB más de energía que las derechas; se reparten por igual con la misma energía total. DECAY del FDN, suavizado 50 ms.
+  - **FOLD:** `sin(π/2·g·x)` pasa una señal baja a π/2 × DRIVE y se asienta en 0.707 rms al plegar. Compensación con la inversa de esa curva para una señal de línea nominal (0.1 rms), como los demás modelos. Ningún preset de los packs usa FOLD.
+  - **Selectores del rack:** `FxRack` mantiene el modo con el que corre cada unidad. Si el selector cambia, la unidad se funde a cero en 10 ms con su modo, cambia en silencio y vuelve a entrar. Las que conservan memoria (cinta del eco, delay) la conservan; la reverb arranca con el tanque nuevo vacío, no con la cola vieja que guardaba.
+  - **Arranque sin escalón:** una unidad que empieza vacía (al encenderla o al cambiar de circuito) corre 10 ms sin oírse mientras su entrada sube desde cero. Antes, la señal cortada a mitad de ciclo entraba como un escalón que cada toma, cabeza o repetición devolvía después. El FLANGER escribe siempre su línea seca (THROUGH-ZERO la encontraba vacía).
+  - **Rack recién reiniciado** (sonido o sesión nuevos): las unidades encendidas están encendidas desde la primera muestra; el fundido de entrada lo pone el motor. El fundido de 10 ms queda para encender una unidad a mano.
+  - **Filtro:** al cambiar MODEL, pendiente o modo con voces sonando, el bus de voces baja a cero en 3 ms, el circuito cambia ahí y vuelve en 5 ms. Sin voces, el cambio es inmediato.
+  - **HPF, PAN, SPREAD:** se deslizan por bloque de control (30 ms). En reposo valen el parámetro exacto: BY VOICE sigue idéntico al bit a 1.6.0 (81 renders).
+- **Lo que se deja como está, medido:**
+  - TIME del DELAY y del eco y PREDELAY de la reverb, de un extremo al otro: 4.5–9.9×. Es el barrido de tono de una cinta que cambia de velocidad, por diseño (D-057).
+  - DELAY PING-PONG: wet +1.1 dB a la izquierda; la señal entra por ese lado y la primera repetición es la más fuerte.
+  - DRIVE TAPE: +0.5 dB a 96 y 192 kHz (el lazo de histéresis se integra a 4× el sample rate). BUS COMP en LIMIT con ataque de 0.1 ms: −0.6 / −1.3 dB a 96 / 192 kHz.
+  - Las colas de reverb mueven el balance 2.6–6.6 dB en ventanas de 100 ms: es la cola difusa, independiente en cada canal.
+- **Cambia el sonido de los presets** con eco en los modos de una cabeza o de par (se centra; el nivel no cambia) y, unas décimas, el reparto L/R de ROOM / HALL / SHIMMER.
+- **Tests:** `tests/test_audit.cpp` (5 casos nuevos: 103 en total).
+- **Comprobaciones:** 103 tests, `--check-migration`, `--check-skins`, `--check-augury`, `--check-augury-gui`, `--check-preset-clicks` (0), auditoría de fábrica (0 fuera de rango), headroom de acordes en los cuatro packs (ninguno sobre −1 dBFS: SUN ATLAS −1.0, Anthology −1.4, AUSPICE −1.4, AUGURY Scenes −3.1) y pluginval estricto. CPU sin cambio: ECO 5.2 %, GREAT 10.7 %, DIVINE 20.3 %.
+- La versión la decide el usuario: los instaladores 1.6.0 no incluyen esto.

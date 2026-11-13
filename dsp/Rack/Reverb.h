@@ -87,7 +87,7 @@ private:
     // output
     OnePole lowCutL, lowCutR;
     MonoBass monoBass; // the tail's bass in the middle, its width above stereoBassHz (D-057)
-    Smooth mixS, widthS, sizeS, predelayS, lowCutS;
+    Smooth mixS, widthS, sizeS, predelayS, lowCutS, decaySm;
     ReverbType lastType = ReverbType::plate;
 };
 

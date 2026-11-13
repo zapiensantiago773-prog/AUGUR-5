@@ -74,11 +74,9 @@ void Flanger::process (double& left, double& right, const FlangerParams& p) noex
         const double wet = damp[uc].lp (wetLine[uc].read (std::max (1.0, ms * 0.001 * sr)));
         fb[uc] = wet;
         double dry = io[c];
+        dryLine[uc].write (io[c]); // always: THROUGH-ZERO switched on finds the signal there, not an empty line
         if (p.throughZero)
-        {
-            dryLine[uc].write (io[c]);
             dry = dryLine[uc].read (std::max (1.0, manual * 0.001 * sr));
-        }
         // (Negative regeneration alone moves the comb peaks to the odd harmonics: the hollow "jet".)
         const double w = wet;
         // mix 1 = dry and wet at equal level (deepest comb). Through-zero sums them in opposite polarity, so the

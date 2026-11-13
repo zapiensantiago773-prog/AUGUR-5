@@ -68,7 +68,7 @@ struct FxParams
 };
 
 // Each unit fades in / out over 10 ms when switched, costs nothing while off, and starts from silence when
-// switched back on. The order of the units is free (FxParams::order). Below stereoBassHz every unit keeps the bass
+// switched back on. A selector moved while it sounds (model, mode, heads, type) takes the same way: out, change, in. The order of the units is free (FxParams::order). Below stereoBassHz every unit keeps the bass
 // mono and in phase (D-057). A non-finite sample (which no unit should ever make) clears the rack instead of
 // circulating in the delay lines and tails for ever.
 class FxRack
@@ -85,7 +85,8 @@ public:
     double echoHeadMs (int h) const noexcept { return echo.headDelayMs (h); }
 
 private:
-    void runOne (FxId id, double& l, double& r, const FxParams& p, double bpm) noexcept;
+    void runOne (FxId id, double& l, double& r, const FxParams& p, double bpm, int mode) noexcept;
+    static int modeOf (FxId id, const FxParams& p) noexcept; // the unit's selectors (model, mode, heads, type) as one number
     void resetOne (FxId id) noexcept;
     double springWet (SpringReverb& tank, double l, double r, double decay, double tension, double& outR) noexcept;
 
@@ -102,6 +103,11 @@ private:
     MonoBass echoSpringBass, tankBass;
     Smooth springMixS, echoSpringS;
     std::array<double, fxCount> fade {};
+    std::array<int, fxCount> heldMode {};   // the mode each unit is running (it changes only while faded out)
+    std::array<bool, fxCount> modeSwap {};  // fading out for a mode change, not because it was switched off
+    std::array<int, fxCount> preRoll {};    // samples left of the silent run before a unit fades in
+    int preRollSamples = 1440;
+    bool fresh = true; // prepared or reset: the units that are on start on (see process)
     double fadeStep = 0.001;
 };
 

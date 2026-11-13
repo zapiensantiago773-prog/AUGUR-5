@@ -663,7 +663,64 @@ void SynthEngine::controlUpdate() noexcept
         lastVoiceMode = pending.voiceMode;
         lastArpOn = pending.arpOn;
         lastArpLatch = pending.arpLatch;
+        panNow = params.voicePan;
+        spreadNow = params.voiceSpread;
+        hpfOctNow = std::log2 (std::max (1.0f, params.hpfHz));
+        heldFilter = { params.filterModel, params.filterSlope, params.filterMode };
+        duckState = 0;
+        duckFrom = duckTo = 1.0f;
         paramsInitialised = true;
+    }
+
+    // Controls the voices read once per chunk glide here, chunk by chunk (30 ms): PAN, SPREAD and the HPF stepped
+    // every 32 samples when they were moved or automated (second difference 9 .. 29 times the signal's own). At rest
+    // the values are the parameters themselves, bit for bit.
+    {
+        const auto glide = [this] (float& now, float target, float snap) {
+            now = std::abs (target - now) < snap ? target : now + (target - now) * panGlide;
+            return now == target;
+        };
+        glide (panNow, params.voicePan, 1.0e-5f);
+        params.voicePan = panNow;
+        glide (spreadNow, params.voiceSpread, 1.0e-5f);
+        params.voiceSpread = spreadNow;
+        if (! glide (hpfOctNow, std::log2 (std::max (1.0f, params.hpfHz)), 1.0e-4f))
+            params.hpfHz = std::exp2 (hpfOctNow);
+    }
+
+    // The filter's switches (MODEL, 24 / 12 dB, LP / BP / HP) change the circuit under a sounding note: a step in
+    // its output (up to 326 times the signal's second difference). The voice bus dips to silence over 3 ms, the
+    // circuit changes there, and the bus comes back over 5 ms. Nothing sounding: the switch is immediate.
+    {
+        const std::array<int, 3> wanted { params.filterModel, params.filterSlope, params.filterMode };
+        bool sounding = false;
+        for (const auto& v : voices)
+            sounding = sounding || v.isActive();
+        duckFrom = duckTo;
+        if (duckState == 0 && wanted != heldFilter)
+        {
+            if (sounding)
+                duckState = 1;
+            else
+                heldFilter = wanted;
+        }
+        if (duckState == 1)
+        {
+            duckTo = std::max (0.0f, duckTo - 1.0f / static_cast<float> (std::max (1, static_cast<int> (std::ceil (0.003 * hostRate / controlInterval)))));
+            if (duckTo <= 0.0f)
+                duckState = 2;
+        }
+        else if (duckState == 2)
+        {
+            if (duckFrom <= 0.0f)
+                heldFilter = wanted; // at the bottom: the new circuit starts unheard
+            duckTo = std::min (1.0f, duckTo + 1.0f / static_cast<float> (std::max (1, static_cast<int> (std::ceil (0.005 * hostRate / controlInterval)))));
+            if (duckTo >= 1.0f)
+                duckState = 0;
+        }
+        params.filterModel = heldFilter[0];
+        params.filterSlope = heldFilter[1];
+        params.filterMode = heldFilter[2];
     }
 
     syncMode();
@@ -864,6 +921,16 @@ void SynthEngine::renderSegment (float* left, float* right, int offset, int numS
 
     // A new sound comes in under a short fade on the bus, before FUZZ, the decimators and the effects: their delay
     // lines fill with the fade too, so the first echoes of the new sound come in as smoothly as the sound itself.
+    if (duckFrom < 1.0f || duckTo < 1.0f) // a filter switch in progress (see controlUpdate)
+    {
+        const float inv = 1.0f / static_cast<float> (controlInterval * oversampling);
+        for (int i = 0; i < iCount; ++i)
+        {
+            const float g = duckFrom + (duckTo - duckFrom) * static_cast<float> (iStart + i + 1) * inv;
+            busL[static_cast<size_t> (i)] *= g;
+            busR[static_cast<size_t> (i)] *= g;
+        }
+    }
     if (fadeInPos < 1.0f)
     {
         for (int i = 0; i < iCount; ++i)

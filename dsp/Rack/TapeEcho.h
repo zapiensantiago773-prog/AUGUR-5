@@ -50,7 +50,7 @@ private:
     OnePole fbHp;
     double fbSample = 0.0, wowPhase = 0.0, flutPhase = 0.0, wowRandom = 0.0, wowTarget = 0.0;
     int wowCounter = 0;
-    Smooth mixS, intS, satS, widthS, bassS, trebleS;
+    Smooth mixS, intS, satS, widthS, centreS, bassS, trebleS;
     MonoBass monoBass;
 };
 

@@ -21,6 +21,9 @@ constexpr double excursion = 16.0;
 constexpr double hallMs[8] { 41.0, 47.3, 53.9, 60.2, 67.1, 74.9, 82.7, 91.3 };
 constexpr double earlyMs[6] { 7.3, 11.9, 17.1, 23.5, 29.1, 37.7 };
 constexpr double earlyGain[6] { 0.72, -0.61, 0.53, -0.44, 0.37, -0.3 };
+constexpr double earlyEnergyL = 0.72 * 0.72 + 0.53 * 0.53 + 0.37 * 0.37, earlyEnergyR = 0.61 * 0.61 + 0.44 * 0.44 + 0.3 * 0.3;
+const double earlyTrimL = std::sqrt (0.5 * (earlyEnergyL + earlyEnergyR) / earlyEnergyL);
+const double earlyTrimR = std::sqrt (0.5 * (earlyEnergyL + earlyEnergyR) / earlyEnergyR);
 } // namespace
 
 void Reverb::prepare (double sampleRate, std::uint64_t seed)
@@ -53,6 +56,7 @@ void Reverb::prepare (double sampleRate, std::uint64_t seed)
     sizeS.prepare (sr, 0.3);
     predelayS.prepare (sr, 0.05);
     lowCutS.prepare (sr, 0.05);
+    decaySm.prepare (sr, 0.05);
     sizeS.snap (1.0);
     monoBass.prepare (sr);
     for (int i = 0; i < lines; ++i)
@@ -159,6 +163,10 @@ void Reverb::fdn (double inL, double inR, double& outL, double& outR, const Reve
         const double v = earlyGain[i] * early.read (earlyMs[i] * 0.001 * sr * (room ? 0.7 : 1.3) * sizeS.v);
         (i % 2 == 0 ? erL : erR) += v;
     }
+    // The left taps (0.72, 0.53, 0.37) carry 1.5 dB more energy than the right ones (0.61, 0.44, 0.30): the whole
+    // reverb leaned 0.4 dB to the left. Same total energy, shared equally.
+    erL *= earlyTrimL;
+    erR *= earlyTrimR;
 
     // Input diffusion: two all-passes per side, different lengths (decorrelated left / right).
     const double dm = room ? 0.6 : 1.0;
@@ -169,7 +177,9 @@ void Reverb::fdn (double inL, double inR, double& outL, double& outR, const Reve
 
     // Absorption per line (Jot): g_i sets the low RT60, the one-pole b_i tilts it so the highs die
     // DAMPING faster (alpha = RT60(pi) / RT60(0)).
-    const double rt = p.freeze ? 1.0e9 : std::clamp (p.decayS, 0.1, 60.0) * (room ? 0.6 : 1.0);
+    // DECAY glides (50 ms): a jump from a short to a long tail stepped every line's gain at once (a click, measured).
+    const double decayNow = decaySm.next (std::clamp (p.decayS, 0.1, 60.0));
+    const double rt = p.freeze ? 1.0e9 : decayNow * (room ? 0.6 : 1.0);
     const double alpha = 1.0 - 0.9 * std::clamp (p.damping, 0.0, 1.0);
     std::array<double, lines> s {};
     double sum = 0.0;

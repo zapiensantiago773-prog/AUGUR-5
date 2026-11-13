@@ -30,6 +30,7 @@ void TapeEcho::prepare (double sampleRate, std::uint64_t seed)
     intS.prepare (sr, 0.02);
     satS.prepare (sr, 0.05);
     widthS.prepare (sr, 0.05);
+    centreS.prepare (sr, 0.05);
     bassS.prepare (sr, 0.05);
     trebleS.prepare (sr, 0.05);
     monoBass.prepare (sr);
@@ -103,12 +104,17 @@ void TapeEcho::process (double& left, double& right, const TapeEchoParams& p) no
     const double loop = 1.15 * intensity / std::sqrt (std::max (1, active));
     fbSample = loop * fbHp.hp (sum);
 
-    // Heads across the stereo field (H1 left, H2 centre, H3 right) by WIDTH.
-    const double pan[3] { -width, 0.0, width };
+    // Heads across the stereo field (H1 left, H2 centre, H3 right) by WIDTH, centred on the heads that play: a single
+    // head sits in the middle and a pair straddles it. With fixed places H1 alone put the whole echo 2.7 dB to the
+    // left, H3 alone 2.7 dB to the right and the pairs 1.2 dB off (measured, pink noise). The heads keep their
+    // distance from each other; the centre glides when the selector moves.
+    constexpr double modeCentre[7] { -1.0, 0.0, 1.0, -0.5, 0.5, 0.0, 0.0 };
+    const double centre = centreS.next (modeCentre[mode]);
+    const double pan[3] { (-1.0 - centre) * width, -centre * width, (1.0 - centre) * width };
     double wl = 0.0, wr = 0.0;
     for (int h = 0; h < 3; ++h)
     {
-        const double a = 0.25 * pi * (1.0 + pan[h]);
+        const double a = 0.25 * pi * (1.0 + std::clamp (pan[h], -1.0, 1.0));
         wl += heads[h] * std::cos (a) * 1.41421356;
         wr += heads[h] * std::sin (a) * 1.41421356;
     }
